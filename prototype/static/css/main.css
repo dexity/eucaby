@@ -1,0 +1,8 @@
+
+body .container {
+    max-width: 600px;
+}
+
+#realtaxi-map {
+    height: 300px;
+}
