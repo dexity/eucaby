@@ -1,4 +1,5 @@
-eucaby
+
+Eucaby
 ======
 
-Real time taxi
+Application for real-time location discovery

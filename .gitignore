@@ -14,10 +14,15 @@ develop-eggs
 lib
 lib64
 __pycache__
-pip-log.txt
+pip-log.txtq
 .coverage
 .tox
 nosetests.xml
 *.mo
 .project
 .idea
+static
+eucaby/local*
+mobile/platforms
+mobile/plugins
+mobile/node_modules
