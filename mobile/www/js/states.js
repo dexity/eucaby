@@ -7,16 +7,25 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
   // Each state's controller can be found in controllers.js
   $stateProvider
 
-    // setup an abstract state for the tabs directive
-    .state('tab', {
-      url: "/tab",
+    // Abstract states
+    .state('main', {
+      url: "/main",
       abstract: true,
-      templateUrl: "templates/tabs.html"
+      templateUrl: "templates/menu.html"
     })
 
-    // Each tab has its own nav history stack:
+    .state('main.tabs', {
+      url: "/tab",
+      abstract: true,
+      views: {
+        'menu-content': {
+            templateUrl: "templates/tabs.html"
+        }
+      }
+    })
 
-    .state('tab.map', {
+    // States with navigation history stack
+    .state('main.tabs.map', {
       url: '/map',
       views: {
         'tab-map': {
@@ -26,7 +35,7 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
       }
     })
 
-    .state('tab.friends', {
+    .state('main.tabs.friends', {
       url: '/friends',
       views: {
         'tab-friends': {
@@ -35,7 +44,7 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
         }
       }
     })
-    .state('tab.friend-detail', {
+    .state('main.tabs.friend-detail', {
       url: '/friend/:friendId',
       views: {
         'tab-friends': {
@@ -45,17 +54,17 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
       }
     })
 
-    .state('tab.account', {
-      url: '/account',
+    .state('main.tabs.down', {
+      url: '/down',
       views: {
         'tab-account': {
-          templateUrl: 'templates/tab-account.html',
-          controller: 'AccountCtrl'
+          templateUrl: 'templates/tab-down.html',
+          controller: 'DownCtrl'
         }
       }
     });
 
   // if none of the above states are matched, use this as the fallback
-  $urlRouterProvider.otherwise('/tab/map');
+  $urlRouterProvider.otherwise('/main/tab/map');
 
 });

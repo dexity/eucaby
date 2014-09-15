@@ -30,11 +30,14 @@ angular.module('starter.controllers', [])
   $scope.friend = Friends.get($stateParams.friendId);
 })
 
-.controller('AccountCtrl', function($scope) {
+.controller('DownCtrl', function($scope) {
 })
 
-.controller('MenuCtrl', function($scope, $ionicSideMenuDelegate) {
-  $scope.toggleLeft = function() {
-    $ionicSideMenuDelegate.toggleLeft();
-  };
+.controller('MainCtrl', function($scope, $ionicSideMenuDelegate) {
+  $scope.leftButtons = [{
+    type: 'button-icon button-clear ion-navicon',
+    tap: function(e) {
+      $ionicSideMenuDelegate.toggleLeft($scope.$$childHead);
+    }
+  }];
 });

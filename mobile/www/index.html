@@ -26,34 +26,20 @@
   </head>
   <body ng-app="starter" animation="slide-left-right-ios7">
 
-<ion-side-menus>
-  <ion-side-menu-content ng-controller="MenuCtrl">
-  </ion-side-menu-content>
-  <ion-side-menu side="right">
-
-      toggleLeft
-  </ion-side-menu>
-</ion-side-menus>
-
     <ion-header-bar align-title="left" class="bar-light">
         <h1 class="title">Eucaby</h1>
         <div class="buttons">
-            <button class="button button-clear" ng-click="toggleLeft()"><i class="icon ion-navicon"></i></button>
+            <button class="button button-icon button-clear ion-navicon" ng-click="toggleLeft()"></button>
         </div>
     </ion-header-bar>
-    <!-- 
-      The nav bar that will be updated as we navigate between views.
-    -->
-    <ion-nav-bar class="bar-stable nav-title-slide-ios7">
-      <ion-nav-back-button class="button-icon icon  ion-ios7-arrow-back">
-        Back
-      </ion-nav-back-button>
-    </ion-nav-bar>
-    <!-- 
-      The views will be rendered in the <ion-nav-view> directive below
-      Templates are in the /templates folder (but you could also
-      have templates inline in this html file if you'd like).
-    -->
-    <ion-nav-view></ion-nav-view>
+
+      <!--<ion-nav-bar class="bar-light" animation="nav-title-slide-ios7">
+        <ion-nav-back-button class="button-icon ion-ios7-arrow-back">
+        </ion-nav-back-button>
+      </ion-nav-bar>-->
+
+    <div ng-controller="MainCtrl">
+        <ion-nav-view animation="slide-left-right"></ion-nav-view>
+    </div>
   </body>
 </html>
