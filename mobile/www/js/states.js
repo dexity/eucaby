@@ -25,6 +25,16 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
     })
 
     // States with navigation history stack
+    .state('main.login', {
+      url: "/login",
+      views: {
+        'menu-content': {
+            templateUrl: "templates/login.html",
+            controller: "LoginCtrl"
+        }
+      }
+    })
+
     .state('main.tabs.map', {
       url: '/map',
       views: {
@@ -34,7 +44,15 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
         }
       }
     })
-
+    .state('main.tabs.map.request', { // Not working
+      url: '/request',
+      views: {
+        'tab-map': {
+          template: 'templates/tab-down.html',
+          controller: 'RequestCtrl'
+        }
+      }
+    })
     .state('main.tabs.friends', {
       url: '/friends',
       views: {
@@ -57,7 +75,7 @@ EucabyApp.config(function($stateProvider, $urlRouterProvider) {
     .state('main.tabs.down', {
       url: '/down',
       views: {
-        'tab-account': {
+        'tab-down': {
           templateUrl: 'templates/tab-down.html',
           controller: 'DownCtrl'
         }

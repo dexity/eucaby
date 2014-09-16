@@ -1,0 +1,20 @@
+<ion-modal-view>
+  <ion-header-bar>
+    <h1 class="title">Where Are You?</h1>
+    <div class="buttons">
+      <button class="button button-clear" ng-click="closeRequest()">Close</button>
+    </div>
+  </ion-header-bar>
+  <ion-content>
+    <form ng-submit="sendRequest()">
+      <div class="list">
+        <label class="item item-input">
+          <input type="text" placeholder="Email" ng-model="requestData.email">
+        </label>
+        <label class="item">
+          <button class="button button-block button-positive" type="submit">Send</button>
+        </label>
+      </div>
+    </form>
+  </ion-content>
+</ion-modal-view>
