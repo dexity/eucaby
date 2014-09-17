@@ -1,6 +1,6 @@
 angular.module('starter.controllers', [])
 
-.controller('MapCtrl', function($scope, $ionicModal, $timeout) {
+.controller('MapCtrl', function($scope, $ionicModal, $ionicPopup, $ionicLoading, $timeout) {
     var initialize = function() {
         var lat = 37.7833;
         var lng = -122.4167;
@@ -40,10 +40,41 @@ angular.module('starter.controllers', [])
     };
 
     $scope.sendRequest = function() {
-    console.log('Sending request', $scope.requestData);
-    $timeout(function() {
-        $scope.closeRequest();
-    }, 1000);
+        console.log('Sending request', $scope.requestData);
+        $timeout(function() {
+            $scope.closeRequest();
+        }, 1000);
+    };
+
+    $scope.showIamhere = function() {
+       var alertPopup = $ionicPopup.alert({
+         title: 'I am here',
+         template: 'Send location notification to specified email'
+       });
+       alertPopup.then(function(res) {
+         console.log('Location notification has been sent');
+       });
+    };
+
+    $scope.centerOnMe = function() {
+        if(!$scope.map) {
+            return;
+        }
+
+//        $scope.loading = $ionicLoading.show({
+//            content: 'Getting current location...',
+//            showBackdrop: false
+//        });
+
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            $scope.map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+            $scope.loading.hide();
+        }, function(error) {
+            $ionicPopup.alert({
+                title: 'Location Error',
+                template: 'Unable to get location: ' + error.message
+            });
+        });
     };
 })
 
