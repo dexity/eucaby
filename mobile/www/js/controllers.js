@@ -40,7 +40,7 @@ angular.module('starter.controllers', [])
     };
 
     $scope.sendRequest = function() {
-    console.log('Doing login', $scope.requestData);
+    console.log('Sending request', $scope.requestData);
     $timeout(function() {
         $scope.closeRequest();
     }, 1000);

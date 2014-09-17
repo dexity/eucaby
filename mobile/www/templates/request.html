@@ -2,7 +2,7 @@
   <ion-header-bar>
     <h1 class="title">Where Are You?</h1>
     <div class="buttons">
-      <button class="button button-clear" ng-click="closeRequest()">Close</button>
+      <button class="button button-small button-icon button-clear ion-close-round" ng-click="closeRequest()"></button>
     </div>
   </ion-header-bar>
   <ion-content>
@@ -11,9 +11,9 @@
         <label class="item item-input">
           <input type="text" placeholder="Email" ng-model="requestData.email">
         </label>
-        <label class="item">
-          <button class="button button-block button-positive" type="submit">Send</button>
-        </label>
+      </div>
+      <div class="padding">
+        <button class="button button-block button-positive" type="submit">Send</button>
       </div>
     </form>
   </ion-content>
