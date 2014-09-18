@@ -17,7 +17,7 @@ handlers:
 #  login: admin
 
 - url: /_ah/spi/.*
-  script: api.location_api.application
+  script: eucaby.api.location_api.application
 
 - url: /tasks/.*
   script: eucaby.wsgi.application
@@ -27,11 +27,14 @@ handlers:
   script: eucaby.wsgi.application
 
 env_variables:
-  DJANGO_SETTINGS_MODULE: 'eucaby.settings'
+  DJANGO_SETTINGS_MODULE: 'settings'
 
 libraries:
 - name: django
   version: 1.5
+
+- name: endpoints
+  version: 1.0
 
 - name: MySQLdb
   version: latest

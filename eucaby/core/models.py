@@ -1,4 +1,4 @@
-from django.db import models
+#from django.db import models
 import datetime
 from google.appengine.ext import ndb
 import uuid
@@ -7,8 +7,8 @@ import uuid
 
 class Session(ndb.Model):
     key = ndb.StringProperty(required=True)
-    sender_email = ndb.EmailProperty(required=True)
-    receiver_email = ndb.EmailProperty(required=True)
+    sender_email = ndb.StringProperty(required=True)
+    receiver_email = ndb.StringProperty(required=True)
 
     @classmethod
     def create(cls, sender_email, receiver_email):

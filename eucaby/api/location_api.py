@@ -3,34 +3,32 @@ import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
-from core import models as core_models
-from api import services
-from api import messages as api_messages
+from eucaby.core import models as core_models
+from eucaby.api import services
+from eucaby.api import messages as api_messages
 
-package = 'Api'
-
-# Temp
-class Greetings(messages.Message):
-    text = messages.StringField(1)
+package = 'Eucaby'
 
 
-@endpoints.api(name='location', version='v1')
+@endpoints.api(name='eucaby', version='v1')
 class LocationApi(remote.Service):
 
     REQUEST_RESOURCE = endpoints.ResourceContainer(
         message_types.VoidMessage,
         sender_email=messages.StringField(1),
-        receiver_email=messages.StringField(1))
+        receiver_email=messages.StringField(2))
 
-    @endpoints.method(REQUEST_RESOURCE, Greetings,
-                      path='/location/request', http_method='POST',
+    @endpoints.method(REQUEST_RESOURCE, api_messages.Session,
+                      path='location/request', http_method='POST',
                       name='location.request')
     def request_location(self, request):
-        #session = core_models.Session.create(
-        #    request.sender_email, request.receiver_email)
+        session = core_models.Session.create(
+            request.sender_email, request.receiver_email)
         #req = core_models.Request.create(session)
 
-        return Greetings(text='Hello')
-        #return api_messages.Request()
+        return api_messages.Session(
+            key=session.key, sender_email=session.sender_email,
+            receiver_email=session.receiver_email)
 
 application = endpoints.api_server([LocationApi], restricted=False)
+
