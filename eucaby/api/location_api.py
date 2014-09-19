@@ -18,17 +18,29 @@ class LocationApi(remote.Service):
         sender_email=messages.StringField(1),
         receiver_email=messages.StringField(2))
 
-    @endpoints.method(REQUEST_RESOURCE, api_messages.Session,
+    LOCATION_RESOURCE = endpoints.ResourceContainer(
+        message_types.VoidMessage,
+        latlng=api_messages.LatLngField(1),
+        sender_email=messages.StringField(2),
+        receiver_email=messages.StringField(3))
+
+    @endpoints.method(REQUEST_RESOURCE, api_messages.Request,
                       path='location/request', http_method='POST',
                       name='location.request')
     def request_location(self, request):
         session = core_models.Session.create(
             request.sender_email, request.receiver_email)
-        #req = core_models.Request.create(session)
+        req = core_models.Request.create(session)
+        return api_messages.Request(**req.to_dict())
 
-        return api_messages.Session(
-            key=session.key, sender_email=session.sender_email,
-            receiver_email=session.receiver_email)
+    @endpoints.method(LOCATION_RESOURCE, api_messages.Response,
+                      path='location/notify', http_method='POST',
+                      name='location.notify')
+    def notify_location(self, request):
+        session = core_models.Session.create(
+            request.sender_email, request.receiver_email)
+        resp = core_models.Response.create(session, request.latlng)
+        return api_messages.Response(**resp.to_dict())
 
 application = endpoints.api_server([LocationApi], restricted=False)
 

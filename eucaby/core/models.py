@@ -18,6 +18,9 @@ class Session(ndb.Model):
         obj.put()
         return obj
 
+    def to_dict(self):
+        return self._to_dict()
+
 
 class Request(ndb.Model):
     token = ndb.StringProperty(required=True)
@@ -32,8 +35,28 @@ class Request(ndb.Model):
         obj.put()
         return obj
 
+    def to_dict(self):
+        return dict(
+            token=self.token, session=self.session.to_dict(),
+            created_date=str(self.created_date))
+
 
 class Response(ndb.Model):
     location = ndb.GeoPtProperty(required=True)
     session = ndb.StructuredProperty(Session, required=True)
     created_date = ndb.DateTimeProperty(required=True)
+
+    @classmethod
+    def create(cls, session, latlng):
+        obj = cls(
+            location=ndb.GeoPt(latlng), session=session,
+            created_date=datetime.datetime.now())
+        obj.put()
+        return obj
+
+    def to_dict(self):
+
+        return dict(
+            #location='Fix me', # XXX: Fix location
+            session=self.session.to_dict(),
+            created_date=str(self.created_date))
