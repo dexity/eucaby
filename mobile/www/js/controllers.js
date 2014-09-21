@@ -1,6 +1,11 @@
 angular.module('starter.controllers', [])
 
-.controller('MapCtrl', function($scope, $ionicModal, $ionicPopup, $ionicLoading, $timeout) {
+.controller('MapCtrl', function($scope, $http, $ionicModal, $ionicPopup,
+                                $ionicLoading, $timeout) {
+    var SENDER_EMAIL = 'alex@eucaby.com';
+    var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
+    var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
+
     var initialize = function() {
         var lat = 37.7833;
         var lng = -122.4167;
@@ -41,9 +46,12 @@ angular.module('starter.controllers', [])
 
     $scope.sendRequest = function() {
         console.log('Sending request', $scope.requestData);
-        $timeout(function() {
-            $scope.closeRequest();
-        }, 1000);
+        $scope.requestData.email;
+        $http.post(REQUEST_URL, {"receiver_email": "test1@example.com", "sender_email": "test2@example.com"})
+            .success(function(data){
+                console.log(data);
+                $scope.closeRequest();
+            });
     };
 
     $scope.showIamhere = function() {

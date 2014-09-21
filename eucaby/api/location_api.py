@@ -1,5 +1,6 @@
 #import settings
 import endpoints
+import logging
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
@@ -15,14 +16,14 @@ class LocationApi(remote.Service):
 
     REQUEST_RESOURCE = endpoints.ResourceContainer(
         message_types.VoidMessage,
-        sender_email=messages.StringField(1),
-        receiver_email=messages.StringField(2))
+        sender_email=messages.StringField(1, required=True),
+        receiver_email=messages.StringField(2, required=True))
 
     LOCATION_RESOURCE = endpoints.ResourceContainer(
         message_types.VoidMessage,
-        latlng=api_messages.LatLngField(1),
-        sender_email=messages.StringField(2),
-        receiver_email=messages.StringField(3))
+        latlng=api_messages.LatLngField(1, required=True),
+        sender_email=messages.StringField(2, required=True),
+        receiver_email=messages.StringField(3, required=True))
 
     @endpoints.method(REQUEST_RESOURCE, api_messages.Request,
                       path='location/request', http_method='POST',

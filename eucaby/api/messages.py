@@ -34,7 +34,7 @@ class Response(messages.Message):
 class LatLngField(messages.StringField):
 
     def validate_element(self, value):
-        if not re.match(LATLNG_REGEX, value):
+        if not value or not re.match(LATLNG_REGEX, value):
             raise endpoints.BadRequestException(
                 'Wrong format. Latitude and longitude should have format: '
                 '<lat>,<lng>')

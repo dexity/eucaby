@@ -1,0 +1,10 @@
+total_storage_limit: 500M
+
+queue:
+- name: default
+  rate: 5/s
+  bucket_size: 20
+  max_concurrent_requests: 5
+  retry_parameters:
+    task_retry_limit: 20
+    task_age_limit: 1h
