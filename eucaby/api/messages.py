@@ -25,7 +25,7 @@ class Request(messages.Message):
 
 
 class Response(messages.Message):
-    #location = messages.MessageField(GeoPtMessage, 1, required=True)
+    location = messages.MessageField(GeoPtMessage, 1, required=True)
     session = messages.MessageField(Session, 2, required=True)
     created_date = messages.StringField(3, required=True)
 

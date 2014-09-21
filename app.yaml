@@ -17,7 +17,7 @@ handlers:
 #  login: admin
 
 - url: /_ah/spi/.*
-  script: eucaby.api.location_api.application
+  script: eucaby.api.eucaby_api.application
 
 - url: /tasks/.*
   script: eucaby.wsgi.application

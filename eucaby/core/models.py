@@ -57,6 +57,7 @@ class Response(ndb.Model):
     def to_dict(self):
 
         return dict(
-            #location='Fix me', # XXX: Fix location
+            location=dict(
+                lat=self.location.lat, lng=self.location.lon),
             session=self.session.to_dict(),
             created_date=str(self.created_date))

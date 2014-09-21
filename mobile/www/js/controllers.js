@@ -1,7 +1,7 @@
 angular.module('starter.controllers', [])
 
 .controller('MapCtrl', function($scope, $http, $ionicModal, $ionicPopup,
-                                $ionicLoading, $timeout) {
+                                $ionicLoading) {
     var SENDER_EMAIL = 'alex@eucaby.com';
     var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
     var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
@@ -46,11 +46,14 @@ angular.module('starter.controllers', [])
 
     $scope.sendRequest = function() {
         console.log('Sending request', $scope.requestData);
-        $scope.requestData.email;
-        $http.post(REQUEST_URL, {"receiver_email": "test1@example.com", "sender_email": "test2@example.com"})
+        $http.post(REQUEST_URL + '?receiver_email=' + $scope.requestData.email +
+                '&sender_email=' + SENDER_EMAIL)
             .success(function(data){
                 console.log(data);
                 $scope.closeRequest();
+            })
+            .error(function(e){
+                console.log(e);
             });
     };
 
