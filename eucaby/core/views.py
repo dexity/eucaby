@@ -1,6 +1,7 @@
 
 from django.views import generic
 from django import http
+import logging
 
 class Home(generic.View):
 
@@ -11,7 +12,7 @@ class Home(generic.View):
 class NotifyLocation(generic.View):
 
     def get(self, *args, **kwargs):
-        print kwargs.get('token')
+        logging.info('Token: {}'.format(kwargs.get('token')))
         return http.HttpResponse('Your location has been sent')
 
 
