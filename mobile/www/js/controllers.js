@@ -46,8 +46,8 @@ angular.module('starter.controllers', [])
 
     $scope.sendRequest = function() {
         console.log('Sending request', $scope.requestData);
-        $http.post(REQUEST_URL + '?receiver_email=' + $scope.requestData.email +
-                '&sender_email=' + SENDER_EMAIL)
+        $http.post(REQUEST_URL, {receiver_email: $scope.requestData.email,
+            sender_email: SENDER_EMAIL})
             .success(function(data){
                 console.log(data);
                 $scope.closeRequest();

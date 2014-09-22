@@ -6,6 +6,7 @@ from protorpc import message_types
 from protorpc import remote
 from eucaby.core import models as core_models
 from eucaby.api import messages as api_messages
+from eucaby.api import resources as api_resources
 from eucaby.utils import mail as utils_mail
 
 package = 'Eucaby'
@@ -14,20 +15,10 @@ package = 'Eucaby'
 @endpoints.api(name='eucaby', version='v1')
 class EucabyApi(remote.Service):
 
-    REQUEST_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        sender_email=messages.StringField(1, required=True),
-        receiver_email=messages.StringField(2, required=True))
-
-    LOCATION_RESOURCE = endpoints.ResourceContainer(
-        message_types.VoidMessage,
-        latlng=api_messages.LatLngField(1, required=True),
-        sender_email=messages.StringField(2, required=True),
-        receiver_email=messages.StringField(3, required=True))
-
-    @endpoints.method(REQUEST_RESOURCE, api_messages.Request,
-                      path='location/request', http_method='POST',
-                      name='location.request')
+    @endpoints.method(
+        endpoints.ResourceContainer(api_resources.RequestResource),
+        api_messages.Request, path='location/request', http_method='POST',
+        name='location.request')
     def request_location(self, request):
         session = core_models.Session.create(
             request.sender_email, request.receiver_email)
@@ -46,9 +37,10 @@ class EucabyApi(remote.Service):
             'Location Request', MSG, NOREPLY_EMAIL, [request.receiver_email])
         return api_messages.Request(**req.to_dict())
 
-    @endpoints.method(LOCATION_RESOURCE, api_messages.Response,
-                      path='location/notify', http_method='POST',
-                      name='location.notify')
+    @endpoints.method(
+        endpoints.ResourceContainer(api_resources.LocationResource),
+        api_messages.Response, path='location/notify', http_method='POST',
+        name='location.notify')
     def notify_location(self, request):
         session = core_models.Session.create(
             request.sender_email, request.receiver_email)
