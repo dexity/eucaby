@@ -1,5 +1,4 @@
 
-
 from django.conf import urls
 from eucaby.core import views
 

@@ -1,10 +1,10 @@
-from django.conf.urls import patterns, include, url
+from django.conf import urls
 
 # from django.contrib import admin
 # admin.autodiscover()
 
-urlpatterns = patterns('',
-    url(r'', include('eucaby.core.urls')),
+urlpatterns = urls.patterns('',
+    urls.url(r'', urls.include('eucaby.core.urls')),
 
     # url(r'^admin/', include(admin.site.urls)),
 )
