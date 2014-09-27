@@ -1,4 +1,3 @@
-application: auto
 version: 1
 runtime: python27
 api_version: 1
@@ -46,6 +45,9 @@ builtins:
 - django_wsgi: on
 #- remote_api: on
 
+inbound_services:
+- warmup
+
 skip_files:
 - ^\.git
 - ^\.idea
@@ -58,4 +60,4 @@ skip_files:
 - ^lib/PyYAML*
 - ^lib/yaml
 - ^prototype
-
+- ^eucabyrt
