@@ -2,6 +2,7 @@
 *.so
 *.egg
 *.egg-info
+*.log
 dist
 build
 eggs
@@ -23,6 +24,7 @@ nosetests.xml
 .idea
 static
 eucaby/local*
+eucabyrt/node_modules
 mobile/platforms
 mobile/plugins
 mobile/node_modules

@@ -1,20 +1,26 @@
-angular.module('starter.controllers', [])
+'use strict';
 
-.controller('MapCtrl', function($scope, $http, $ionicModal, $ionicPopup,
-                                $ionicLoading) {
+angular.module('eucaby.controllers', [])
+
+.controller('MapCtrl', ['$scope', 'socket', '$http', '$ionicModal',
+    '$ionicPopup', '$ionicLoading',
+    function($scope, socket, $http, $ionicModal, $ionicPopup, $ionicLoading) {
     var SENDER_EMAIL = 'alex@eucaby.com';
     var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
     var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
+    var SF_LAT = 37.7833;
+    var SF_LNG = -122.4167;
+    var RT_URL = '192.168.1.11';
+    var RT_PORT = 4000
 
-    var initialize = function() {
-        var lat = 37.7833;
-        var lng = -122.4167;
+    var mapFactory = function(lat, lng) {
+        // Creates map
         var mapOptions = {
             center: new google.maps.LatLng(lat, lng),
             zoom: 13,
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
-        var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        var map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
         // Stop the side bar from dragging when mousedown/tapdown on the map
         google.maps.event.addDomListener(document.getElementById('map'), 'mousedown', function(e) {
@@ -22,10 +28,30 @@ angular.module('starter.controllers', [])
             return false;
         });
 
-        $scope.map = map;
+        return map
     }
-    initialize();
 
+    var markerFactory = function(map, lat, lng, username) {
+        // Creates marker
+        return new google.maps.Marker({
+            position:  	new google.maps.LatLng(lat, lng),
+            title:      username,
+            map:        map
+        });
+    }
+
+    var clearOverlays = function(markers) {
+        // Clears markers from the map
+        if (markers) {
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].setMap(null);
+            }
+        }
+        markers = [];
+    }
+
+    $scope.map = mapFactory(SF_LAT, SF_LNG);
+    $scope.markers = [];
     $scope.requestData = {};
 
     $ionicModal.fromTemplateUrl('templates/request.html', {
@@ -44,6 +70,7 @@ angular.module('starter.controllers', [])
         $scope.modal.show();
     };
 
+    // Send request action
     $scope.sendRequest = function() {
         console.log('Sending request', $scope.requestData);
         $http.post(REQUEST_URL, {receiver_email: $scope.requestData.email,
@@ -57,6 +84,7 @@ angular.module('starter.controllers', [])
             });
     };
 
+    // I am here action
     $scope.showIamhere = function() {
        var alertPopup = $ionicPopup.alert({
          title: 'I am here',
@@ -67,16 +95,17 @@ angular.module('starter.controllers', [])
        });
     };
 
+    // Center on me action
     $scope.centerOnMe = function() {
         if(!$scope.map) {
             return;
         }
-
 //        $scope.loading = $ionicLoading.show({
 //            content: 'Getting current location...',
 //            showBackdrop: false
 //        });
 
+        // Not working yet
         navigator.geolocation.getCurrentPosition(function(pos) {
             $scope.map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
             $scope.loading.hide();
@@ -87,7 +116,19 @@ angular.module('starter.controllers', [])
             });
         });
     };
-})
+
+    // Socket.io
+    socket.on('connect', function(){
+        console.log("Connected");
+    });
+
+    socket.on('message', function(message) {
+        var msg = JSON.parse(message);
+        clearOverlays($scope.markers);
+        var marker = markerFactory($scope.map, msg.lat, msg.lng, msg.username);
+        $scope.markers.push(marker);
+    });
+}])
 
 .controller('RequestCtrl', function($scope) {
 

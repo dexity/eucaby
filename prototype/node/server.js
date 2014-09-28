@@ -10,7 +10,7 @@ var sub = redis.createClient();
 //Subscribe to the Redis location channel
 sub.subscribe('realtaxi');
 
-//Configure socket.io to store cookie set by Django
+// Configure socket.io to store cookie set by Django
 io.configure(function(){
     io.set('authorization', function(data, accept){
         if(data.headers.cookie){

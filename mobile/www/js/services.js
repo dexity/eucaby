@@ -1,4 +1,6 @@
-angular.module('starter.services', [])
+'use strict';
+
+angular.module('eucaby.services', [])
 
 /**
  * A simple example service that returns some data.

@@ -18,13 +18,15 @@
     <!-- cordova script (this will be a 404 during development) -->
     <script src="cordova.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
-    <!-- your app's js -->
+    <script src="http://192.168.1.11:4000/socket.io/socket.io.js"></script>
+    <!--<script src="lib/socket.io/socket.io.js"></script>-->
+    <script src="lib/angular_socket_io/socket.js"></script>
     <script src="js/app.js"></script>
     <script src="js/states.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
   </head>
-  <body ng-app="starter" animation="slide-right-left-ios7" ng-controller="MainCtrl">
+  <body ng-app="eucaby" animation="slide-right-left-ios7" ng-controller="MainCtrl">
 
     <ion-header-bar align-title="left" class="bar-stable">
         <h1 class="title">Eucaby</h1>

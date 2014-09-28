@@ -1,6 +1,16 @@
 'use strict';
-var EucabyApp = angular.module('starter', ['ionic', 'starter.controllers', 'starter.services'])
 
+var EucabyApp = angular.module('eucaby', [
+        'ionic',
+        'btford.socket-io',
+        'eucaby.controllers',
+        'eucaby.services'
+])
+.factory('socket', function (socketFactory) {
+    return socketFactory({
+        ioSocket: io.connect("/eucaby")
+    });
+})
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
