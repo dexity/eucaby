@@ -35,7 +35,9 @@ class EucabyApi(remote.Service):
 
         utils_mail.send_mail(
             'Location Request', MSG, NOREPLY_EMAIL, [request.receiver_email])
-        return api_messages.Request(**req.to_dict())
+        kwargs = req.to_dict()
+        logging.info(kwargs)
+        return api_messages.Request(**kwargs)
 
     @endpoints.method(
         endpoints.ResourceContainer(api_resources.LocationResource),
@@ -45,7 +47,9 @@ class EucabyApi(remote.Service):
         session = core_models.Session.create(
             request.sender_email, request.receiver_email)
         resp = core_models.Response.create(session, request.latlng)
-        return api_messages.Response(**resp.to_dict())
+        kwargs = resp.to_dict()
+        logging.info(kwargs)
+        return api_messages.Response(**kwargs)
 
 
 application = endpoints.api_server([EucabyApi], restricted=False)

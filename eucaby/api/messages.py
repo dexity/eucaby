@@ -3,8 +3,7 @@ import endpoints
 from protorpc import messages
 import re
 
-FLOAT_REGEX = r'\-?\d+(\.\d+)?'
-LATLNG_REGEX = r'^{0},{0}$'.format(FLOAT_REGEX)
+from eucaby.eucaby import const
 
 # Messages
 class GeoPtMessage(messages.Message):
@@ -30,13 +29,11 @@ class Response(messages.Message):
     created_date = messages.StringField(3, required=True)
 
 
-
-
 # Message fields
 class LatLngField(messages.StringField):
 
     def validate_element(self, value):
-        if not value or not re.match(LATLNG_REGEX, value):
+        if not value or not re.match(const.LATLNG_REGEX, value):
             raise endpoints.BadRequestException(
                 'Wrong format. Latitude and longitude should have format: '
                 '<lat>,<lng>')
