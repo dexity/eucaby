@@ -7,10 +7,10 @@ var querystring = require('querystring');
 var redis = require('redis');
 var sub = redis.createClient();
 
-//Subscribe to the Redis location channel
+// Subscribe to the Redis location channel
 sub.subscribe('eucabyrt');
 
-//Configure socket.io to store cookie set by Django
+// Configure socket.io to store cookie set by Django
 /*
 io.configure(function(){
     io.set('authorization', function(data, accept){
@@ -24,15 +24,16 @@ io.configure(function(){
 });
 */
 
+
 io.sockets.on('connection', function (socket) {
 
-    //Grab message from Redis and send to client
+    // Grab message from Redis and send to client
     sub.on('message', function(channel, message){
         console.log(message);
         socket.send(message);
     });
 
-    //Client is sending message through socket.io
+    // Client is sending message through socket.io
     socket.on('send_message', function (message) {
         values = querystring.stringify({
             sessionid: socket.handshake.cookie['sessionid']
@@ -49,7 +50,7 @@ io.sockets.on('connection', function (socket) {
             }
         };
 
-        //Send message to Django server
+        // Send message to Django server
         var req = http.request(options, function(res){
             res.setEncoding('utf8');
 

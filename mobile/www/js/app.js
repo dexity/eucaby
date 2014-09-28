@@ -1,14 +1,14 @@
 'use strict';
 
 var EucabyApp = angular.module('eucaby', [
-        'ionic',
-        'btford.socket-io',
-        'eucaby.controllers',
-        'eucaby.services'
+    'ionic',
+    'btford.socket-io',
+    'eucaby.controllers',
+    'eucaby.services'
 ])
 .factory('socket', function (socketFactory) {
     return socketFactory({
-        ioSocket: io.connect("/eucaby")
+        ioSocket: io('http://localhost:4000')
     });
 })
 .run(function($ionicPlatform) {
