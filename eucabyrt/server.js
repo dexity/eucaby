@@ -33,6 +33,7 @@ io.sockets.on('connection', function (socket) {
         socket.send(message);
     });
 
+    /*
     // Client is sending message through socket.io
     socket.on('send_message', function (message) {
         values = querystring.stringify({
@@ -65,4 +66,5 @@ io.sockets.on('connection', function (socket) {
         req.write(values);
         req.end();
     });
+    */
 });

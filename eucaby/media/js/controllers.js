@@ -7,10 +7,12 @@ angular.module('eucaby.controllers', [])
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(pos){
-            $http.post("/location/send", {
-                session: $scope.session,
-                latlng: pos.coords.latitude + ',' + pos.coords.longitude
-            }).success(function(data){
+            // Send location to the Django app
+            $http.post('/location/send', 'session=' + $scope.session +
+                '&latlng=' + pos.coords.latitude + ',' + pos.coords.longitude,
+                {headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'}})
+            .success(function(data){
                 $scope.message_type = 'success';
                 $scope.message = data.message;
             }).error(function(){
@@ -25,5 +27,4 @@ angular.module('eucaby.controllers', [])
         $scope.message_type = 'error';
         $scope.message = 'Geolocation is not supported in your browser';
     }
-
 }])
