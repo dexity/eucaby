@@ -1,5 +1,15 @@
 {% extends  "base.html" %}
 
 {% block content %}
-Notify your location
+
+{% verbatim %}
+<div ng-switch on="message_type">
+    <div ng-switch-when="error">{{message}}</div>
+    <div ng-switch-when="success">{{message}}</div>
+    <div ng-switch-default>
+        Notify your location
+    </div>
+</div>
+{% endverbatim %}
+<div ng-init="session='{{ session }}'"></div>
 {% endblock %}

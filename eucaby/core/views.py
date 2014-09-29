@@ -5,6 +5,8 @@ from django import shortcuts
 import logging
 import re
 from eucaby.eucaby import const
+from eucaby.core import models as core_models
+
 
 class Home(generic.View):
 
@@ -14,11 +16,17 @@ class Home(generic.View):
 
 class ViewLocation(generic.View):
 
-    def get(self, *args, **kwargs):
+    http_method_names = ['get', ]
 
-        logging.info('Token: {}'.format(kwargs.get('token')))
-        c = {}
-        return shortcuts.render(self.request, 'location.html', c) #http.HttpResponse('Your location has been sent')
+    def get(self, *args, **kwargs):
+        token = kwargs.get('token')
+        logging.info('Token: {}'.format(token))
+        # Get session by token
+        req = core_models.Request.query(core_models.Request.token==token).get()
+        if not req:
+            return http.HttpResponseNotFound()
+        c = dict(session=req.session.key)
+        return shortcuts.render(self.request, 'location.html', c)
 
 
 class NotifyLocation(generic.View):

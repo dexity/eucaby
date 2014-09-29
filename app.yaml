@@ -5,10 +5,10 @@ threadsafe: true
 
 handlers:
 - url: /media
-  static_dir: media
+  static_dir: eucaby/media
 
 - url: /static
-  static_dir: static
+  static_dir: eucaby/static
   expiration: 0
 
 #- url: /remoteapi.*

@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="eucaby">
     <head>
         <meta charset="utf-8">
         <title>Eucaby</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="">
-        <meta name="author" content="">
-        <script src="/media/js/main.js"></script>
+        <meta name="author" content="Alex Dementsov">
+        <script src="/media/lib/angular/angular.js"></script>
+        <script src="/media/js/app.js"></script>
+        <script src="/media/js/controllers.js"></script>
         <link href="/media/css/main.css" rel="stylesheet">
 
         {% block header %}{% endblock %}
     </head>
-    <body data-spy="scroll" data-target=".subnav" data-offset="50">
+    <body ng-controller="MainCtrl">
         {% block content %}{% endblock %}
         {% block footer %}{% endblock %}
     </body>
