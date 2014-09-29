@@ -35,9 +35,11 @@ angular.module('eucaby.controllers', [])
     }
 
     var markerFactory = function(map, lat, lng, username) {
+        var position = new google.maps.LatLng(lat, lng);
+        map.setCenter(position);
         // Creates marker
         return new google.maps.Marker({
-            position:  	new google.maps.LatLng(lat, lng),
+            position:  	position,
             title:      username,
             map:        map
         });
@@ -128,7 +130,9 @@ angular.module('eucaby.controllers', [])
     socket.on('message', function(message) {
         var msg = JSON.parse(message);
         clearOverlays($scope.markers);
-        var marker = markerFactory($scope.map, msg.lat, msg.lng, msg.username);
+        var marker = markerFactory(
+            $scope.map, msg.location.lat, msg.location.lng,
+            msg.session.receiver_email);
         $scope.markers.push(marker);
     });
 }])
