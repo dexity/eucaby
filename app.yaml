@@ -59,5 +59,6 @@ skip_files:
 - ^lib/_mysql
 - ^lib/PyYAML*
 - ^lib/yaml
-- ^prototype
 - ^eucabyrt
+- ^prototype
+- ^mobile

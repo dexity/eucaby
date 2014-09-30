@@ -1,5 +1,6 @@
 
 from google.appengine.ext import ndb
+from django.conf import settings
 from django.views import generic
 from django import http
 from django import shortcuts
@@ -57,7 +58,8 @@ class NotifyLocation(generic.View):
         else:
             resp = core_models.Response.create(session, latlng)
         # Post to location channel
-        r = redis.StrictRedis(host='localhost', port=6379, db=0)
+        r = redis.StrictRedis(
+            host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
         r.publish('eucabyrt', json.dumps(resp.to_dict()))
 
         return http.HttpResponse(

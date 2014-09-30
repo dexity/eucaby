@@ -33,6 +33,7 @@ io.sockets.on('connection', function (socket) {
         socket.send(message);
     });
 
+    // TODO: Notify Django app
     /*
     // Client is sending message through socket.io
     socket.on('send_message', function (message) {
