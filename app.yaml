@@ -53,6 +53,7 @@ skip_files:
 - ^\.idea
 - ^(.*/)?.*~$
 - ^(.*/)?.*\.py[co]$
+- ^deploy*
 - ^lib/Django.*
 - ^lib/django
 - ^lib/MySQL
