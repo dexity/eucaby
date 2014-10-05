@@ -77,7 +77,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
@@ -115,7 +115,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
-REDIS_HOST = 'rt.eucaby-dev.appspot.com'  #'localhost'
+REDIS_HOST = '146.148.67.189'  # 'rt.eucaby-dev.appspot.com'  #'localhost'
 REDIS_PORT = 6379
 
 # A sample logging configuration. The only tangible logging

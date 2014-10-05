@@ -13,6 +13,7 @@ sub.subscribe('eucabyrt');
 // Configure socket.io to store cookie set by Django
 /*
 io.configure(function(){
+    io.set('origins', '*:*');
     io.set('authorization', function(data, accept){
         if(data.headers.cookie){
             data.cookie = cookie_reader.parse(data.headers.cookie);
@@ -24,6 +25,19 @@ io.configure(function(){
 });
 */
 
+var enableCORS = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, *');
+
+        // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+        res.send(200);
+    } else {
+        next();
+    };
+};
+io.use(enableCORS);
 
 io.sockets.on('connection', function (socket) {
 

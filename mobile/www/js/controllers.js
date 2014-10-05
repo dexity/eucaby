@@ -7,13 +7,13 @@ angular.module('eucaby.controllers', [])
     function($scope, socket, $http, $ionicModal, $ionicPopup, $ionicLoading) {
 
     var SENDER_EMAIL = 'alex@eucaby.com';
-    //var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
-    //var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
-    var REQUEST_URL = 'http://localhost:8080/_ah/api/eucaby/v1/location/request';
-    var NOTIFY_URL = 'http://localhost:8080/_ah/api/eucaby/v1/location/notify';
+    var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
+    var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
+//    var REQUEST_URL = 'http://localhost:8080/_ah/api/eucaby/v1/location/request';
+//    var NOTIFY_URL = 'http://localhost:8080/_ah/api/eucaby/v1/location/notify';
     var SF_LAT = 37.7833;
     var SF_LNG = -122.4167;
-    var RT_URL = 'localhost';
+    var RT_URL = '146.148.67.189'; //'localhost';
     var RT_PORT = 4000;
 
     var mapFactory = function(lat, lng) {
