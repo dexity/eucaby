@@ -1,7 +1,0 @@
-
-redis==2.9.1
-south==0.8.4
--e git+https://github.com/django-nonrel/django#egg=django
--e git+https://github.com/django-nonrel/djangotoolbox#egg=djangotoolbox
--e git+https://github.com/django-nonrel/mongodb-engine#egg=mongodb-engine
-djangorestframework==2.3.13
