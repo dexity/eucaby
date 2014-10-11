@@ -13,7 +13,7 @@ angular.module('eucaby.controllers', [])
 //    var NOTIFY_URL = 'http://localhost:8080/_ah/api/eucaby/v1/location/notify';
     var SF_LAT = 37.7833;
     var SF_LNG = -122.4167;
-    var RT_URL = '146.148.67.189'; //'localhost';
+    var RT_URL = 'rt.eucaby-dev.appspot.com'; //'localhost'; //'146.148.67.189';
     var RT_PORT = 4000;
 
     var mapFactory = function(lat, lng) {

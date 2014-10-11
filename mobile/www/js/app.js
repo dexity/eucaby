@@ -8,7 +8,7 @@ var EucabyApp = angular.module('eucaby', [
 ])
 .factory('socket', function (socketFactory) {
     return socketFactory({
-        ioSocket: io('http://146.148.67.189:4000') // localhost
+        ioSocket: io('http://rt.eucaby-dev.appspot.com:4000') // localhost, 146.148.67.189
     });
 })
 .run(function($ionicPlatform) {
