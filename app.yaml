@@ -15,8 +15,6 @@ handlers:
 #  script: google.appengine.ext.remote_api.handler.application
 #  login: admin
 
-- url: /_ah/spi/.*
-  script: eucaby.api.eucaby_api.application
 
 - url: /tasks/.*
   script: eucaby.wsgi.application
@@ -31,9 +29,6 @@ env_variables:
 libraries:
 - name: django
   version: 1.5
-
-- name: endpoints
-  version: 1.0
 
 - name: MySQLdb
   version: latest
@@ -60,6 +55,5 @@ skip_files:
 - ^lib/_mysql
 - ^lib/PyYAML*
 - ^lib/yaml
-- ^eucabyrt
-- ^prototype
-- ^mobile
+- ^eucaby_rt
+- ^eucaby_mobile

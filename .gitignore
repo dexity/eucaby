@@ -24,7 +24,7 @@ nosetests.xml
 .idea
 static
 eucaby/local*
-eucabyrt/node_modules
-mobile/platforms
-mobile/plugins
-mobile/node_modules
+eucaby_rt/node_modules
+eucaby_mobile/platforms
+eucaby_mobile/plugins
+eucaby_mobile/node_modules

@@ -1,0 +1,16 @@
+module: api
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /_ah/spi/.*
+  script: eucaby_api.api.application
+
+libraries:
+- name: endpoints
+  version: 1.0
+
+inbound_services:
+- warmup
