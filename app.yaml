@@ -40,8 +40,8 @@ builtins:
 - django_wsgi: on
 #- remote_api: on
 
-inbound_services:
-- warmup
+#inbound_services:
+#- warmup
 
 skip_files:
 - ^\.git

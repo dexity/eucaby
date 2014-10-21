@@ -13,5 +13,5 @@ VOLUME ["/data"]
 
 EXPOSE 4000
 EXPOSE 6379
-CMD ["/bin/bash", "run.sh"]
+CMD ["/bin/bash", "start.sh"]
 

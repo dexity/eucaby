@@ -12,5 +12,5 @@ libraries:
 - name: endpoints
   version: 1.0
 
-inbound_services:
-- warmup
+#inbound_services:
+#- warmup

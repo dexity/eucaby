@@ -4,5 +4,5 @@ dispatch:
 - url: /_ah/spi/.*
   module: api
 
-- url: .*
+- url: /.*
   module: default
