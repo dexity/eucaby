@@ -1,8 +1,0 @@
-
-
-dispatch:
-- url: /_ah/spi/.*
-  module: api
-
-- url: /.*
-  module: default

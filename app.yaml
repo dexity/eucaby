@@ -11,16 +11,14 @@ handlers:
   static_dir: eucaby/static
   expiration: 0
 
-#- url: /remoteapi.*
-#  script: google.appengine.ext.remote_api.handler.application
-#  login: admin
-
-
 - url: /tasks/.*
   script: eucaby.wsgi.application
   login: admin
 
-- url: .*
+- url: /_ah/spi/.*
+  script: eucaby_api.api.application
+
+- url: /.*
   script: eucaby.wsgi.application
 
 env_variables:
@@ -36,9 +34,11 @@ libraries:
 - name: ssl
   version: latest
 
+- name: endpoints
+  version: 1.0
+
 builtins:
 - django_wsgi: on
-#- remote_api: on
 
 #inbound_services:
 #- warmup
