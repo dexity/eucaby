@@ -19,5 +19,6 @@ handlers:
   script: main.application
 
 skip_files:
+- npm-debug.log
 - ^deploy*
 - ^node_modules
