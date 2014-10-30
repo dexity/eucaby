@@ -141,24 +141,36 @@ angular.module('eucaby.controllers', [])
 
 })
 
-.controller('LoginCtrl', function($scope) {
-
+.controller('LoginCtrl', function($scope, $location, OpenFB) {
+    $scope.facebookLogin = function(){
+        OpenFB.login('email,user_friends').then(
+            function () {
+                $location.path('/app/tab/map');
+            },
+            function () {
+                alert('OpenFB login failed');
+            });
+    }
 })
 
 .controller('FriendsCtrl', function($scope, Friends) {
-  $scope.friends = Friends.all();
+    $scope.friends = Friends.all();
 })
 
 .controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
-  $scope.friend = Friends.get($stateParams.friendId);
+    $scope.friend = Friends.get($stateParams.friendId);
 })
 
 .controller('DownCtrl', function($scope) {
 })
 
-.controller('MainCtrl', function($scope, $ionicSideMenuDelegate) {
+.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate) {
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
+    }
+
+    $scope.showHeader = function(){
+        return !$state.is('app.login');
     }
 //  $scope.rightButtons = [{
 //    type: 'button-icon button-clear ion-navicon',

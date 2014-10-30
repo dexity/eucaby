@@ -21,13 +21,13 @@
     <script src="http://localhost:4000/socket.io/socket.io.js"></script>
     <script src="lib/angular_socket_io/socket.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/states.js"></script>
+    <script src="lib/openfb-angular.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
   </head>
   <body ng-app="eucaby" animation="slide-right-left-ios7" ng-controller="MainCtrl">
 
-    <ion-header-bar align-title="left" class="bar-stable">
+    <ion-header-bar align-title="left" class="bar-stable" ng-show="showHeader()">
         <h1 class="title">Eucaby</h1>
         <div class="buttons">
             <button class="button button-icon button-clear ion-navicon" ng-click="toggleRight()"></button>
@@ -39,6 +39,6 @@
         </ion-nav-back-button>
       </ion-nav-bar>-->
 
-    <ion-nav-view></ion-nav-view>
+    <ion-nav-view id="main"></ion-nav-view>
   </body>
 </html>

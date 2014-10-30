@@ -10,3 +10,18 @@
 input {
     -webkit-user-select: auto !important;
 }
+
+.gray {
+    background: #F0F3F8; /* #f7f7f7 */
+}
+
+.login-logo {
+    border:none;
+    margin-top:50px;
+    margin-bottom: 70px;
+    background: #F0F3F8;
+}
+
+.login-text {
+    margin-left: 20px;
+}
