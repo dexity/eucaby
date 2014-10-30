@@ -141,11 +141,11 @@ angular.module('eucaby.controllers', [])
 
 })
 
-.controller('LoginCtrl', function($scope, $location, OpenFB) {
+.controller('LoginCtrl', function($scope, $state, OpenFB) {
     $scope.facebookLogin = function(){
         OpenFB.login('email,user_friends').then(
             function () {
-                $location.path('/app/tab/map');
+                $state.go('app.tabs.map')
             },
             function () {
                 alert('OpenFB login failed');
@@ -164,7 +164,7 @@ angular.module('eucaby.controllers', [])
 .controller('DownCtrl', function($scope) {
 })
 
-.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate) {
+.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     }
@@ -172,6 +172,12 @@ angular.module('eucaby.controllers', [])
     $scope.showHeader = function(){
         return !$state.is('app.login');
     }
+
+    $scope.logout = function () {
+        OpenFB.logout();
+        $state.go('app.login');
+    };
+
 //  $scope.rightButtons = [{
 //    type: 'button-icon button-clear ion-navicon',
 //    tap: function(e) {
