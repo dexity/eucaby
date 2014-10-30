@@ -158,7 +158,7 @@ angular.module('eucaby.controllers', [])
 
 .controller('MainCtrl', function($scope, $ionicSideMenuDelegate) {
     $scope.toggleRight = function(){
-        $ionicSideMenuDelegate.toggleRight($scope.$$childHead);
+        $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     }
 //  $scope.rightButtons = [{
 //    type: 'button-icon button-clear ion-navicon',
