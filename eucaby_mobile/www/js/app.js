@@ -1,6 +1,6 @@
 'use strict';
 
-var EucabyApp = angular.module('eucaby',
+angular.module('eucaby',
     ['ionic', 'openfb', 'btford.socket-io', 'eucaby.controllers',
      'eucaby.services'])
 
@@ -10,9 +10,20 @@ var EucabyApp = angular.module('eucaby',
     });
 })
 
-.run(function($ionicPlatform, OpenFB) {
+.run(function($rootScope, $state, $ionicPlatform, $window, OpenFB) {
 
     OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html');
+
+    $rootScope.$on('$stateChangeStart', function(event, toState) {
+        if (toState.name !== "app.login" && toState.name !== "app.logout" && !$window.sessionStorage['fbtoken']) {
+            $state.go('app.login');
+            event.preventDefault();
+        }
+    });
+
+    $rootScope.$on('OAuthException', function() {
+        $state.go('app.login');
+    });
 
     $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -58,6 +69,16 @@ var EucabyApp = angular.module('eucaby',
             'menu-content': {
                 templateUrl: "templates/login.html",
                 controller: "LoginCtrl"
+            }
+        }
+    })
+
+    .state('app.logout', {
+        url: "/logout",
+        views: {
+            'menu-content': {
+                templateUrl: "templates/logout.html",
+                controller: "LogoutCtrl"
             }
         }
     })

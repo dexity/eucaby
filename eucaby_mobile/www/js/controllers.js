@@ -153,6 +153,9 @@ angular.module('eucaby.controllers', [])
     }
 })
 
+.controller('LogoutCtrl', function($scope) {
+})
+
 .controller('FriendsCtrl', function($scope, Friends) {
     $scope.friends = Friends.all();
 })
