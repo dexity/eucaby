@@ -13,7 +13,7 @@ angular.module('eucaby.controllers', [])
     var NOTIFY_URL = 'http://localhost:8888/_ah/api/eucaby/v1/location/notify';
     var SF_LAT = 37.7833;
     var SF_LNG = -122.4167;
-    var RT_URL = 'localhost'; //'rt.eucaby-dev.appspot.com'; //'146.148.67.189';
+    var RT_URL = 'localhost'; //'146.148.67.189'; //'rt.eucaby-dev.appspot.com'; //
     var RT_PORT = 4000;
 
     var mapFactory = function(lat, lng) {
@@ -141,11 +141,12 @@ angular.module('eucaby.controllers', [])
 
 })
 
-.controller('LoginCtrl', function($scope, $state, OpenFB) {
+.controller('LoginCtrl', function($scope, $location, $state, OpenFB) {
     $scope.facebookLogin = function(){
         OpenFB.login('email,user_friends').then(
             function () {
-                $state.go('app.tabs.map')
+                $location.path('/app/tab/map');
+                //$state.go('app.tabs.map')
             },
             function () {
                 alert('OpenFB login failed');

@@ -12,10 +12,17 @@ angular.module('eucaby',
 
 .run(function($rootScope, $state, $ionicPlatform, $window, OpenFB) {
 
-    OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html');
+    OpenFB.init('809426419123624'); //, 'http://localhost:8100/oauthcallback.html');
+
+    $ionicPlatform.ready(function() {
+        if(window.StatusBar) {
+            // org.apache.cordova.statusbar required
+            StatusBar.styleDefault();
+        }
+    });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
-        if (toState.name !== "app.login" && toState.name !== "app.logout" && !$window.sessionStorage['fbtoken']) {
+        if (toState.name !== 'app.login' && toState.name !== 'app.logout' && !$window.sessionStorage['fbtoken']) {
             $state.go('app.login');
             event.preventDefault();
         }
@@ -25,60 +32,46 @@ angular.module('eucaby',
         $state.go('app.login');
     });
 
-    $ionicPlatform.ready(function() {
-    // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-    // for form inputs)
-    if(window.cordova && window.cordova.plugins.Keyboard) {
-        cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-    }
-    if(window.StatusBar) {
-        // org.apache.cordova.statusbar required
-        StatusBar.styleDefault();
-    }
-    });
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
 
-    // Ionic uses AngularUI Router which uses the concept of states
-    // Learn more here: https://github.com/angular-ui/ui-router
-    // Each state's controller can be found in controllers.js
     $stateProvider
 
     // Abstract states
     .state('app', {
-        url: "/app",
+        url: '/app',
         abstract: true,
-        templateUrl: "templates/menu.html"
+        templateUrl: 'templates/menu.html'
     })
 
     .state('app.tabs', {
-        url: "/tab",
+        url: '/tab',
         abstract: true,
         views: {
             'menu-content': {
-                templateUrl: "templates/tabs.html"
+                templateUrl: 'templates/tabs.html'
             }
         }
     })
 
     // States with navigation history stack
     .state('app.login', {
-        url: "/login",
+        url: '/login',
         views: {
             'menu-content': {
-                templateUrl: "templates/login.html",
-                controller: "LoginCtrl"
+                templateUrl: 'templates/login.html',
+                controller: 'LoginCtrl'
             }
         }
     })
 
     .state('app.logout', {
-        url: "/logout",
+        url: '/logout',
         views: {
             'menu-content': {
-                templateUrl: "templates/logout.html",
-                controller: "LogoutCtrl"
+                templateUrl: 'templates/logout.html',
+                controller: 'LogoutCtrl'
             }
         }
     })
@@ -130,7 +123,6 @@ angular.module('eucaby',
         }
     });
 
-  // if none of the above states are matched, use this as the fallback
   $urlRouterProvider.otherwise('/app/tab/map');
 
 });
