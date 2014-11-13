@@ -5,8 +5,8 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /_ah/spi/.*
-  script: eucaby_api.api.application
+- url: .*
+  script: eucaby_api.wsgi.app
 
 libraries:
 - name: endpoints

@@ -55,8 +55,5 @@ skip_files:
 - ^lib/_mysql
 - ^lib/PyYAML*
 - ^lib/yaml
-- ^lib/setuptools*
-- ^lib/pip*
-- ^lib/_markerlib
 - ^eucaby_rt
 - ^eucaby_mobile
