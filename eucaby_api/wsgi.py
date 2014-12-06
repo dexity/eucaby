@@ -1,10 +1,21 @@
 
 import flask
+import os
+from eucaby_api import views
+from eucaby_api import auth
 
-app = flask.Flask(__name__)
+def create_app():
+    app = flask.Flask(__name__)
+    app.register_blueprint(views.api_app)
+    auth.oauth.init_app(app)
+    return app
 
-@app.route('/')
-def test():
-    return 'Hello'
+if __name__ == '__main__':
+    app = create_app()
+    if os.getenv('FLASK_CONF') == 'DEV':
+        app.config.from_object('eucaby_api.config.Development')
+    else:
+        app.config.from_object('eucaby_api.config.Production')
+
 
 
