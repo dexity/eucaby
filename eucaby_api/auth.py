@@ -1,27 +1,32 @@
 import flask
-from flask_oauthlib import client as oauthlib_client
-from oauthlib.oauth2.rfc6749 import parameters
+from flask_oauthlib import client as fol_client
+from oauthlib import common as ol_common
 
-oauth = oauthlib_client.OAuth()
+oauth = fol_client.OAuth()
 
-class FacebookRemoteApp(oauthlib_client.OAuthRemoteApp):
+class FacebookRemoteApp(fol_client.OAuthRemoteApp):
 
     def __init__(self, oauth_, **kwargs):
         super(FacebookRemoteApp, self).__init__(oauth_, 'facebook', **kwargs)
 
     def exchange_token(self, token):
         """Authorizes user by exchanging short-lived token for long-lived."""
-        client = self.make_client()
 
-        params = dict(
-            grant_type='fb_exchange_token', fb_exchange_token=token, client_secret=self.consumer_secret)
-            # client_id=self.consumer_key,
-            # client_secret=self.consumer_secret, fb_exchange_token=token)
-        url = # parameters.prepare_grant_uri( #client.prepare_refresh_token_request( #prepare_token_request(  # prepare_request_uri(
-            self.expand_url(self.access_token_url),
-            **params
-        )
-        print url
+        url = self.expand_url(self.access_token_url)
+        data = dict(client_id=self.consumer_key,  #
+                    client_secret=self.consumer_secret, fb_exchange_token=token,
+                    grant_type='fb_exchange_token')
+        url = ol_common.add_params_to_uri(url, data)
+        resp, content = self.http_request(url)
+        data = fol_client.parse_response(resp, content, self.content_type)
+        if resp.code not in (200, 201):
+            try:
+                message = data['error']['message']
+            except (KeyError, TypeError):
+                message = 'Failed to exchange token for {}'.format(self.name)
+            raise fol_client.OAuthException(
+                message, type='token_exchange_failed', data=data)
+        return data
 
 
 facebook = FacebookRemoteApp(
@@ -36,5 +41,7 @@ if 'facebook' not in oauth.remote_apps:
     oauth.remote_apps['facebook'] = facebook
 
 def fb_exchange_token():
-    resp = facebook.exchange_token('hello')
-    # print resp.data
+    token = 'hello'
+#'CAALgK0YvBagBABiZCz2oDovYcs3JTz9OlUGt3mKkFGf3BGXk0s2hEgkwQNYRX2xNCasxiv0ZAeN4QjcbHZBsADh3QjJ0foJ82QpMuzmzhkYIr9oOVCXUTJupxwkccMp8ABKFLBVyaKhz8ZCKK0awbvXEG4FneuqCZCoZAilZBDJhQvV4U2UyGHWiUxyqiOq8ZCn95CezA7avLZAcpfwMQjeBhz0CFVBmqE2oZD'
+    resp = facebook.exchange_token(token)
+    print resp
