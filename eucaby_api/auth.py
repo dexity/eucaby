@@ -1,10 +1,10 @@
-import flask
-from flask_oauthlib import client as fol_client
-from oauthlib import common as ol_common
 
-oauth = fol_client.OAuth()
+from flask_oauthlib import client as f_oauth_client
+from oauthlib import common as oauth_common
 
-class FacebookRemoteApp(fol_client.OAuthRemoteApp):
+oauth = f_oauth_client.OAuth()
+
+class FacebookRemoteApp(f_oauth_client.OAuthRemoteApp):
 
     def __init__(self, oauth_, **kwargs):
         super(FacebookRemoteApp, self).__init__(oauth_, 'facebook', **kwargs)
@@ -16,22 +16,21 @@ class FacebookRemoteApp(fol_client.OAuthRemoteApp):
         data = dict(client_id=self.consumer_key,  #
                     client_secret=self.consumer_secret, fb_exchange_token=token,
                     grant_type='fb_exchange_token')
-        url = ol_common.add_params_to_uri(url, data)
+        url = oauth_common.add_params_to_uri(url, data)
         resp, content = self.http_request(url)
-        data = fol_client.parse_response(resp, content, self.content_type)
+        data = f_oauth_client.parse_response(resp, content, self.content_type)
         if resp.code not in (200, 201):
             try:
                 message = data['error']['message']
             except (KeyError, TypeError):
                 message = 'Failed to exchange token for {}'.format(self.name)
-            raise fol_client.OAuthException(
+            raise f_oauth_client.OAuthException(
                 message, type='token_exchange_failed', data=data)
         return data
 
 
 facebook = FacebookRemoteApp(
     oauth,
-    request_token_params={'scope': 'email'},
     base_url='https://graph.facebook.com',
     access_token_url='/oauth/access_token',
     authorize_url='https://www.facebook.com/dialog/oauth',
@@ -40,8 +39,8 @@ facebook = FacebookRemoteApp(
 if 'facebook' not in oauth.remote_apps:
     oauth.remote_apps['facebook'] = facebook
 
-def fb_exchange_token():
-    token = 'hello'
-#'CAALgK0YvBagBABiZCz2oDovYcs3JTz9OlUGt3mKkFGf3BGXk0s2hEgkwQNYRX2xNCasxiv0ZAeN4QjcbHZBsADh3QjJ0foJ82QpMuzmzhkYIr9oOVCXUTJupxwkccMp8ABKFLBVyaKhz8ZCKK0awbvXEG4FneuqCZCoZAilZBDJhQvV4U2UyGHWiUxyqiOq8ZCn95CezA7avLZAcpfwMQjeBhz0CFVBmqE2oZD'
-    resp = facebook.exchange_token(token)
-    print resp
+# def fb_exchange_token():
+#     token = 'hello'
+# #'CAALgK0YvBagBABiZCz2oDovYcs3JTz9OlUGt3mKkFGf3BGXk0s2hEgkwQNYRX2xNCasxiv0ZAeN4QjcbHZBsADh3QjJ0foJ82QpMuzmzhkYIr9oOVCXUTJupxwkccMp8ABKFLBVyaKhz8ZCKK0awbvXEG4FneuqCZCoZAilZBDJhQvV4U2UyGHWiUxyqiOq8ZCn95CezA7avLZAcpfwMQjeBhz0CFVBmqE2oZD'
+#     resp = facebook.exchange_token(token)
+#     print resp

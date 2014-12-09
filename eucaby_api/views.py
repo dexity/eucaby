@@ -26,7 +26,15 @@ class OAuthToken(restful.Resource):
         sl_token = args['password']
         fb_user_id = args['username']
 
-        ll_access_token = auth.fb_exchange_token()
+
+        # Exchange and save token
+        # ll_access_token = auth.fb_exchange_token()
+
+        resp = auth.facebook.exchange_token(sl_token)
+        # if isinstance(resp, auth.f_oauth_client.OAuthException):
+        #     return 'Access denied: %s' % resp.message
+
+        # session['oauth_token'] = (resp['access_token'], '')
         return {'hello': 'world'}
 
 

@@ -20,6 +20,10 @@ class Development(Config):
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
 class Testing(Config):
+    FACEBOOK = dict(
+        consumer_key='12345',
+        consumer_secret='secret'
+    )
     TESTING = True
     DEBUG = True
 
