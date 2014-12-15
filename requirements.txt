@@ -3,4 +3,4 @@ Django==1.7
 Flask==0.10
 redis==2.10.3
 Flask-OAuthlib==0.7
-Flask-RESTful
+Flask-RESTful==0.3.1

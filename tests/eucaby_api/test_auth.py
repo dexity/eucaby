@@ -15,9 +15,6 @@ class FacebookRemoteAppTest(unittest.TestCase):
     @mock.patch('flask_oauthlib.client.parse_response')
     @mock.patch('eucaby_api.auth.FacebookRemoteApp.http_request')
     def test_fb_exchange_token(self, http_req, parse_resp):
-        ctx = self.app.test_request_context()
-        ctx.push()
-
         # Success
         resp = mock.Mock()
         resp.code = 200
@@ -38,11 +35,6 @@ class FacebookRemoteAppTest(unittest.TestCase):
         parse_resp.return_value = data
         self.assertRaises(auth.f_oauth_client.OAuthException,
                           self.facebook.exchange_token, 'sl_token')
-
-
-    def test_fb_refresh_token(self):
-        pass
-
 
 
 if __name__ == "__main__":

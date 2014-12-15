@@ -13,7 +13,7 @@ class FacebookRemoteApp(f_oauth_client.OAuthRemoteApp):
         """Authorizes user by exchanging short-lived token for long-lived."""
 
         url = self.expand_url(self.access_token_url)
-        data = dict(client_id=self.consumer_key,  #
+        data = dict(client_id=self.consumer_key,  # XXX: Add appsecret_proof
                     client_secret=self.consumer_secret, fb_exchange_token=token,
                     grant_type='fb_exchange_token')
         url = oauth_common.add_params_to_uri(url, data)
@@ -38,9 +38,3 @@ facebook = FacebookRemoteApp(
 )
 if 'facebook' not in oauth.remote_apps:
     oauth.remote_apps['facebook'] = facebook
-
-# def fb_exchange_token():
-#     token = 'hello'
-# #'CAALgK0YvBagBABiZCz2oDovYcs3JTz9OlUGt3mKkFGf3BGXk0s2hEgkwQNYRX2xNCasxiv0ZAeN4QjcbHZBsADh3QjJ0foJ82QpMuzmzhkYIr9oOVCXUTJupxwkccMp8ABKFLBVyaKhz8ZCKK0awbvXEG4FneuqCZCoZAilZBDJhQvV4U2UyGHWiUxyqiOq8ZCn95CezA7avLZAcpfwMQjeBhz0CFVBmqE2oZD'
-#     resp = facebook.exchange_token(token)
-#     print resp
