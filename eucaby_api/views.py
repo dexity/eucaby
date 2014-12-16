@@ -29,7 +29,6 @@ class OAuthToken(restful.Resource):
 
     def post(self):
         """Authentication handler."""
-        args = None
         # Password grant type
         parser = reqparse.RequestParser()
         params = ['username', 'password']
@@ -45,33 +44,42 @@ class OAuthToken(restful.Resource):
         parser.add_argument(service_arg)
         parser.add_argument(grant_type_arg)
         try:
-            args = parser.parse_args()
-            # Exchange short lived token for the long lived token
-            service = args['service']
-            grant_type = args['grant_type']
-            sl_token = args['password']
-            fb_user_id = args['username']
-
-            resp = auth.facebook.exchange_token(sl_token)
-            # if isinstance(resp, auth.f_oauth_client.OAuthException):
-            #     return 'Access denied: %s' % resp.message
-
-            # XXX: Finish
-            # Returns either Eucaby access token or error
-            # Lookup sl_token and make request to FB:
-            #   - If exists and sl_token is valid update access token.
-            #   - If exists and sl_token is not valid return "expired" error
-            #   - If doesn't exist sl_token is valid create a new record
-            #   - If doesn't exist sl_token is not valid return "invalid" error
-            # Note: Token exchange can create Eucaby access token but it can't refresh it
+            args = parser.parse_args(strict=True)
         except reqparse.InvalidError as e:
-            if not ('grant_type' in e.namespace
+            if 'grant_type' not in e.namespace or ('grant_type' in e.namespace
                 and e.namespace['grant_type'] == GRANT_TYPE_PASSWORD):
-                error = dict(message='Invalid request parameters', code='invalid',
-                             fields=e.errors)
-
-                print e.errors, e.namespace
+                error = dict(message='Invalid request parameters',
+                             code='invalid', fields=e.errors)
                 return api_utils.make_error(error, 400)
+
+        # Exchange short lived token for the long lived token
+        assert args['service'], 'facebook'
+        assert args['grant_type'], 'password'
+        sl_token = args['password']
+        fb_user_id = args['username']
+
+        try:
+            resp = auth.facebook.exchange_token(sl_token)
+
+        except auth.f_oauth_client.OAuthException as e:
+
+            error = dict(message=e.message, code='invalid_oauth')
+            return api_utils.make_error(error, 403)
+
+        # if isinstance(resp, auth.f_oauth_client.OAuthException):
+        #     return 'Access denied: %s' % resp.message
+
+        # print resp
+        # XXX: Finish
+        # Returns either Eucaby access token or error
+        # Lookup sl_token and make request to FB:
+        #   - If exists and sl_token is valid update access token.
+        #   - If exists and sl_token is not valid return "expired" error
+        #   - If doesn't exist sl_token is valid create a new record
+        #   - If doesn't exist sl_token is not valid return "invalid" error
+        # Note: Token exchange can create Eucaby access token but it can't refresh it
+
+
 
 
 
@@ -80,6 +88,7 @@ class OAuthToken(restful.Resource):
             parser = reqparse.RequestParser()
 
 
+        # print e.errors, e.namespace
         # Exchange and save token
         # ll_access_token = auth.fb_exchange_token()
 

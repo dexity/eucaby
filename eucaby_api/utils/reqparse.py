@@ -1,6 +1,7 @@
+
 from flask import request
 from flask.ext.restful import reqparse
-
+from werkzeug import exceptions
 
 class InvalidError(Exception):
 
@@ -24,12 +25,16 @@ class RequestParser(reqparse.RequestParser):
         self.errors = {}
         super(RequestParser, self).__init__(argument_class, namespace_class)
 
-    def parse_args(self, req=None):
+    def parse_args(self, req=None, strict=False):
         """Argument parser which returns parsed arguments or error."""
         if req is None:
             req = request
 
         namespace = self.namespace_class()
+
+        # A record of arguments not yet parsed; as each is found
+        # among self.args, it will be popped out
+        req.unparsed_arguments = dict(Argument('').source(req))
 
         for arg in self.args:
             try:
@@ -42,4 +47,9 @@ class RequestParser(reqparse.RequestParser):
         if self.errors:
             raise InvalidError(self.errors, namespace)
 
+        # XXX: Finish
+        if strict and req.unparsed_arguments:
+            raise exceptions.BadRequest(
+                'Unknown arguments: {}'.format(
+                    ', '.join(req.unparsed_arguments.keys())))
         return namespace

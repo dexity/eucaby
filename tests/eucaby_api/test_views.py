@@ -1,6 +1,7 @@
 import unittest
 from flask import json
 import mock
+from eucaby_api import auth
 from eucaby_api import wsgi
 
 class TestViews(unittest.TestCase):
@@ -42,16 +43,41 @@ class TestViews(unittest.TestCase):
         self.assertEqual(data, self.grant_password_error)
 
         # Grant type is set
-        resp = self.app.post('/oauth/token', dict(grant_type='password'))
+        resp = self.app.post('/oauth/token', data=dict(grant_type='password'))
         data = json.loads(resp.data)
         assert_data = self.grant_password_error.copy()
         assert_data['fields'].pop('grant_type')
-        # self.assertEqual(data, assert_data)
+        self.assertEqual(data, assert_data)
+
+        # All parameters are set
+        params = dict(grant_type='password', service='facebook',
+                    password='test_password', username='test_username')
+        # # XXX: Finish
+        # # Valid token
+        # ex_token.return_value = dict(access_token='someaccesstoken',
+        #                              expires=123)
+        # resp = self.app.post('/oauth/token', data=params)
+
+        message = 'Invalid OAuth access token.'
+        ex_token.side_effect = auth.f_oauth_client.OAuthException(message)
+        resp = self.app.post('/oauth/token', data=params)
+        data = json.loads(resp.data)
+        self.assertEqual(data, dict(code='invalid_oauth', message=message))
+
+        # Expired token
+        # ex_token
+
+
+
+
+        data = json.loads(resp.data)
+
+        # XXX: Finish
+        #params['extra'] = 'param'
+        # Short-lived token
         print resp.data
 
-        # # Missing other parameters for password grant type
-        # resp = self.app.post('/oauth/token', dict(grant_type='password'))
-        #
+
         # # Invalid password
         #
         # # Missing parameters for refresh grant type
