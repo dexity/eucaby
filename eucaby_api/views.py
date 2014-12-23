@@ -5,6 +5,7 @@ import flask
 from flask.ext import restful
 from eucaby_api.utils import reqparse
 from eucaby_api.utils import utils as api_utils
+from eucaby_api import models
 
 from eucaby_api import auth
 
@@ -17,19 +18,15 @@ INVALID_SERVICE = 'Invalid service'
 GRANT_TYPES = 'Valid grant types are password and refresh_token'
 GRANT_TYPE_PASSWORD = 'password'
 GRANT_TYPE_REFRESH = 'refresh_token'
+
 # Choices
 GRANT_TYPE_CHOICES = [GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH]
 
 
 class OAuthToken(restful.Resource):
 
-    #@classmethod
-    #def handle_password_grant(cls):
-
-
-    def post(self):
-        """Authentication handler."""
-        # Password grant type
+    def password_grant_parser(self):
+        """Returns password grant parser."""
         parser = reqparse.RequestParser()
         params = ['username', 'password']
         for param in params:
@@ -37,40 +34,83 @@ class OAuthToken(restful.Resource):
                                 help=PARAM_MISSING.format(param=param))
         service_arg = reqparse.Argument(
             'service', type=str, required=True,
-            choices=['facebook', ], help=INVALID_SERVICE)
+            choices=[models.FACEBOOK, ], help=INVALID_SERVICE)
+        grant_type_arg = reqparse.Argument(
+            name='grant_type', type=str, required=True,
+            choices=[GRANT_TYPE_PASSWORD, ], help=GRANT_TYPES)
+        parser.add_argument(service_arg)
+        parser.add_argument(grant_type_arg)
+        return parser
+
+    def refresh_grant_parser(self):
+        """Returns refresh grant parser."""
+        parser = reqparse.RequestParser()
+        # XXX: Finish
+        return parser
+
+    def parse_grant_type(self):
+        """Parses grant_type argument or throws exception."""
+        parser = reqparse.RequestParser()
         grant_type_arg = reqparse.Argument(
             name='grant_type', type=str, required=True,
             choices=GRANT_TYPE_CHOICES, help=GRANT_TYPES)
-        parser.add_argument(service_arg)
         parser.add_argument(grant_type_arg)
+        args = parser.parse_args()
+        return args['grant_type']
+
+
+    def handle_password_grant(self):
+        """Handles password grant_type."""
+        parser = self.password_grant_parser()
         try:
             args = parser.parse_args(strict=True)
         except reqparse.InvalidError as e:
-            if 'grant_type' not in e.namespace or ('grant_type' in e.namespace
-                and e.namespace['grant_type'] == GRANT_TYPE_PASSWORD):
-                error = dict(message='Invalid request parameters',
-                             code='invalid', fields=e.errors)
-                return api_utils.make_error(error, 400)
+            error = dict(message='Invalid request parameters',
+                         code='invalid', fields=e.errors)
+            return api_utils.make_error(error, 400)
 
         # Exchange short lived token for the long lived token
         assert args['service'], 'facebook'
         assert args['grant_type'], 'password'
-        sl_token = args['password']
+        fb_short_token = args['password']
         fb_user_id = args['username']
 
         try:
-            resp = auth.facebook.exchange_token(sl_token)
-
+            resp_token = auth.facebook.exchange_token(fb_short_token)
         except auth.f_oauth_client.OAuthException as e:
-
             error = dict(message=e.message, code='invalid_oauth')
             return api_utils.make_error(error, 403)
 
-        # if isinstance(resp, auth.f_oauth_client.OAuthException):
-        #     return 'Access denied: %s' % resp.message
+        access_token = resp_token['access_token']
+        user = models.db.User.query.filter_by(username=fb_user_id).first()
+        if user is None:
+            try:
+                resp_me = auth.facebook.get('/me', token=(access_token, ''))
+            except auth.f_oauth_client.OAuthException as e:
+                error = dict(message=e.message, code='invalid_oauth')
+                return api_utils.make_error(error, 401)
 
-        # print resp
-        # XXX: Finish
+            username = str(resp_me.pop('id'))
+            assert username, fb_user_id
+            resp_me['username'] = username
+            # Get user profile data
+            user = models.db.User.create(resp_me)
+
+        # Facebook token
+        fb_token = models.Token.create_or_update(
+            models.FACEBOOK, user.id, access_token, resp_token['expires'])
+        ec_token = models.Token.provide_eucaby_token(user.id)
+        return dict(
+            access_token=ec_token.access_token,
+            token_type=models.TOKEN_TYPE,
+            expires_in=str(ec_token.expires_date),
+            refresh_token=ec_token.refresh_token,
+            scope=' '.join(models.EUCABY_SCOPES)
+        )
+
+
+
+
         # Returns either Eucaby access token or error
         # Lookup sl_token and make request to FB:
         #   - If exists and sl_token is valid update access token.
@@ -80,23 +120,34 @@ class OAuthToken(restful.Resource):
         # Note: Token exchange can create Eucaby access token but it can't refresh it
 
 
-
-
-
-        # Refresh token grant type
-        if not args:
-            parser = reqparse.RequestParser()
-
+    def handle_refresh_grant(self):
+        """Handles refresh token grant type."""
+        parser = self.refresh_grant_parser()
 
         # print e.errors, e.namespace
         # Exchange and save token
         # ll_access_token = auth.fb_exchange_token()
 
-
         # resp['access_token']
         # Create (if it doesn't exist) or update user
 
-        return {'hello': 'world'}
+
+    def post(self):
+        """Authentication handler."""
+        try:
+            grant_type = self.parse_grant_type()
+        except reqparse.InvalidError as e:
+            error = dict(message=e.message, code='invalid_grant')
+            return api_utils.make_error(error, 400)
+
+        if grant_type == GRANT_TYPE_PASSWORD:
+            return self.handle_password_grant()
+        elif grant_type == GRANT_TYPE_REFRESH:
+            return self.handle_refresh_grant()
+
+        error = dict(message='Authentication failed', code='server_error')
+        return api_utils.make_error(error, 500)
+
 
 api.add_resource(OAuthToken, '/oauth/token')
 

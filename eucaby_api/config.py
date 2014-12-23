@@ -1,4 +1,5 @@
 
+# from secret_keys import CSRF_SECRET_KEY, SESSION_KEY
 
 class Config(object):
     # SECRET_KEY = CSRF_SECRET_KEY
@@ -20,6 +21,7 @@ class Development(Config):
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
 class Testing(Config):
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/eucaby.db'
     FACEBOOK = dict(
         consumer_key='12345',
         consumer_secret='secret'

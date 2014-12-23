@@ -24,8 +24,9 @@ class TestViews(unittest.TestCase):
     def tearDown(self):
         pass
 
+    @mock.patch('eucaby_api.auth.facebook.get')
     @mock.patch('eucaby_api.auth.facebook.exchange_token')
-    def testExchangeToken(self, ex_token):
+    def testExchangeToken(self, fb_exchange_token, fb_get):
         # Get is not supported
         resp = self.app.get('/oauth/token')
         self.assertEqual(405, resp._status_code)
@@ -35,47 +36,54 @@ class TestViews(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(400, resp._status_code)
         data = json.loads(resp.data)
-        self.assertEqual(data, self.grant_password_error)
+        self.assertEqual(self.grant_password_error, data)
 
         # Invalid grant type
         resp = self.app.post('/oauth/token', dict(grant_type='wrong'))
         self.assertEqual(400, resp._status_code)
-        self.assertEqual(data, self.grant_password_error)
+        self.assertEqual(self.grant_password_error, data)
 
         # Grant type is set
         resp = self.app.post('/oauth/token', data=dict(grant_type='password'))
         data = json.loads(resp.data)
         assert_data = self.grant_password_error.copy()
         assert_data['fields'].pop('grant_type')
-        self.assertEqual(data, assert_data)
+        self.assertEqual(assert_data, data)
 
         # All parameters are set
         params = dict(grant_type='password', service='facebook',
-                    password='test_password', username='test_username')
-        # # XXX: Finish
-        # # Valid token
-        # ex_token.return_value = dict(access_token='someaccesstoken',
-        #                              expires=123)
-        # resp = self.app.post('/oauth/token', data=params)
-
-        message = 'Invalid OAuth access token.'
-        ex_token.side_effect = auth.f_oauth_client.OAuthException(message)
+                      password='test_password', username='test_username')
+        # Valid token, user doesn't exist
+        fb_exchange_token.return_value = dict(
+            access_token='someaccesstoken', expires=123)
+        fb_get.return_value = {u'first_name': u'Alexander', u'last_name': u'Dementsov', u'verified': True, u'name': u'Alexander Dementsov', u'locale': u'en_US', u'gender': u'male', u'email': u'dexity@gmail.com', u'link': u'https://www.facebook.com/app_scoped_user_id/10152815532718638/', u'timezone': -8, u'updated_time': u'2014-12-06T21:31:50+0000', u'id': u'10152815532718638'}
         resp = self.app.post('/oauth/token', data=params)
-        data = json.loads(resp.data)
-        self.assertEqual(data, dict(code='invalid_oauth', message=message))
+
+        # Valid token, user doesn't exist, fb profile error
+
+        # Valid token, user exists
+
+        # message = 'Invalid OAuth access token.'
+        # ex_token.side_effect = auth.f_oauth_client.OAuthException(message)
+        # resp = self.app.post('/oauth/token', data=params)
+        # data = json.loads(resp.data)
+        # self.assertEqual(403, resp._status_code)
+        # self.assertEqual(dict(code='invalid_oauth', message=message), data)
+
+
+        # token = 'CAALgK0YvBagBAKO3HYZBfVwUDojv6cqnJFblOXFocDgzv4h2mwPsi1i44ZCcXtacOYfB7vAhQRvq7asZCsZCI7tg9xbvAkac7hVcYJvXgkhZA4xl8qzgQk0Dhb1ahIDqw95UtlMlpAk9wb0UGYsLtvkrA3ZBL0A2OZCv7G4ToYKZApq3JumQlZBFp42scHd9ijuLnw1twjYFgJESZARhJuJKxoPcu2hmQkLLEZD'
+        # resp = auth.facebook.get('/me', token=(token, ''))
+        # print resp.data
 
         # Expired token
         # ex_token
 
-
-
-
-        data = json.loads(resp.data)
+        # data = json.loads(resp.data)
 
         # XXX: Finish
         #params['extra'] = 'param'
         # Short-lived token
-        print resp.data
+        # print resp.data
 
 
         # # Invalid password
