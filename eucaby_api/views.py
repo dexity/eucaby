@@ -58,7 +58,6 @@ class OAuthToken(restful.Resource):
         args = parser.parse_args()
         return args['grant_type']
 
-
     def handle_password_grant(self):
         """Handles password grant_type."""
         parser = self.password_grant_parser()
@@ -93,32 +92,21 @@ class OAuthToken(restful.Resource):
             username = str(resp_me.pop('id'))
             assert username, fb_user_id
             resp_me['username'] = username
-            # Get user profile data
+            # Create user profile from Facebook data
             user = models.db.User.create(resp_me)
 
-        # Facebook token
-        fb_token = models.Token.create_or_update(
-            models.FACEBOOK, user.id, access_token, resp_token['expires'])
-        ec_token = models.Token.provide_eucaby_token(user.id)
+        # Create Facebook and Eucaby tokens
+        models.Token.create_facebook_token(
+            user.id, access_token, resp_token['expires'])
+        ec_token = models.Token.create_eucaby_token(user.id)
+        flask.session['user_id'] = user.id
         return dict(
             access_token=ec_token.access_token,
             token_type=models.TOKEN_TYPE,
             expires_in=str(ec_token.expires_date),
             refresh_token=ec_token.refresh_token,
-            scope=' '.join(models.EUCABY_SCOPES)
+            scope=ec_token.scopes
         )
-
-
-
-
-        # Returns either Eucaby access token or error
-        # Lookup sl_token and make request to FB:
-        #   - If exists and sl_token is valid update access token.
-        #   - If exists and sl_token is not valid return "expired" error
-        #   - If doesn't exist sl_token is valid create a new record
-        #   - If doesn't exist sl_token is not valid return "invalid" error
-        # Note: Token exchange can create Eucaby access token but it can't refresh it
-
 
     def handle_refresh_grant(self):
         """Handles refresh token grant type."""
@@ -150,4 +138,3 @@ class OAuthToken(restful.Resource):
 
 
 api.add_resource(OAuthToken, '/oauth/token')
-

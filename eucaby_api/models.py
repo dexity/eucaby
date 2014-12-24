@@ -57,14 +57,17 @@ class Token(db.Model):
 
     access_token = db.Column(db.String(512), unique=True, nullable=False)
     refresh_token = db.Column(db.String(512))
+    created_date = db.Column(
+        db.DateTime, nullable=False, default=datetime.datetime.now)
     updated_date = db.Column(
         db.DateTime, nullable=False, onupdate=datetime.datetime.now)
     expires_date = db.Column(db.DateTime, nullable=False)
-    _scopes = db.Column(db.Text)
+    scopes = db.Column(db.Text)
 
     @classmethod
     def get_or_create(cls, service, user_id, commit=False):
         """Gets or create token by service and user_id."""
+        # XXX: Redo
         kwargs = dict(service=service, user_id=user_id)
         is_created = False
         try:
@@ -83,36 +86,31 @@ class Token(db.Model):
         return token
 
     @classmethod
-    def create_or_update(cls, service, user_id, access_token, expires_seconds):
-
-        token = cls.get_or_create(service, user_id)
-        token.access_token = access_token
-        token.expires_date = (
-            datetime.datetime.now() + datetime.timedelta(
+    def create_facebook_token(cls, user_id, access_token, expires_seconds):
+        """Creates Facebook token."""
+        token = cls(
+            service=FACEBOOK, user_id=user_id, access_token=access_token,
+            expires_date=datetime.datetime.now() + datetime.timedelta(
                 seconds=expires_seconds))
         db.session.add(token)
         db.session.commit()
         return token
 
     @classmethod
-    def provide_facebook_token(cls, user_id, access_token, expires_seconds):
-        pass
-
-    @classmethod
-    def provide_eucaby_token(cls, user_id):
-        """Gets or creates eucaby token."""
-        token = cls.get_or_create(EUCABY, user_id)
-        token.access_token = utils.generate_uuid()
-        token.refresh_token = utils.generate_uuid()
-        token.expires_date = (
-            datetime.datetime.now() + datetime.timedelta(
-                seconds=EUCABY_EXPIRATION_SEC))
+    def create_eucaby_token(cls, user_id):
+        """Creates Eucaby token."""
+        token = cls(
+            service=EUCABY, user_id=user_id,
+            access_token=utils.generate_uuid(),
+            refresh_token=utils.generate_uuid(),
+            expires_date=datetime.datetime.now() + datetime.timedelta(
+                seconds=EUCABY_EXPIRATION_SEC),
+            scopes=' '.join(EUCABY_SCOPES))
         db.session.add(token)
         db.session.commit()
         return token
 
-    @property
-    def scopes(self):
-        if self._scopes:
-            return self._scopes.split()
+    def get_scopes(self):
+        if self.scopes:
+            return self.scopes.split()
         return []
