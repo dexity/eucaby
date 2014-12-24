@@ -14,7 +14,7 @@ class InvalidError(Exception):
 class Argument(reqparse.Argument):
 
     def handle_validation_error(self, error):
-        msg = self.help if self.help is not None else str(error)
+        msg = self.help or str(error)
         raise ValueError(msg)
 
 

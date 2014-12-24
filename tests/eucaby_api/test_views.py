@@ -4,29 +4,35 @@ import mock
 from eucaby_api import auth
 from eucaby_api import wsgi
 
-class TestViews(unittest.TestCase):
+class TestOAuthToken(unittest.TestCase):
 
     def setUp(self):
         app = wsgi.create_app()
         app.config.from_object('eucaby_api.config.Testing')
         self.app = app.test_client()
         self.grant_password_error = dict(
-            code="invalid",
+            code='invalid',
             fields=dict(
-                grant_type="Valid grant types are password and refresh_token",
-                password="Missing required parameter password",
-                service="Invalid service",
-                username="Missing required parameter username"
+                grant_type='Valid grant types are password and refresh_token',
+                password='Missing required parameter password',
+                service='Invalid service',
+                username='Missing required parameter username'
             ),
-            message="Invalid request parameters"
+            message='Invalid request parameters'
+        )
+        self.invalid_grant = dict(
+            code='invalid_grant',
+            fields=dict(
+                grant_type='Valid grant types are password and refresh_token'
+            ),
+            message='Invalid request parameters'
         )
 
     def tearDown(self):
         pass
 
-    @mock.patch('eucaby_api.auth.facebook.get')
-    @mock.patch('eucaby_api.auth.facebook.exchange_token')
-    def testExchangeToken(self, fb_exchange_token, fb_get):
+    def testGeneralErrors(self):
+        """Tests general errors related to oauth."""
         # Get is not supported
         resp = self.app.get('/oauth/token')
         self.assertEqual(405, resp._status_code)
@@ -36,13 +42,16 @@ class TestViews(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(400, resp._status_code)
         data = json.loads(resp.data)
-        self.assertEqual(self.grant_password_error, data)
+        self.assertEqual(self.invalid_grant, data)
 
         # Invalid grant type
         resp = self.app.post('/oauth/token', dict(grant_type='wrong'))
         self.assertEqual(400, resp._status_code)
-        self.assertEqual(self.grant_password_error, data)
+        self.assertEqual(self.invalid_grant, data)
 
+    @mock.patch('eucaby_api.auth.facebook.get')
+    @mock.patch('eucaby_api.auth.facebook.exchange_token')
+    def testExchangeToken(self, fb_exchange_token, fb_get):
         # Grant type is set
         resp = self.app.post('/oauth/token', data=dict(grant_type='password'))
         data = json.loads(resp.data)
@@ -56,8 +65,8 @@ class TestViews(unittest.TestCase):
         # Valid token, user doesn't exist
         fb_exchange_token.return_value = dict(
             access_token='someaccesstoken', expires=123)
-        fb_get.return_value = {u'first_name': u'Alexander', u'last_name': u'Dementsov', u'verified': True, u'name': u'Alexander Dementsov', u'locale': u'en_US', u'gender': u'male', u'email': u'dexity@gmail.com', u'link': u'https://www.facebook.com/app_scoped_user_id/10152815532718638/', u'timezone': -8, u'updated_time': u'2014-12-06T21:31:50+0000', u'id': u'10152815532718638'}
-        resp = self.app.post('/oauth/token', data=params)
+        # fb_get.return_value = {u'first_name': u'Alexander', u'last_name': u'Dementsov', u'verified': True, u'name': u'Alexander Dementsov', u'locale': u'en_US', u'gender': u'male', u'email': u'dexity@gmail.com', u'link': u'https://www.facebook.com/app_scoped_user_id/10152815532718638/', u'timezone': -8, u'updated_time': u'2014-12-06T21:31:50+0000', u'id': u'10152815532718638'}
+        # resp = self.app.post('/oauth/token', data=params)
 
         # Valid token, user doesn't exist, fb profile error
 

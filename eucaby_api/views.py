@@ -45,7 +45,10 @@ class OAuthToken(restful.Resource):
     def refresh_grant_parser(self):
         """Returns refresh grant parser."""
         parser = reqparse.RequestParser()
-        # XXX: Finish
+        grant_type_arg = reqparse.Argument(
+            name='grant_type', type=str, required=True,
+            choices=[GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH], help=GRANT_TYPES)
+        parser.add_argument(grant_type_arg)
         return parser
 
     def parse_grant_type(self):
@@ -69,8 +72,8 @@ class OAuthToken(restful.Resource):
             return api_utils.make_error(error, 400)
 
         # Exchange short lived token for the long lived token
-        assert args['service'], 'facebook'
-        assert args['grant_type'], 'password'
+        assert args['service'], models.FACEBOOK
+        assert args['grant_type'], GRANT_TYPE_PASSWORD
         fb_short_token = args['password']
         fb_user_id = args['username']
 
@@ -125,7 +128,8 @@ class OAuthToken(restful.Resource):
         try:
             grant_type = self.parse_grant_type()
         except reqparse.InvalidError as e:
-            error = dict(message=e.message, code='invalid_grant')
+            error = dict(message='Invalid request parameters',
+                         code='invalid_grant', fields=e.errors)
             return api_utils.make_error(error, 400)
 
         if grant_type == GRANT_TYPE_PASSWORD:
