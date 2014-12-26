@@ -10,6 +10,7 @@ def create_app():
     app.register_blueprint(views.api_app)
     auth.oauth.init_app(app)
     models.db.init_app(app)
+    app.db = models.db
     return app
 
 if __name__ == '__main__':

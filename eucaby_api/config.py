@@ -1,9 +1,9 @@
 
-# from secret_keys import CSRF_SECRET_KEY, SESSION_KEY
+from secret_keys import CSRF_SECRET_KEY, SESSION_KEY
 
 class Config(object):
-    # SECRET_KEY = CSRF_SECRET_KEY
-    # CSRF_SESSION_KEY = SESSION_KEY
+    SECRET_KEY = CSRF_SECRET_KEY
+    CSRF_SESSION_KEY = SESSION_KEY
     DATABASE_NAME = ''
     DATABASE_USERNAME = ''
     DATABASE_PASSWORD = ''

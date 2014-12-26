@@ -71,32 +71,37 @@ class OAuthToken(restful.Resource):
                          code='invalid', fields=e.errors)
             return api_utils.make_error(error, 400)
 
-        # Exchange short lived token for the long lived token
         assert args['service'], models.FACEBOOK
         assert args['grant_type'], GRANT_TYPE_PASSWORD
         fb_short_token = args['password']
         fb_user_id = args['username']
 
         try:
+            # Exchange short lived token for the long lived token
             resp_token = auth.facebook.exchange_token(fb_short_token)
         except auth.f_oauth_client.OAuthException as e:
             error = dict(message=e.message, code='invalid_oauth')
             return api_utils.make_error(error, 403)
 
         access_token = resp_token['access_token']
-        user = models.db.User.query.filter_by(username=fb_user_id).first()
+        user = models.User.query.filter_by(username=fb_user_id).first()
         if user is None:
             try:
+                # Facebook profile request
                 resp_me = auth.facebook.get('/me', token=(access_token, ''))
             except auth.f_oauth_client.OAuthException as e:
                 error = dict(message=e.message, code='invalid_oauth')
                 return api_utils.make_error(error, 401)
 
             username = str(resp_me.pop('id'))
-            assert username, fb_user_id
             resp_me['username'] = username
             # Create user profile from Facebook data
-            user = models.db.User.create(resp_me)
+            user = models.User.create(**resp_me)
+
+        # Username should match Facebook user id
+        if user.username != fb_user_id:
+            error = dict(message='Invalid username', code='invalid_user')
+            return api_utils.make_error(error, 400)
 
         # Create Facebook and Eucaby tokens
         models.Token.create_facebook_token(
@@ -106,10 +111,9 @@ class OAuthToken(restful.Resource):
         return dict(
             access_token=ec_token.access_token,
             token_type=models.TOKEN_TYPE,
-            expires_in=str(ec_token.expires_date),
+            expires_in=models.EXPIRATION_SECONDS,
             refresh_token=ec_token.refresh_token,
-            scope=ec_token.scopes
-        )
+            scope=ec_token.scopes)
 
     def handle_refresh_grant(self):
         """Handles refresh token grant type."""

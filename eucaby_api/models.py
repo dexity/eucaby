@@ -11,7 +11,7 @@ db = SQLAlchemy()
 FACEBOOK = 'facebook'
 EUCABY = 'eucaby'
 TOKEN_TYPE = 'Bearer'
-EUCABY_EXPIRATION_SEC = 60*60*24*30  # 30 days
+EXPIRATION_SECONDS = 60*60*24*30  # 30 days
 EUCABY_SCOPES = ['profile', 'history', 'location']
 
 SERVICE_TYPES = [
@@ -31,7 +31,8 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     is_superuser = db.Column(db.Boolean, nullable=False, default=False)
     last_login = db.Column(
-        db.DateTime, nullable=False, onupdate=datetime.datetime.now)
+        db.DateTime, nullable=False, default=datetime.datetime.now,
+        onupdate=datetime.datetime.now)
     date_joined = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
 
@@ -60,7 +61,8 @@ class Token(db.Model):
     created_date = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
     updated_date = db.Column(
-        db.DateTime, nullable=False, onupdate=datetime.datetime.now)
+        db.DateTime, nullable=False, default=datetime.datetime.now,
+        onupdate=datetime.datetime.now)
     expires_date = db.Column(db.DateTime, nullable=False)
     scopes = db.Column(db.Text)
 
@@ -104,7 +106,7 @@ class Token(db.Model):
             access_token=utils.generate_uuid(),
             refresh_token=utils.generate_uuid(),
             expires_date=datetime.datetime.now() + datetime.timedelta(
-                seconds=EUCABY_EXPIRATION_SEC),
+                seconds=EXPIRATION_SECONDS),
             scopes=' '.join(EUCABY_SCOPES))
         db.session.add(token)
         db.session.commit()
