@@ -25,6 +25,16 @@ GRANT_TYPE_CHOICES = [GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH]
 
 class OAuthToken(restful.Resource):
 
+    def parse_grant_type(self):
+        """Parses grant_type argument or throws exception."""
+        parser = reqparse.RequestParser()
+        grant_type_arg = reqparse.Argument(
+            name='grant_type', type=str, required=True,
+            choices=GRANT_TYPE_CHOICES, help=GRANT_TYPES)
+        parser.add_argument(grant_type_arg)
+        args = parser.parse_args()
+        return args['grant_type']
+
     def password_grant_parser(self):
         """Returns password grant parser."""
         parser = reqparse.RequestParser()
@@ -47,19 +57,13 @@ class OAuthToken(restful.Resource):
         parser = reqparse.RequestParser()
         grant_type_arg = reqparse.Argument(
             name='grant_type', type=str, required=True,
-            choices=[GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH], help=GRANT_TYPES)
+            choices=[GRANT_TYPE_REFRESH, ], help=GRANT_TYPES)
+        refresh_arg = reqparse.Argument(
+            name='refresh_token', type=str, required=True,
+            help=PARAM_MISSING.format(param='refresh_token'))
         parser.add_argument(grant_type_arg)
+        parser.add_argument(refresh_arg)
         return parser
-
-    def parse_grant_type(self):
-        """Parses grant_type argument or throws exception."""
-        parser = reqparse.RequestParser()
-        grant_type_arg = reqparse.Argument(
-            name='grant_type', type=str, required=True,
-            choices=GRANT_TYPE_CHOICES, help=GRANT_TYPES)
-        parser.add_argument(grant_type_arg)
-        args = parser.parse_args()
-        return args['grant_type']
 
     def handle_password_grant(self):
         """Handles password grant_type."""
@@ -68,8 +72,7 @@ class OAuthToken(restful.Resource):
             args = parser.parse_args(strict=True)
         except reqparse.InvalidError as e:
             errors = e.errors
-            if e.unparsed:
-                errors.update(e.unparsed)
+            errors.update(e.unparsed)
             error = dict(message='Invalid request parameters',
                          code='invalid', fields=errors)
             return api_utils.make_error(error, 400)
@@ -111,24 +114,25 @@ class OAuthToken(restful.Resource):
             user.id, access_token, resp_token['expires'])
         ec_token = models.Token.create_eucaby_token(user.id)
         flask.session['user_id'] = user.id
-        return dict(
-            access_token=ec_token.access_token,
-            token_type=models.TOKEN_TYPE,
-            expires_in=models.EXPIRATION_SECONDS,
-            refresh_token=ec_token.refresh_token,
-            scope=ec_token.scopes)
+        return ec_token.to_response()
 
     def handle_refresh_grant(self):
         """Handles refresh token grant type."""
         parser = self.refresh_grant_parser()
+        try:
+            args = parser.parse_args(strict=True)
+        except reqparse.InvalidError as e:
+            errors = e.errors
+            errors.update(e.unparsed)
+            error = dict(message='Invalid request parameters',
+                         code='invalid', fields=errors)
+            return api_utils.make_error(error, 400)
 
-        # print e.errors, e.namespace
-        # Exchange and save token
-        # ll_access_token = auth.fb_exchange_token()
-
-        # resp['access_token']
-        # Create (if it doesn't exist) or update user
-
+        token = models.Token.update_token(args['refresh_token'])
+        if token is None:
+            error = dict(message='Invalid refresh token', code='invalid_token')
+            return api_utils.make_error(error, 404)
+        return token.to_response()
 
     def post(self):
         """Authentication handler."""
@@ -141,12 +145,8 @@ class OAuthToken(restful.Resource):
 
         if grant_type == GRANT_TYPE_PASSWORD:
             return self.handle_password_grant()
-        elif grant_type == GRANT_TYPE_REFRESH:
-            return self.handle_refresh_grant()
 
-        # You should be here
-        error = dict(message='Authentication failed', code='server_error')
-        return api_utils.make_error(error, 500)
+        return self.handle_refresh_grant()
 
 
 api.add_resource(OAuthToken, '/oauth/token')

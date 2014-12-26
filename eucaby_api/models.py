@@ -57,7 +57,7 @@ class Token(db.Model):
     user = db.relationship('User')
 
     access_token = db.Column(db.String(512), unique=True, nullable=False)
-    refresh_token = db.Column(db.String(512))
+    refresh_token = db.Column(db.String(512), unique=True)
     created_date = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
     updated_date = db.Column(
@@ -65,27 +65,6 @@ class Token(db.Model):
         onupdate=datetime.datetime.now)
     expires_date = db.Column(db.DateTime, nullable=False)
     scopes = db.Column(db.Text)
-
-    @classmethod
-    def get_or_create(cls, service, user_id, commit=False):
-        """Gets or create token by service and user_id."""
-        # XXX: Redo
-        kwargs = dict(service=service, user_id=user_id)
-        is_created = False
-        try:
-            token = cls.query.filter(**kwargs).one()
-        except sqlalchemy_exceptions.MultipleResultsFound:
-            tokens = cls.query.filter(**kwargs).all()
-            token = tokens[0]
-            for t in tokens[1:]:  # Clean up other records
-                db.session.delete(t)
-                db.session.commit()
-        except sqlalchemy_exceptions.NoResultFound:
-            token = cls(**kwargs)
-        if commit:
-            db.session.add(token)
-            db.session.commit()
-        return token
 
     @classmethod
     def create_facebook_token(cls, user_id, access_token, expires_seconds):
@@ -111,6 +90,25 @@ class Token(db.Model):
         db.session.add(token)
         db.session.commit()
         return token
+
+    @classmethod
+    def update_token(cls, refresh_token):
+        """Refreshes existing token."""
+        token = cls.query.filter_by(refresh_token=refresh_token).first()
+        if token is None:
+            return None
+        token.access_token = utils.generate_uuid()
+        token.expires_date = (datetime.datetime.now() +
+                              datetime.timedelta(seconds=EXPIRATION_SECONDS))
+        db.session.add(token)
+        db.session.commit()
+        return token
+
+    def to_response(self):
+        return dict(
+            access_token=self.access_token, token_type=TOKEN_TYPE,
+            expires_in=EXPIRATION_SECONDS, refresh_token=self.refresh_token,
+            scope=self.scopes)
 
     def get_scopes(self):
         if self.scopes:
