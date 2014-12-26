@@ -67,8 +67,11 @@ class OAuthToken(restful.Resource):
         try:
             args = parser.parse_args(strict=True)
         except reqparse.InvalidError as e:
+            errors = e.errors
+            if e.unparsed:
+                errors.update(e.unparsed)
             error = dict(message='Invalid request parameters',
-                         code='invalid', fields=e.errors)
+                         code='invalid', fields=errors)
             return api_utils.make_error(error, 400)
 
         assert args['service'], models.FACEBOOK
@@ -141,6 +144,7 @@ class OAuthToken(restful.Resource):
         elif grant_type == GRANT_TYPE_REFRESH:
             return self.handle_refresh_grant()
 
+        # You should be here
         error = dict(message='Authentication failed', code='server_error')
         return api_utils.make_error(error, 500)
 

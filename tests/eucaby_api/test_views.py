@@ -25,6 +25,10 @@ class TestOAuthToken(unittest.TestCase):
         self.fb_invalid_token = dict(
             error=dict(message='Invalid OAuth access token.',
                 type='OAuthException', code=190))
+        self.fb_invalid_method = dict(
+            error=dict(message=('(#803) Cannot query users by their '
+                                'username (helloworld)'),
+                type='OAuthException', code=803))
         self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)
         self.fb_profile = dict(
             first_name='Test', last_name='User', verified=True,
@@ -44,13 +48,16 @@ class TestOAuthToken(unittest.TestCase):
 
     def testGeneralErrors(self):
         """Tests general errors related to oauth."""
-        invalid_grant = dict(
+        invalid_grant_error = dict(
             code='invalid_grant',
             fields=dict(
                 grant_type='Valid grant types are password and refresh_token'
             ),
             message='Invalid request parameters'
         )
+        extra_params_error = dict(
+            fields=dict(extra='Unrecognized parameter'),
+            message='Invalid request parameters', code='invalid')
         # Get is not supported
         resp = self.client.get('/oauth/token')
         self.assertEqual(405, resp._status_code)
@@ -60,12 +67,18 @@ class TestOAuthToken(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(400, resp._status_code)
         data = json.loads(resp.data)
-        self.assertEqual(invalid_grant, data)
+        self.assertEqual(invalid_grant_error, data)
 
         # Invalid grant type
         resp = self.client.post('/oauth/token', dict(grant_type='wrong'))
         self.assertEqual(400, resp._status_code)
-        self.assertEqual(invalid_grant, data)
+        self.assertEqual(invalid_grant_error, data)
+
+        # Extra parameters
+        self.valid_params['extra'] = 'param'
+        resp = self.client.post('/oauth/token', data=self.valid_params)
+        data = json.loads(resp.data)
+        self.assertEqual(extra_params_error, data)
 
     @mock.patch('eucaby_api.auth.facebook.exchange_token')
     def testExchangeInvalidToken(self, fb_exchange_token):
@@ -94,7 +107,7 @@ class TestOAuthToken(unittest.TestCase):
     def testExchangeValidTokenSuccess(
             self, fb_exchange_token, fb_get, eucaby_utils):
         """Tests successful response."""
-        # Valid token, user doesn't exist, fb profile
+        # Test A: Valid token, user doesn't exist, fb profile
         fb_exchange_token.return_value = self.fb_valid_token
         fb_get.return_value = self.fb_profile
         UUID = '1a2b3c'
@@ -107,7 +120,7 @@ class TestOAuthToken(unittest.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(eucaby_success_resp, data)
         self.assertEqual(200, resp._status_code)
-
+        # Verify user and access tokens
         users = models.User.query.all()
         tokens = models.Token.query.all()
         self.assertEqual(1, len(users))
@@ -118,13 +131,41 @@ class TestOAuthToken(unittest.TestCase):
             email='test@example.com', username='12345')
         fb_token = tokens[0]
         eucaby_token = tokens[1]
-        # self.assert
+        self.assert_object(
+            fb_token, service=models.FACEBOOK, user_id=user.id,
+            access_token='someaccesstoken', refresh_token=None)
+        self.assert_object(
+            eucaby_token, service=models.EUCABY, user_id=user.id,
+            access_token=UUID, refresh_token=UUID)
 
-        # Valid token, user exists, fb profile
-
-        # print tokens
-
-        # print resp.data, resp._status_code
+        # Test B: Valid token, user exists, fb profile
+        UUID2 = '123qweasd'
+        eucaby_utils.generate_uuid.return_value = UUID2
+        params = dict(access_token=UUID2, refresh_token=UUID2)
+        fb_params = dict(access_token='anotheraccesstoken')
+        self.fb_valid_token.update(fb_params)
+        resp = self.client.post('/oauth/token', data=self.valid_params)
+        data = json.loads(resp.data)
+        eucaby_success_resp.update(params)
+        self.assertEqual(eucaby_success_resp, data)
+        self.assertEqual(200, resp._status_code)
+        # Verify user and access tokens
+        users = models.User.query.all()
+        tokens = models.Token.query.all()
+        self.assertEqual(1, len(users))
+        # Every access token request generates tokens
+        self.assertEqual(4, len(tokens))
+        self.assert_object(  # Same user
+            user, first_name='Test', last_name='User', gender='male',
+            email='test@example.com', username='12345')
+        fb_token = tokens[2]
+        eucaby_token = tokens[3]
+        self.assert_object(
+            fb_token, service=models.FACEBOOK, user_id=user.id,
+            access_token='anotheraccesstoken', refresh_token=None)
+        self.assert_object(
+            eucaby_token, service=models.EUCABY, user_id=user.id,
+            access_token=UUID2, refresh_token=UUID2)
 
     @mock.patch('eucaby_api.models.utils')
     @mock.patch('eucaby_api.auth.facebook.get')
@@ -132,45 +173,54 @@ class TestOAuthToken(unittest.TestCase):
     def testExchangeValidTokenFailed(
             self, fb_exchange_token, fb_get, eucaby_utils):
         """Tests valid token with failed response."""
-        self.valid_params['username'] = '54321'
-        # Valid token, fb profile, username doesn't match fb profile id
+        # Test A: Valid token, user doesn't exist, fb profile error
         fb_exchange_token.return_value = self.fb_valid_token
+        side_effect = auth.f_oauth_client.OAuthException(
+            self.fb_invalid_method['error']['message'],
+            type='token_exchange_failed', data=self.fb_invalid_method)
+        fb_get.side_effect = side_effect
+        resp = self.client.post('/oauth/token', data=self.valid_params)
+        data = json.loads(resp.data)
+        eucaby_invalid_oauth = dict(
+            code='invalid_oauth',
+            message=self.fb_invalid_method['error']['message'])
+        self.assertEqual(eucaby_invalid_oauth, data)
+        self.assertEqual(401, resp._status_code)
+        # Verify user and access tokens
+        self.assertEqual(0, models.User.query.count())
+        self.assertEqual(0, models.Token.query.count())
+
+        # Test B: Valid token, fb profile, username doesn't match fb profile id
+        valid_params = self.valid_params.copy()
+        valid_params['username'] = '54321'
         fb_get.return_value = self.fb_profile
+        fb_get.side_effect = None
         UUID = '1a2b3c'
         eucaby_utils.generate_uuid.return_value = UUID
-        resp = self.client.post('/oauth/token', data=self.valid_params)
+        resp = self.client.post('/oauth/token', data=valid_params)
         data = json.loads(resp.data)
         eucaby_invalid_user = dict(
             code='invalid_user', message='Invalid username')
         self.assertEqual(eucaby_invalid_user, data)
         self.assertEqual(400, resp._status_code)
+        self.assertEqual(1, models.User.query.count())
+        self.assertEqual(0, models.Token.query.count())
 
-        # Valid token, user doesn't exist, fb profile error
-
+        # Test C:
         # Valid token, user exists, fb profile error
-
-
-        # token = 'CAALgK0YvBagBAKO3HYZBfVwUDojv6cqnJFblOXFocDgzv4h2mwPsi1i44ZCcXtacOYfB7vAhQRvq7asZCsZCI7tg9xbvAkac7hVcYJvXgkhZA4xl8qzgQk0Dhb1ahIDqw95UtlMlpAk9wb0UGYsLtvkrA3ZBL0A2OZCv7G4ToYKZApq3JumQlZBFp42scHd9ijuLnw1twjYFgJESZARhJuJKxoPcu2hmQkLLEZD'
-        # resp = auth.facebook.get('/me', token=(token, ''))
-        # print resp.data
-
-        # Expired token
-        # ex_token
-
-        # data = json.loads(resp.data)
-
-        # XXX: Finish
-        #params['extra'] = 'param'
-        # Short-lived token
-        # print resp.data
-
-
-        # # Invalid password
-        #
-        # # Missing parameters for refresh grant type
-        # resp = self.client.post('/oauth/token', dict(grant_type='refresh_token'))
-        #
-
+        # FB profile error doesn't affect access tokens creation
+        eucaby_success_resp = dict(
+            access_token=UUID, expires_in=models.EXPIRATION_SECONDS,
+            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=models.TOKEN_TYPE)
+        fb_get.side_effect = side_effect
+        resp = self.client.post('/oauth/token', data=self.valid_params)
+        data = json.loads(resp.data)
+        self.assertEqual(eucaby_success_resp, data)
+        self.assertEqual(200, resp._status_code)
+        # Verify user and access tokens
+        self.assertEqual(1, models.User.query.count())
+        self.assertEqual(2, models.Token.query.count())
 
     def testRefreshToken(self):
 
@@ -186,6 +236,7 @@ class TestOAuthToken(unittest.TestCase):
         # self.assertEqual(200, resp._status_code)
         # # XXX: Add Facebook mock
         pass
+
 
     def testAuthRequest(self):
         pass

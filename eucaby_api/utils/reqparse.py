@@ -5,9 +5,10 @@ from werkzeug import exceptions
 
 class InvalidError(Exception):
 
-    def __init__(self, errors, namespace, *args, **kwargs):
+    def __init__(self, errors, namespace, unparsed, *args, **kwargs):
         self.errors = errors
         self.namespace = namespace
+        self.unparsed = unparsed
         super(InvalidError, self).__init__(*args, **kwargs)
 
 
@@ -23,6 +24,7 @@ class RequestParser(reqparse.RequestParser):
     def __init__(self, argument_class=Argument,
                  namespace_class=reqparse.Namespace):
         self.errors = {}
+        self.unparsed = {}
         super(RequestParser, self).__init__(argument_class, namespace_class)
 
     def parse_args(self, req=None, strict=False):
@@ -44,12 +46,11 @@ class RequestParser(reqparse.RequestParser):
             except ValueError as e:
                 self.errors[arg.dest or arg.name] = str(e)
 
-        if self.errors:
-            raise InvalidError(self.errors, namespace)
-
-        # XXX: Finish
+        # Collect unparsed (extra) arguments
         if strict and req.unparsed_arguments:
-            raise exceptions.BadRequest(
-                'Unknown arguments: {}'.format(
-                    ', '.join(req.unparsed_arguments.keys())))
+            for arg, value in req.unparsed_arguments.items():
+                self.unparsed[arg] = 'Unrecognized parameter'
+
+        if self.errors or self.unparsed:
+            raise InvalidError(self.errors, namespace, self.unparsed)
         return namespace
