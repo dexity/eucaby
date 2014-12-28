@@ -69,6 +69,7 @@ class Token(db.Model):
     @classmethod
     def create_facebook_token(cls, user_id, access_token, expires_seconds):
         """Creates Facebook token."""
+        # Note: It doesn't create user
         token = cls(
             service=FACEBOOK, user_id=user_id, access_token=access_token,
             expires_date=datetime.datetime.now() + datetime.timedelta(
@@ -80,6 +81,7 @@ class Token(db.Model):
     @classmethod
     def create_eucaby_token(cls, user_id):
         """Creates Eucaby token."""
+        # Note: It doesn't create user
         token = cls(
             service=EUCABY, user_id=user_id,
             access_token=utils.generate_uuid(),

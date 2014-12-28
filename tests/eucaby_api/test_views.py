@@ -4,12 +4,15 @@ import mock
 from eucaby_api import auth
 from eucaby_api import models
 from eucaby_api import wsgi
+from tests.utils import utils as test_utils
 
 class TestOAuthToken(unittest.TestCase):
 
     def setUp(self):
         self.app = wsgi.create_app()
         self.app.config.from_object('eucaby_api.config.Testing')
+        models.db.app = self.app
+        models.db.create_all()
         self.client = self.app.test_client()
         self.grant_password_error = dict(
             code='invalid',
@@ -43,8 +46,6 @@ class TestOAuthToken(unittest.TestCase):
         self.valid_params = dict(
             grant_type='password', service='facebook',
             password='test_password', username='12345')
-        models.db.app = self.app
-        models.db.create_all()
 
     def tearDown(self):
         models.db.drop_all()
@@ -129,15 +130,15 @@ class TestOAuthToken(unittest.TestCase):
         self.assertEqual(1, len(users))
         self.assertEqual(2, len(tokens))
         user = users[0]
-        self.assert_object(
+        test_utils.assert_object(
             user, first_name='Test', last_name='User', gender='male',
             email='test@example.com', username='12345')
         fb_token = tokens[0]
         eucaby_token = tokens[1]
-        self.assert_object(
+        test_utils.assert_object(
             fb_token, service=models.FACEBOOK, user_id=user.id,
             access_token='someaccesstoken', refresh_token=None)
-        self.assert_object(
+        test_utils.assert_object(
             eucaby_token, service=models.EUCABY, user_id=user.id,
             access_token=UUID, refresh_token=UUID)
 
@@ -158,15 +159,15 @@ class TestOAuthToken(unittest.TestCase):
         self.assertEqual(1, len(users))
         # Every access token request generates tokens
         self.assertEqual(4, len(tokens))
-        self.assert_object(  # Same user
+        test_utils.assert_object(  # Same user
             user, first_name='Test', last_name='User', gender='male',
             email='test@example.com', username='12345')
         fb_token = tokens[2]
         eucaby_token = tokens[3]
-        self.assert_object(
+        test_utils.assert_object(
             fb_token, service=models.FACEBOOK, user_id=user.id,
             access_token='anotheraccesstoken', refresh_token=None)
-        self.assert_object(
+        test_utils.assert_object(
             eucaby_token, service=models.EUCABY, user_id=user.id,
             access_token=UUID2, refresh_token=UUID2)
 
@@ -266,10 +267,6 @@ class TestOAuthToken(unittest.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(eucaby_error_resp, data)
         self.assertEqual(404, resp._status_code)
-
-    def assert_object(self, user, **kwargs):
-        for k, v in kwargs.items():
-            self.assertEqual(v, getattr(user, k))
 
 
 if __name__ == '__main__':
