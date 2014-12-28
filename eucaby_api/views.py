@@ -9,8 +9,8 @@ from eucaby_api import models
 
 from eucaby_api import auth
 
-api_app = flask.Blueprint('api', __name__)
-api = restful.Api(api_app)
+api_app = flask.Blueprint('api', __name__)  # pylint: disable=invalid-name
+api = restful.Api(api_app)  # pylint: disable=invalid-name
 
 # Messages
 PARAM_MISSING = 'Missing required parameter {param}'
@@ -24,6 +24,7 @@ GRANT_TYPE_CHOICES = [GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH]
 
 
 class OAuthToken(restful.Resource):
+    """Handles oauth requests."""
 
     def parse_grant_type(self):
         """Parses grant_type argument or throws exception."""
@@ -70,9 +71,9 @@ class OAuthToken(restful.Resource):
         parser = self.password_grant_parser()
         try:
             args = parser.parse_args(strict=True)
-        except reqparse.InvalidError as e:
-            errors = e.errors
-            errors.update(e.unparsed)
+        except reqparse.InvalidError as ex:
+            errors = ex.errors
+            errors.update(ex.unparsed)
             error = dict(message='Invalid request parameters',
                          code='invalid', fields=errors)
             return api_utils.make_error(error, 400)
@@ -85,8 +86,8 @@ class OAuthToken(restful.Resource):
         try:
             # Exchange short lived token for the long lived token
             resp_token = auth.facebook.exchange_token(fb_short_token)
-        except auth.f_oauth_client.OAuthException as e:
-            error = dict(message=e.message, code='invalid_oauth')
+        except auth.f_oauth_client.OAuthException as ex:
+            error = dict(message=ex.message, code='invalid_oauth')
             return api_utils.make_error(error, 403)
 
         access_token = resp_token['access_token']
@@ -95,8 +96,8 @@ class OAuthToken(restful.Resource):
             try:
                 # Facebook profile request
                 resp_me = auth.facebook.get('/me', token=(access_token, ''))
-            except auth.f_oauth_client.OAuthException as e:
-                error = dict(message=e.message, code='invalid_oauth')
+            except auth.f_oauth_client.OAuthException as ex:
+                error = dict(message=ex.message, code='invalid_oauth')
                 return api_utils.make_error(error, 401)
 
             username = str(resp_me.pop('id'))
@@ -121,9 +122,9 @@ class OAuthToken(restful.Resource):
         parser = self.refresh_grant_parser()
         try:
             args = parser.parse_args(strict=True)
-        except reqparse.InvalidError as e:
-            errors = e.errors
-            errors.update(e.unparsed)
+        except reqparse.InvalidError as ex:
+            errors = ex.errors
+            errors.update(ex.unparsed)
             error = dict(message='Invalid request parameters',
                          code='invalid', fields=errors)
             return api_utils.make_error(error, 400)
@@ -138,9 +139,9 @@ class OAuthToken(restful.Resource):
         """Authentication handler."""
         try:
             grant_type = self.parse_grant_type()
-        except reqparse.InvalidError as e:
+        except reqparse.InvalidError as ex:
             error = dict(message='Invalid request parameters',
-                         code='invalid_grant', fields=e.errors)
+                         code='invalid_grant', fields=ex.errors)
             return api_utils.make_error(error, 400)
 
         if grant_type == GRANT_TYPE_PASSWORD:
