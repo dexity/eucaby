@@ -1,9 +1,11 @@
+"""API configuration."""
 
-from secret_keys import CSRF_SECRET_KEY, SESSION_KEY
+from eucaby_api import secret_keys
 
 class Config(object):
-    SECRET_KEY = CSRF_SECRET_KEY
-    CSRF_SESSION_KEY = SESSION_KEY
+    """General configuration."""
+    SECRET_KEY = secret_keys.CSRF_SECRET_KEY
+    CSRF_SESSION_KEY = secret_keys.SESSION_KEY
     DATABASE_NAME = ''
     DATABASE_USERNAME = ''
     DATABASE_PASSWORD = ''
@@ -15,12 +17,14 @@ class Config(object):
     CACHE_TYPE = 'gaememcached'
 
 class Development(Config):
+    """Development configuration."""
     DEBUG = True
     # Flask-DebugToolbar settings
     DEBUG_TB_PROFILER_ENABLED = True
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
 class Testing(Config):
+    """Testing configuration."""
     SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/eucaby.db'
     FACEBOOK = dict(
         consumer_key='12345',
@@ -30,4 +34,5 @@ class Testing(Config):
     DEBUG = True
 
 class Production(Config):
+    """Production configuration."""
     DEBUG = False

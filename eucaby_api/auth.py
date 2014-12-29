@@ -1,3 +1,4 @@
+"""Authentication module."""
 
 import flask
 from flask_oauthlib import client as f_oauth_client
@@ -7,7 +8,9 @@ from eucaby_api import models
 
 oauth = f_oauth_client.OAuth()
 
+
 class FacebookRemoteApp(f_oauth_client.OAuthRemoteApp):
+    """Facebook remote app."""
 
     def __init__(self, oauth_, **kwargs):
         super(FacebookRemoteApp, self).__init__(oauth_, 'facebook', **kwargs)
@@ -47,8 +50,9 @@ if 'facebook' not in oauth.remote_apps:
 def get_facebook_access_token():
     """Returns Facebook access token."""
     # XXX: Add logged_in decorator
+    # Order by expires_date?
     token = models.Token.query.filter(
-        user_id=flask.session['user_id'], service=models.FACEBOOK).first()  # Order by expires_date?
+        user_id=flask.session['user_id'], service=models.FACEBOOK).first()
 
     access_token = token and token.access_token or ''
     return access_token, ''

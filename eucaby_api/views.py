@@ -1,16 +1,15 @@
 """Views for Eucaby API."""
-# from eucaby_api.wsgi import app
 
 import flask
-from flask.ext import restful
+import flask_restful
+from eucaby_api import auth
+from eucaby_api import models
 from eucaby_api.utils import reqparse
 from eucaby_api.utils import utils as api_utils
-from eucaby_api import models
 
-from eucaby_api import auth
 
-api_app = flask.Blueprint('api', __name__)  # pylint: disable=invalid-name
-api = restful.Api(api_app)  # pylint: disable=invalid-name
+api_app = flask.Blueprint('api', __name__)
+api = flask_restful.Api(api_app)
 
 # Messages
 PARAM_MISSING = 'Missing required parameter {param}'
@@ -23,10 +22,11 @@ GRANT_TYPE_REFRESH = 'refresh_token'
 GRANT_TYPE_CHOICES = [GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH]
 
 
-class OAuthToken(restful.Resource):
+class OAuthToken(flask_restful.Resource):
     """Handles oauth requests."""
 
-    def parse_grant_type(self):
+    @classmethod
+    def parse_grant_type(cls):
         """Parses grant_type argument or throws exception."""
         parser = reqparse.RequestParser()
         grant_type_arg = reqparse.Argument(
@@ -36,7 +36,8 @@ class OAuthToken(restful.Resource):
         args = parser.parse_args()
         return args['grant_type']
 
-    def password_grant_parser(self):
+    @classmethod
+    def password_grant_parser(cls):
         """Returns password grant parser."""
         parser = reqparse.RequestParser()
         params = ['username', 'password']
@@ -53,7 +54,8 @@ class OAuthToken(restful.Resource):
         parser.add_argument(grant_type_arg)
         return parser
 
-    def refresh_grant_parser(self):
+    @classmethod
+    def refresh_grant_parser(cls):
         """Returns refresh grant parser."""
         parser = reqparse.RequestParser()
         grant_type_arg = reqparse.Argument(

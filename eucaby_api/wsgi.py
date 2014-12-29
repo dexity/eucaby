@@ -1,17 +1,21 @@
+"""Application runner."""
 
 import flask
 import os
-from eucaby_api import views
 from eucaby_api import auth
 from eucaby_api import models
+from eucaby_api import views
+
 
 def create_app():
-    app = flask.Flask(__name__)
-    app.register_blueprint(views.api_app)
-    auth.oauth.init_app(app)
-    models.db.init_app(app)
-    app.db = models.db
-    return app
+    """Creates Flask app."""
+    fapp = flask.Flask(__name__)
+    fapp.register_blueprint(views.api_app)
+    auth.oauth.init_app(fapp)
+    models.db.init_app(fapp)
+    fapp.db = models.db
+    return fapp
+
 
 if __name__ == '__main__':
     app = create_app()

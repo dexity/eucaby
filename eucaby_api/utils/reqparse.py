@@ -1,9 +1,10 @@
+"""Custom request parser."""
 
 from flask import request
-from flask.ext.restful import reqparse
-from werkzeug import exceptions
+from flask_restful import reqparse
 
 class InvalidError(Exception):
+    """Custom InvalidError exception."""
 
     def __init__(self, errors, namespace, unparsed, *args, **kwargs):
         self.errors = errors
@@ -13,6 +14,7 @@ class InvalidError(Exception):
 
 
 class Argument(reqparse.Argument):
+    """Argument class with custom error validation."""
 
     def handle_validation_error(self, error):
         msg = self.help or str(error)
@@ -20,6 +22,7 @@ class Argument(reqparse.Argument):
 
 
 class RequestParser(reqparse.RequestParser):
+    """RequestParser class with custom parse_args."""
 
     def __init__(self, argument_class=Argument,
                  namespace_class=reqparse.Namespace):
@@ -43,8 +46,8 @@ class RequestParser(reqparse.RequestParser):
                 value, found = arg.parse(req)
                 if found or arg.store_missing:
                     namespace[arg.dest or arg.name] = value
-            except ValueError as e:
-                self.errors[arg.dest or arg.name] = str(e)
+            except ValueError as ex:
+                self.errors[arg.dest or arg.name] = str(ex)
 
         # Collect unparsed (extra) arguments
         if strict and req.unparsed_arguments:

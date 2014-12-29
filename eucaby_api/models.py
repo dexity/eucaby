@@ -1,12 +1,12 @@
+"""Models for API service."""
 
 import datetime
-from flask.ext.sqlalchemy import SQLAlchemy
+import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
-from sqlalchemy.orm import exc as sqlalchemy_exceptions
 
 from eucaby_api.utils import utils
 
-db = SQLAlchemy()
+db = flask_sqlalchemy.SQLAlchemy()
 
 FACEBOOK = 'facebook'
 EUCABY = 'eucaby'
@@ -21,6 +21,8 @@ SERVICE_TYPES = [
 
 
 class User(db.Model):
+    """User model."""
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
@@ -38,6 +40,7 @@ class User(db.Model):
 
     @classmethod
     def create(cls, **kwargs):
+        """Creates user."""
         user = cls(
             username=kwargs['username'],
             first_name=kwargs.get('first_name', ''),
@@ -107,12 +110,14 @@ class Token(db.Model):
         return token
 
     def to_response(self):
+        """Return response dictionary."""
         return dict(
             access_token=self.access_token, token_type=TOKEN_TYPE,
             expires_in=EXPIRATION_SECONDS, refresh_token=self.refresh_token,
             scope=self.scopes)
 
     def get_scopes(self):
+        """Returns list of scopes."""
         if self.scopes:
             return self.scopes.split()
         return []

@@ -2,3 +2,4 @@
 
 pylint eucaby_api
 # pylint eucaby
+pylint tests
