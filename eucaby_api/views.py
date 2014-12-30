@@ -23,6 +23,7 @@ GRANT_TYPE_CHOICES = [GRANT_TYPE_PASSWORD, GRANT_TYPE_REFRESH]
 
 
 class OAuthToken(flask_restful.Resource):
+
     """Handles oauth requests."""
 
     @classmethod

@@ -23,6 +23,3 @@ if __name__ == '__main__':
         app.config.from_object('eucaby_api.config.Development')
     else:
         app.config.from_object('eucaby_api.config.Production')
-
-
-

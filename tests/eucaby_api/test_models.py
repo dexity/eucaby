@@ -2,16 +2,18 @@
 import mock
 import unittest
 from eucaby_api import models
-from eucaby_api import wsgi
+from tests.eucaby_api import base as test_base
 from tests.utils import utils as test_utils
 
-class TestViews(unittest.TestCase):
+
+UUID = '1a2b3c'
+UUID2 = '123qweasd'
+
+
+class TestModels(test_base.TestCase):
 
     def setUp(self):
-        self.app = wsgi.create_app()
-        self.app.config.from_object('eucaby_api.config.Testing')
-        models.db.app = self.app
-        models.db.create_all()
+        super(TestModels, self).setUp()
         self.user = models.User(
             username='2345', first_name='Test', last_name='User',
             email='test@example.com')
@@ -35,7 +37,6 @@ class TestViews(unittest.TestCase):
     @mock.patch('eucaby_api.models.utils')
     def test_create_or_update_eucaby_token(self, eucaby_utils):
         """Tests create and update eucaby token."""
-        UUID = '1a2b3c'
         eucaby_utils.generate_uuid.return_value = UUID
         token = models.Token.create_eucaby_token(self.user.id)
         test_utils.assert_object(
@@ -44,7 +45,6 @@ class TestViews(unittest.TestCase):
         self.assertEqual(1, models.Token.query.count())
 
         # Refresh token exists
-        UUID2 = '123qweasd'
         eucaby_utils.generate_uuid.return_value = UUID2
         token = models.Token.update_token(UUID)
         test_utils.assert_object(
@@ -55,5 +55,5 @@ class TestViews(unittest.TestCase):
         self.assertIsNone(token)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,7 @@ oauth = f_oauth_client.OAuth()
 
 
 class FacebookRemoteApp(f_oauth_client.OAuthRemoteApp):
+
     """Facebook remote app."""
 
     def __init__(self, oauth_, **kwargs):
@@ -56,4 +57,3 @@ def get_facebook_access_token():
 
     access_token = token and token.access_token or ''
     return access_token, ''
-

@@ -4,6 +4,7 @@ import unittest
 from eucaby_api import wsgi
 from eucaby_api import auth
 
+
 class FacebookRemoteAppTest(unittest.TestCase):
 
     def setUp(self):
@@ -37,5 +38,5 @@ class FacebookRemoteAppTest(unittest.TestCase):
                           self.facebook.exchange_token, 'sl_token')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

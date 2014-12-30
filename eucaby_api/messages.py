@@ -6,6 +6,8 @@ import re
 from eucaby.eucaby import const
 
 # Messages
+
+
 class GeoPtMessage(messages.Message):
     lat = messages.FloatField(1, required=True)
     lng = messages.FloatField(2, required=True)

@@ -3,7 +3,9 @@
 from flask import request
 from flask_restful import reqparse
 
+
 class InvalidError(Exception):
+
     """Custom InvalidError exception."""
 
     def __init__(self, errors, namespace, unparsed, *args, **kwargs):
@@ -14,6 +16,7 @@ class InvalidError(Exception):
 
 
 class Argument(reqparse.Argument):
+
     """Argument class with custom error validation."""
 
     def handle_validation_error(self, error):
@@ -22,6 +25,7 @@ class Argument(reqparse.Argument):
 
 
 class RequestParser(reqparse.RequestParser):
+
     """RequestParser class with custom parse_args."""
 
     def __init__(self, argument_class=Argument,

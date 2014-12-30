@@ -52,4 +52,3 @@ class EucabyApi(remote.Service):
 
 
 application = endpoints.api_server([EucabyApi], restricted=False)
-

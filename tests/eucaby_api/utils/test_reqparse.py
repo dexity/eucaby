@@ -2,6 +2,7 @@ import unittest
 from eucaby_api.utils import reqparse
 from eucaby_api import wsgi
 
+
 class RequestParserTest(unittest.TestCase):
 
     def setUp(self):
@@ -25,18 +26,19 @@ class RequestParserTest(unittest.TestCase):
                               strict=True)
             try:
                 parser.parse_args(strict=True)
-            except reqparse.InvalidError as e:
-                self.assertEqual({}, e.errors)
-                self.assertEqual(parsed_args, e.namespace)
+            except reqparse.InvalidError as ex:
+                self.assertEqual({}, ex.errors)
+                self.assertEqual(parsed_args, ex.namespace)
                 self.assertEqual(
-                    dict(param3='Unrecognized parameter'), e.unparsed)
+                    dict(param3='Unrecognized parameter'), ex.unparsed)
 
 
 class ArgumentParserTest(unittest.TestCase):
 
     def test_handle_validation_error(self):
         arg = reqparse.Argument('some_param')
-        self.assertRaises(ValueError, arg.handle_validation_error, 'some_error')
+        self.assertRaises(
+            ValueError, arg.handle_validation_error, 'some_error')
 
 
 if __name__ == '__main__':

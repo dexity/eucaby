@@ -11,7 +11,7 @@ db = flask_sqlalchemy.SQLAlchemy()
 FACEBOOK = 'facebook'
 EUCABY = 'eucaby'
 TOKEN_TYPE = 'Bearer'
-EXPIRATION_SECONDS = 60*60*24*30  # 30 days
+EXPIRATION_SECONDS = 60 * 60 * 24 * 30  # 30 days
 EUCABY_SCOPES = ['profile', 'history', 'location']
 
 SERVICE_TYPES = [
@@ -21,6 +21,7 @@ SERVICE_TYPES = [
 
 
 class User(db.Model):
+
     """User model."""
 
     id = db.Column(db.Integer, primary_key=True)
@@ -53,6 +54,7 @@ class User(db.Model):
 
 
 class Token(db.Model):
+
     """Bearer token for Facebook or Eucaby."""
     id = db.Column(db.Integer, primary_key=True)
     service = db.Column(choice.ChoiceType(SERVICE_TYPES), nullable=False)
