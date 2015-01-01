@@ -52,9 +52,6 @@ class TestOAuthToken(test_base.TestCase):
             grant_type='password', service='facebook',
             password='test_password', username='12345')
 
-    def tearDown(self):
-        models.db.drop_all()
-
     def test_general_errors(self):
         """Tests general errors related to oauth."""
         invalid_grant_error = dict(

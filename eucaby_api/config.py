@@ -31,7 +31,9 @@ class Development(Config):
 class Testing(Config):
 
     """Testing configuration."""
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/eucaby.db'
+    SQLALCHEMY_DATABASE_URI = (
+        'mysql+mysqldb://test:testpass@localhost/test_eucaby'
+        '?charset=utf8&use_unicode=0')
     FACEBOOK = dict(
         consumer_key='12345',
         consumer_secret='secret'

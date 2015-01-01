@@ -61,8 +61,8 @@ class Token(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User')
 
-    access_token = db.Column(db.String(512), unique=True, nullable=False)
-    refresh_token = db.Column(db.String(512), unique=True)
+    access_token = db.Column(db.String(255), unique=True, nullable=False)
+    refresh_token = db.Column(db.String(255), unique=True)
     created_date = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
     updated_date = db.Column(
