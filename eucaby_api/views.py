@@ -103,10 +103,11 @@ class OAuthToken(flask_restful.Resource):
                 error = dict(message=ex.message, code='invalid_oauth')
                 return api_utils.make_error(error, 401)
 
-            username = str(resp_me.pop('id'))
-            resp_me['username'] = username
+            resp_data = resp_me.data.copy()
+            username = str(resp_data.pop('id'))
+            resp_data['username'] = username
             # Create user profile from Facebook data
-            user = models.User.create(**resp_me)
+            user = models.User.create(**resp_data)
 
         # Username should match Facebook user id
         if user.username != fb_user_id:
@@ -115,7 +116,7 @@ class OAuthToken(flask_restful.Resource):
 
         # Create Facebook and Eucaby tokens
         models.Token.create_facebook_token(
-            user.id, access_token, resp_token['expires'])
+            user.id, access_token, int(resp_token['expires']))
         ec_token = models.Token.create_eucaby_token(user.id)
         flask.session['user_id'] = user.id
         return ec_token.to_response()

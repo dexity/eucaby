@@ -8,9 +8,6 @@ class Config(object):
     """General configuration."""
     SECRET_KEY = secret_keys.CSRF_SECRET_KEY
     CSRF_SESSION_KEY = secret_keys.SESSION_KEY
-    DATABASE_NAME = ''
-    DATABASE_USERNAME = ''
-    DATABASE_PASSWORD = ''
     FACEBOOK = dict(
         consumer_key='809426419123624',
         consumer_secret='b4b8c000e74e15c294e9d67ce7fca42b'
@@ -23,6 +20,7 @@ class Development(Config):
 
     """Development configuration."""
     DEBUG = True
+    APP_ID = 'eucaby-dev'
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://dev:devpass@localhost/eucaby'
         '?charset=utf8&use_unicode=0')
@@ -49,3 +47,4 @@ class Production(Config):
 
     """Production configuration."""
     DEBUG = False
+    APP_ID = 'eucaby-prd'
