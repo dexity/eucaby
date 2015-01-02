@@ -1,14 +1,14 @@
 import json
 import mock
 import unittest
-from eucaby_api import wsgi
+from eucaby_api.utils import app as eucaby_app
 from eucaby_api import auth
 
 
 class FacebookRemoteAppTest(unittest.TestCase):
 
     def setUp(self):
-        self.app = wsgi.create_app()
+        self.app = eucaby_app.create_app()
         self.app.config.from_object('eucaby_api.config.Testing')
         self.app.secret_key = 'development'
         self.facebook = auth.facebook

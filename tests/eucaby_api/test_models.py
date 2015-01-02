@@ -2,7 +2,6 @@
 import mock
 import unittest
 from eucaby_api import models
-from eucaby_api import wsgi
 from tests.eucaby_api import base as test_base
 from tests.utils import utils as test_utils
 

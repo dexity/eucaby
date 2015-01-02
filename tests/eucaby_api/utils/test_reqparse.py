@@ -1,12 +1,12 @@
 import unittest
 from eucaby_api.utils import reqparse
-from eucaby_api import wsgi
+from eucaby_api.utils import app as eucaby_app
 
 
 class RequestParserTest(unittest.TestCase):
 
     def setUp(self):
-        self.app = wsgi.create_app()
+        self.app = eucaby_app.create_app()
         self.app.config.from_object('eucaby_api.config.Testing')
 
     def test_parse_args(self):
@@ -16,7 +16,7 @@ class RequestParserTest(unittest.TestCase):
         parser.add_argument(arg1)
         parser.add_argument(arg2)
         with self.app.test_request_context(
-                '?param1=test1&param2=test2&param3=test3'):
+            '?param1=test1&param2=test2&param3=test3'):
             parsed_args = dict(param1='test1', param2='test2')
             # Non-strict
             args = parser.parse_args()

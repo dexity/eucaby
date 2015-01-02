@@ -23,6 +23,9 @@ class Development(Config):
 
     """Development configuration."""
     DEBUG = True
+    SQLALCHEMY_DATABASE_URI = (
+        'mysql+mysqldb://dev:devpass@localhost/eucaby'
+        '?charset=utf8&use_unicode=0')
     # Flask-DebugToolbar settings
     DEBUG_TB_PROFILER_ENABLED = True
     DEBUG_TB_INTERCEPT_REDIRECTS = False
