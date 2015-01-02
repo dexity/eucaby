@@ -116,7 +116,7 @@ class TestOAuthToken(test_base.TestCase):
         """Tests successful response for access token."""
         # Test A: Valid token, user doesn't exist, fb profile
         fb_exchange_token.return_value = self.fb_valid_token
-        fb_get.return_value = self.fb_profile
+        fb_get.return_value = mock.Mock(data=self.fb_profile)
         eucaby_utils.generate_uuid.return_value = UUID
         eucaby_success_resp = dict(
             access_token=UUID, expires_in=models.EXPIRATION_SECONDS,
@@ -198,7 +198,7 @@ class TestOAuthToken(test_base.TestCase):
         # Test B: Valid token, fb profile, username doesn't match fb profile id
         valid_params = self.valid_params.copy()
         valid_params['username'] = '54321'
-        fb_get.return_value = self.fb_profile
+        fb_get.return_value = mock.Mock(data=self.fb_profile)
         fb_get.side_effect = None
         eucaby_utils.generate_uuid.return_value = UUID
         resp = self.client.post('/oauth/token', data=valid_params)
@@ -239,7 +239,7 @@ class TestOAuthToken(test_base.TestCase):
         self.assertEqual(400, resp.status_code)
         # Create token
         fb_exchange_token.return_value = self.fb_valid_token
-        fb_get.return_value = self.fb_profile
+        fb_get.return_value = mock.Mock(data=self.fb_profile)
         eucaby_utils.generate_uuid.return_value = UUID
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
