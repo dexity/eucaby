@@ -101,7 +101,9 @@ class Token(db.Model):
     @classmethod
     def update_token(cls, refresh_token):
         """Refreshes existing token."""
-        token = cls.query.filter_by(refresh_token=refresh_token).first()
+        # Only Eucaby can be refreshed. Facebook has no way to do that
+        token = cls.query.filter_by(
+            refresh_token=refresh_token, service=EUCABY).first()
         if token is None:
             return None
         token.access_token = utils.generate_uuid()
@@ -110,13 +112,6 @@ class Token(db.Model):
         db.session.add(token)
         db.session.commit()
         return token
-
-    def to_response(self):
-        """Return response dictionary."""
-        return dict(
-            access_token=self.access_token, token_type=TOKEN_TYPE,
-            expires_in=EXPIRATION_SECONDS, refresh_token=self.refresh_token,
-            scope=self.scopes)
 
     def get_scopes(self):
         """Returns list of scopes."""

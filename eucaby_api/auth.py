@@ -6,7 +6,7 @@ from oauthlib import common as oauth_common
 
 from eucaby_api import models
 
-oauth = f_oauth_client.OAuth()
+oauth = f_oauth_client.OAuth()  # Client for remote APIs
 
 
 class FacebookRemoteApp(f_oauth_client.OAuthRemoteApp):

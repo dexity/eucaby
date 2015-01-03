@@ -2,8 +2,10 @@
 
 import flask
 import flask_restful
+
 from eucaby_api import auth
 from eucaby_api import models
+from eucaby_api import fields as api_fields
 from eucaby_api.utils import reqparse
 from eucaby_api.utils import utils as api_utils
 
@@ -119,7 +121,7 @@ class OAuthToken(flask_restful.Resource):
             user.id, access_token, int(resp_token['expires']))
         ec_token = models.Token.create_eucaby_token(user.id)
         flask.session['user_id'] = user.id
-        return ec_token.to_response()
+        return flask_restful.marshal(ec_token, api_fields.TOKEN_FIELDS)
 
     def handle_refresh_grant(self):
         """Handles refresh token grant type."""
@@ -137,7 +139,7 @@ class OAuthToken(flask_restful.Resource):
         if token is None:
             error = dict(message='Invalid refresh token', code='invalid_token')
             return api_utils.make_error(error, 404)
-        return token.to_response()
+        return flask_restful.marshal(token, api_fields.TOKEN_FIELDS)
 
     def post(self):
         """Authentication handler."""
@@ -154,4 +156,23 @@ class OAuthToken(flask_restful.Resource):
         return self.handle_refresh_grant()
 
 
+class FriendsView(flask_restful.Resource):
+
+    """Returns list of friends."""
+
+    # @ec_oauth.require_oauth('profile')
+    def get(self):
+        # XXX: Get access token from headers
+        ec_token = models.Token.query.filter_by(access_token='').first()
+        fb_token = models.Token.query.filter_by().first()
+        try:
+            fb_friends = auth.facebook.get('')
+        except auth.f_oauth_client.OAuthException as ex:
+            error = dict(message=ex.message, code='invalid_oauth') # XXX: Finish
+            return api_utils.make_error(error, 401)
+
+        return fb_friends.data #dict(hello='world')
+
+
 api.add_resource(OAuthToken, '/oauth/token')
+api.add_resource(FriendsView, '/friends')
