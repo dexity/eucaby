@@ -46,14 +46,10 @@ class TestModels(test_base.TestCase):
 
         token_dict['access_token'] = UUID2
         # Refresh token exists
-        token = models.Token.update_token(token, token_dict)
+        token.update_token(token_dict)
         test_utils.assert_object(
             token, user_id=self.user.id, service=models.EUCABY,
             access_token=UUID2, refresh_token=UUID)
-        token_dict['refresh_token'] = 'wrongtoken'
-        # Refresh token doesn't exist, None is passed for token
-        self.assertRaises(
-            AttributeError, models.Token.update_token, None, token_dict)
 
 
 if __name__ == '__main__':

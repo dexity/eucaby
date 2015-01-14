@@ -152,7 +152,7 @@ def eucaby_tokensetter(token, request, *args, **kwargs):  # pylint: disable=unus
             user.id, fb_token['access_token'], int(fb_token['expires']))
         return models.Token.create_eucaby_token(user.id, token)
     elif request.grant_type == GRANT_TYPE_REFRESH and ec_token:
-        return models.Token.update_token(ec_token, token)
+        return ec_token.update_token(token)
     raise oauth_oauth2.InvalidRequestError('Failed to set token')
 
 

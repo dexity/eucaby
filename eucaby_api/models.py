@@ -101,16 +101,14 @@ class Token(db.Model):
         db.session.commit()
         return token
 
-    @classmethod
-    def update_token(cls, token_obj, token):
+    def update_token(self, token):
         """Refreshes existing token. Doesn't update the refresh_token."""
         # Only Eucaby can be refreshed. Facebook has no way to do that
-        token_obj.access_token = token['access_token']
-        token_obj.expires = (datetime.datetime.now() +
-                             datetime.timedelta(seconds=token['expires_in']))
-        db.session.add(token_obj)
+        self.access_token = token['access_token']
+        self.expires = (datetime.datetime.now() +
+                        datetime.timedelta(seconds=token['expires_in']))
+        db.session.add(self)
         db.session.commit()
-        return token_obj
 
     @property
     def scopes(self):
