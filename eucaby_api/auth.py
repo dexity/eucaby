@@ -58,7 +58,7 @@ if models.FACEBOOK not in oauth.remote_apps:
 
 
 @facebook.tokengetter
-def facebook_tokengetter(fb_short_token=None):
+def facebook_tokengetter():
     """Returns Facebook access token object. Used for authenticated requests."""
     # Note: remote app doesn't support tokensetter
     if flask.request.user:
@@ -125,7 +125,7 @@ def format_auth_response(resp):
     return api_utils.make_error(error, 403)
 
 
-def eucaby_clientgetter(client_id):
+def eucaby_clientgetter(client_id):  # pylint: disable=unused-argument
     """Simple client getter."""
     return Client()
 
@@ -142,7 +142,7 @@ def eucaby_tokengetter(access_token=None, refresh_token=None):
     return None
 
 
-def eucaby_tokensetter(token, request, *args, **kwargs):
+def eucaby_tokensetter(token, request, *args, **kwargs):  # pylint: disable=unused-argument
     """Creates both Eucaby and Facebook tokens."""
     user = request.user
     fb_token = request.facebook_token
@@ -252,5 +252,5 @@ class EucabyOAuth2Provider(provider.OAuth2Provider):
         return decorated
 
 eucaby_oauth = EucabyOAuth2Provider()
-eucaby_oauth._validator = EucabyValidator(
+eucaby_oauth._validator = EucabyValidator(  # pylint: disable=attribute-defined-outside-init,protected-access
     eucaby_clientgetter, eucaby_tokengetter, eucaby_tokensetter)

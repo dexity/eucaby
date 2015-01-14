@@ -1,5 +1,4 @@
 
-import mock
 import unittest
 from eucaby_api import models
 from tests.eucaby_api import base as test_base
@@ -8,12 +7,14 @@ from tests.utils import utils as test_utils
 
 UUID = '1a2b3c'
 UUID2 = '123qweasd'
+TOKEN_TYPE = 'Bearer'
 
 
 class TestModels(test_base.TestCase):
 
     def setUp(self):
         super(TestModels, self).setUp()
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
         self.user = models.User(
             username='2345', first_name='Test', last_name='User',
             email='test@example.com')
@@ -30,25 +31,29 @@ class TestModels(test_base.TestCase):
             access_token=params['access_token'], refresh_token=None)
         self.assertEqual(1, models.Token.query.count())
 
-    @mock.patch('eucaby_api.models.utils')
-    def test_create_or_update_eucaby_token(self, eucaby_utils):
+    def test_create_or_update_eucaby_token(self):
         """Tests create and update eucaby token."""
-        eucaby_utils.generate_uuid.return_value = UUID
-        token = models.Token.create_eucaby_token(self.user.id)
+        token_dict = dict(
+            access_token=UUID,
+            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
+            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=TOKEN_TYPE)
+        token = models.Token.create_eucaby_token(self.user.id, token_dict)
         test_utils.assert_object(
             token, user_id=self.user.id, service=models.EUCABY,
             access_token=UUID, refresh_token=UUID)
         self.assertEqual(1, models.Token.query.count())
 
+        token_dict['access_token'] = UUID2
         # Refresh token exists
-        eucaby_utils.generate_uuid.return_value = UUID2
-        token = models.Token.update_token(UUID)
+        token = models.Token.update_token(token, token_dict)
         test_utils.assert_object(
             token, user_id=self.user.id, service=models.EUCABY,
             access_token=UUID2, refresh_token=UUID)
-        # Refresh token doesn't exist
-        token = models.Token.update_token('wrongtoken')
-        self.assertIsNone(token)
+        token_dict['refresh_token'] = 'wrongtoken'
+        # Refresh token doesn't exist, None is passed for token
+        self.assertRaises(
+            AttributeError, models.Token.update_token, None, token_dict)
 
 
 if __name__ == '__main__':
