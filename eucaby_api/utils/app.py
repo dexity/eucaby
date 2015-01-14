@@ -11,6 +11,7 @@ def create_app():
     fapp = flask.Flask(__name__)
     fapp.register_blueprint(views.api_app)
     auth.oauth.init_app(fapp)
+    auth.eucaby_oauth.init_app(fapp)
     models.db.init_app(fapp)
     fapp.db = models.db
     return fapp

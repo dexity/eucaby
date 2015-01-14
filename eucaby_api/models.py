@@ -4,14 +4,10 @@ import datetime
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
-from eucaby_api.utils import utils
-
 db = flask_sqlalchemy.SQLAlchemy()
 
 FACEBOOK = 'facebook'
 EUCABY = 'eucaby'
-TOKEN_TYPE = 'Bearer'
-EXPIRATION_SECONDS = 60 * 60 * 24 * 30  # 30 days
 EUCABY_SCOPES = ['profile', 'history', 'location']
 
 SERVICE_TYPES = [
@@ -22,14 +18,21 @@ SERVICE_TYPES = [
 
 class User(db.Model):
 
-    """User model."""
+    """User model.
+
+    Notes:
+        email can be empty because Facebook user might be authenticated with
+        the phone number. "This field will not be returned if no valid email
+        address is available."
+        See: https://developers.facebook.com/docs/graph-api/reference/v2.2/user
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.String(50))
-    email = db.Column(db.String(75), nullable=False)
+    email = db.Column(db.String(75))
     is_staff = db.Column(db.Boolean, nullable=False, default=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     is_superuser = db.Column(db.Boolean, nullable=False, default=False)
@@ -68,8 +71,8 @@ class Token(db.Model):
     updated_date = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now,
         onupdate=datetime.datetime.now)
-    expires_date = db.Column(db.DateTime, nullable=False)
-    scopes = db.Column(db.Text)
+    expires = db.Column(db.DateTime, nullable=False)
+    scope = db.Column(db.Text)
 
     @classmethod
     def create_facebook_token(cls, user_id, access_token, expires_seconds):
@@ -77,44 +80,40 @@ class Token(db.Model):
         # Note: It doesn't create user
         token = cls(
             service=FACEBOOK, user_id=user_id, access_token=access_token,
-            expires_date=datetime.datetime.now() + datetime.timedelta(
+            expires=datetime.datetime.now() + datetime.timedelta(
                 seconds=expires_seconds))
         db.session.add(token)
         db.session.commit()
         return token
 
     @classmethod
-    def create_eucaby_token(cls, user_id):
+    def create_eucaby_token(cls, user_id, token):
         """Creates Eucaby token."""
         # Note: It doesn't create user
         token = cls(
             service=EUCABY, user_id=user_id,
-            access_token=utils.generate_uuid(),
-            refresh_token=utils.generate_uuid(),
-            expires_date=datetime.datetime.now() + datetime.timedelta(
-                seconds=EXPIRATION_SECONDS),
-            scopes=' '.join(EUCABY_SCOPES))
+            access_token=token['access_token'],
+            refresh_token=token['refresh_token'],
+            expires=datetime.datetime.now() + datetime.timedelta(
+                seconds=token['expires_in']),
+            scope=token['scope'])
         db.session.add(token)
         db.session.commit()
         return token
 
     @classmethod
-    def update_token(cls, refresh_token):
-        """Refreshes existing token."""
+    def update_token(cls, token_obj, token):
+        """Refreshes existing token. Doesn't update the refresh_token."""
         # Only Eucaby can be refreshed. Facebook has no way to do that
-        token = cls.query.filter_by(
-            refresh_token=refresh_token, service=EUCABY).first()
-        if token is None:
-            return None
-        token.access_token = utils.generate_uuid()
-        token.expires_date = (datetime.datetime.now() +
-                              datetime.timedelta(seconds=EXPIRATION_SECONDS))
-        db.session.add(token)
+        token_obj.access_token = token['access_token']
+        token_obj.expires = (datetime.datetime.now() +
+                             datetime.timedelta(seconds=token['expires_in']))
+        db.session.add(token_obj)
         db.session.commit()
-        return token
+        return token_obj
 
-    def get_scopes(self):
-        """Returns list of scopes."""
-        if self.scopes:
-            return self.scopes.split()
+    @property
+    def scopes(self):
+        if self.scope:
+            return self.scope.split()
         return []
