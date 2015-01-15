@@ -1,20 +1,10 @@
 """Api utils."""
 
-import uuid
 from flask import jsonify
 
-
-def make_error(error_dict, status_code=400):
+def make_response(resp_dict, status_code):
     """Returns error response in JSON format."""
-    error_dict = error_dict or {}
-    resp = jsonify(**error_dict)
+    resp_dict = resp_dict or {}
+    resp = jsonify(**resp_dict)
     resp.status_code = status_code
     return resp
-
-
-def generate_uuid(is_hex=True):
-    """Generates UUID in hex format."""
-    s = uuid.uuid4()
-    if is_hex:
-        return s.hex
-    return str(s)

@@ -120,9 +120,9 @@ def format_auth_response(resp):
     error_code = data['error']
     resp = code2error(error_code, message)
     if resp is not None:
-        return api_utils.make_error(*resp)
+        return api_utils.make_response(*resp)
     error = dict(message=message, code=error_code)
-    return api_utils.make_error(error, 403)
+    return api_utils.make_response(error, 403)
 
 
 def eucaby_clientgetter(client_id):  # pylint: disable=unused-argument
