@@ -15,6 +15,20 @@ UUID2 = '123qweasd'
 TOKEN_TYPE = 'Bearer'
 
 
+class GeneralTest(test_base.TestCase):
+
+    def setUp(self):
+        super(GeneralTest, self).setUp()
+        self.client = self.app.test_client()
+
+    def test_invalid_endpoint(self):
+        resp = self.client.get('/wrong')
+        not_found_error = dict(code='invalid_request', message='Not found')
+        data = json.loads(resp.data)
+        self.assertEqual(not_found_error, data)
+        self.assertEqual(404, resp.status_code)
+
+
 class TestOAuthToken(test_base.TestCase):
 
     def setUp(self):
@@ -262,6 +276,68 @@ class TestOAuthToken(test_base.TestCase):
         self.assertEqual(eucaby_error_resp, data)
         self.assertEqual(403, resp.status_code)
 
+
+class TestFriends(test_base.TestCase):
+
+    def setUp(self):
+        super(TestFriends, self).setUp()
+        self.client = self.app.test_client()
+        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)
+        self.fb_profile = dict(
+            first_name='Test', last_name='User', verified=True,
+            name='Test User', locale='en_US', gender='male',
+            email='test@example.com', id='12345',
+            link='https://www.facebook.com/app_scoped_user_id/12345/',
+            timezone=-8, updated_time='2014-12-06T21:31:50+0000')
+        self.valid_params = dict(
+            grant_type='password', service='facebook',
+            password='test_password', username='12345')
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # No token is passed
+        eucaby_unauthorized_error = dict(
+            code='invalid_request', message='Unauthorized')
+        resp = self.client.get('/friends')
+        data = json.loads(resp.data)
+        self.assertEqual(eucaby_unauthorized_error, data)
+        self.assertEqual(401, resp.status_code)
+        # Invalid token
+        resp = self.client.get(
+            '/friends', headers=dict(Authorization='Bearer {}'.format('wrong')))
+        data = json.loads(resp.data)
+        print data
+        # XXX: Should be "Invalid access token"
+
+        # self.assertEqual(eucaby_unauthorized_error, data)
+        # self.assertEqual(401, resp.status_code)
+
+
+        # No Facebook token
+        # {
+        #   "code": "invalid_oauth",
+        #   "message": "No token available"
+        # }
+
+        # Invalid Facebook token
+        # FB response
+        # {u'error': {u'code': 190, u'message': u'Invalid OAuth access token.', u'type': u'OAuthException'}}
+
+        # {"code": "service_error", "message": "Invalid OAuth access token."}
+
+    # @mock.patch('eucaby_api.auth.facebook.get')
+    # @mock.patch('eucaby_api.auth.facebook.exchange_token')
+    # def test_friends(self, fb_exchange_token, fb_get):
+    #     """Tests successful response for access token."""
+    #     # Create user, facebook and eucaby tokens
+    #     fb_exchange_token.return_value = self.fb_valid_token
+    #     fb_get.return_value = mock.Mock(data=self.fb_profile)
+    #     self.client.post('/oauth/token', data=self.valid_params)
+    #
+    #     ec_token = models.Token.query.filter_by(service=models.EUCABY)
+    #     self.client.get('/friends')
+
+        # Empty list of friends
 
 if __name__ == '__main__':
     unittest.main()
