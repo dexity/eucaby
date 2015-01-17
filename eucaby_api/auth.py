@@ -1,7 +1,6 @@
 """Authentication module."""
 
 import flask
-from flask import json
 import functools
 from flask_oauthlib import client as f_oauth_client
 from flask_oauthlib import provider
@@ -62,8 +61,8 @@ def facebook_tokengetter():
     """Returns Facebook access token object. Used for authenticated requests."""
     # Note: remote app doesn't support tokensetter
     if flask.request.user:
-        token = models.Token.query.filter(
-            user_id=flask.user.id, service=models.FACEBOOK).first()
+        token = models.Token.query.filter_by(
+            user_id=flask.request.user.id, service=models.FACEBOOK).first()
         return token.access_token, ''
     return None
 
@@ -77,52 +76,12 @@ class Client(object):
     client_id = models.EUCABY
 
     @property
-    def client_type(self):
+    def client_type(self):  # pylint: disable=no-self-use
         return 'public'
 
     @property
-    def default_scopes(self):
+    def default_scopes(self):  # pylint: disable=no-self-use
         return ['profile', 'history', 'location']
-
-
-PARAM_MISSING = 'Missing {param} parameter'
-
-
-def code2error(code, description=''):
-    def _missing(param_, code_, message_, field_message_):
-        return dict(
-            message=message_, code=code_, fields={param_: field_message_}), 400
-
-    if code == 'unsupported_grant_type':
-        return _missing(
-            'grant_type', code, 'Grant type is not supported',
-            'Grant type is missing or invalid')
-    elif code == 'invalid_request':
-        params = ('service', 'password', 'username', 'grant_type', 'scope',
-                  'refresh_token')
-        for param in params:
-            # Hack to match invalid_request description with the fields
-            key = param.replace('_', ' ')
-            if key in description:
-                return _missing(
-                    param, code, description, PARAM_MISSING.format(param=param))
-    return None
-
-
-def format_auth_response(resp):
-    """Formats auth errors."""
-    if resp.status_code == 200:
-        return resp
-    data = json.loads(resp.data)
-    message = ''
-    if 'error_description' in data:
-        message = data['error_description']
-    error_code = data['error']
-    resp = code2error(error_code, message)
-    if resp is not None:
-        return api_utils.make_response(*resp)
-    error = dict(message=message, code=error_code)
-    return api_utils.make_response(error, 403)
 
 
 def eucaby_clientgetter(client_id):  # pylint: disable=unused-argument
@@ -133,13 +92,16 @@ def eucaby_clientgetter(client_id):  # pylint: disable=unused-argument
 def eucaby_tokengetter(access_token=None, refresh_token=None):
     """Returns token object based on access_token or refresh_token."""
     # Either access_token or refresh_token can be set at a time
+    token = None
     if access_token:
-        return models.Token.query.filter_by(
+        token = models.Token.query.filter_by(
             access_token=access_token, service=models.EUCABY).first()
     elif refresh_token:
-        return models.Token.query.filter_by(
+        token = models.Token.query.filter_by(
             refresh_token=refresh_token, service=models.EUCABY).first()
-    return None
+    if token:
+        flask.request.user = token.user
+    return token
 
 
 def eucaby_tokensetter(token, request, *args, **kwargs):  # pylint: disable=unused-argument
@@ -228,14 +190,14 @@ class EucabyValidator(provider.OAuth2RequestValidator):
 
 class EucabyOAuth2Provider(provider.OAuth2Provider):
 
-    def validate_extra_params(self):
+    def validate_extra_params(self):  # pylint: disable=no-self-use
         """Validates extra params."""
         form = flask.request.form
         param = 'service'
         if (form.get('grant_type') == GRANT_TYPE_PASSWORD and
                 form.get(param) != models.FACEBOOK):
             raise oauth_oauth2.InvalidRequestError(
-                PARAM_MISSING.format(param=param))
+                api_utils.PARAM_MISSING.format(param=param))
 
     def token_handler(self, f):
         """Access or refresh token handler decorator."""
@@ -245,10 +207,10 @@ class EucabyOAuth2Provider(provider.OAuth2Provider):
                 self.validate_extra_params()
             except oauth_oauth2.OAuth2Error as e:
                 resp = flask.make_response(e.json, e.status_code)
-                return format_auth_response(resp)
+                return api_utils.format_oauthlib_response(resp)
             resp = (super(EucabyOAuth2Provider, self)
                     .token_handler(f)(*args, **kwargs))
-            return format_auth_response(resp)
+            return api_utils.format_oauthlib_response(resp)
         return decorated
 
 eucaby_oauth = EucabyOAuth2Provider()
