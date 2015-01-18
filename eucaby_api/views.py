@@ -28,7 +28,8 @@ class FriendsView(flask_restful.Resource):
 
     def get(self):  # pylint: disable=no-self-use
         user = flask.request.user
-        resp = auth.facebook.get('/{}/friends'.format(user.username))
+        resp = auth.facebook_request(
+            'get', '/{}/friends'.format(user.username))
         return api_utils.format_fb_response(resp, api_fields.FRIENDS_FIELDS)
 
 

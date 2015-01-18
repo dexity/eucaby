@@ -44,7 +44,7 @@ def format_oauthlib_response(resp):
     Args:
         resp:  Instance of Flask Response
     """
-    if resp.status_code == 200:
+    if resp.status_code in (200, 201):
         return resp
     data = json.loads(resp.data)
     message = ''
@@ -64,8 +64,9 @@ def format_fb_response(resp, fields):
     Args:
         resp: Instance of flask_oauthlib OAuthResponse
     """
-    if resp.status == 200:
+    if resp.status in (200, 201):
         return marshal(resp.data, fields)
-
+    elif 'code' in resp.data:
+        return resp
     return (dict(message=resp.data['error']['message'], code='service_error'),
             resp.status)

@@ -63,8 +63,21 @@ def facebook_tokengetter():
     if flask.request.user:
         token = models.Token.query.filter_by(
             user_id=flask.request.user.id, service=models.FACEBOOK).first()
+        flask.request.facebook_token = token
         return token.access_token, ''
     return None
+
+
+def facebook_request(method, *args, **kwargs):
+    """Performs Facebook response without exception."""
+    # Note: Flask oauthlib request can throw OAuthException in get_request_token
+    # Facebook error response doesn't throw OAuthException
+    assert method in ('get', 'post', 'put', 'delete', 'patch'), 'Invalid method'
+    try:
+        return getattr(facebook, method)(*args, **kwargs)
+    except f_oauth_client.OAuthException as e:
+        error = dict(message=e.message, code='service_error')
+        return api_utils.make_response(error, 400)
 
 
 class Client(object):
@@ -100,6 +113,7 @@ def eucaby_tokengetter(access_token=None, refresh_token=None):
         token = models.Token.query.filter_by(
             refresh_token=refresh_token, service=models.EUCABY).first()
     if token:
+        flask.request.eucaby_token = token
         flask.request.user = token.user
     return token
 
@@ -216,3 +230,8 @@ class EucabyOAuth2Provider(provider.OAuth2Provider):
 eucaby_oauth = EucabyOAuth2Provider()
 eucaby_oauth._validator = EucabyValidator(  # pylint: disable=attribute-defined-outside-init,protected-access
     eucaby_clientgetter, eucaby_tokengetter, eucaby_tokensetter)
+
+@eucaby_oauth.invalid_response
+def eucaby_invalid_response(req):  # pylint: disable=unused-argument
+    """Handles Eucaby invalid access token."""
+    return dict(code='invalid_token', message='Invalid access token'), 401
