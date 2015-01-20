@@ -1,6 +1,7 @@
 import unittest
+
+from eucaby_api import app as eucaby_app
 from eucaby_api.utils import reqparse
-from eucaby_api.utils import app as eucaby_app
 
 
 class RequestParserTest(unittest.TestCase):

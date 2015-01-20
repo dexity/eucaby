@@ -1,8 +1,9 @@
 import json
-import mock
 import unittest
-from eucaby_api.utils import app as eucaby_app
+
+import mock
 from eucaby_api import auth
+from eucaby_api import app as eucaby_app
 
 
 class FacebookRemoteAppTest(unittest.TestCase):

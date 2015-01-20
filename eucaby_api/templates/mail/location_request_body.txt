@@ -1,0 +1,4 @@
+You received location request from user {{ name }}.
+Follow the link to notify your location: {{ url }}
+
+Eucaby Team

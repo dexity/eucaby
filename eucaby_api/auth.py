@@ -112,10 +112,12 @@ def eucaby_tokengetter(access_token=None, refresh_token=None):
     elif refresh_token:
         token = models.Token.query.filter_by(
             refresh_token=refresh_token, service=models.EUCABY).first()
-    if token:
+
+    if token and token.user.is_active:  # Authentication entrance gate!
         flask.request.eucaby_token = token
         flask.request.user = token.user
-    return token
+        return token
+    return None
 
 
 def eucaby_tokensetter(token, request, *args, **kwargs):  # pylint: disable=unused-argument

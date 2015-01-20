@@ -1,8 +1,9 @@
 """Api utils."""
 
+import uuid
 from flask import json
 from flask import jsonify
-from flask_restful import marshal
+import flask_restful
 
 
 PARAM_MISSING = 'Missing {param} parameter'
@@ -65,8 +66,16 @@ def format_fb_response(resp, fields):
         resp: Instance of flask_oauthlib OAuthResponse
     """
     if resp.status in (200, 201):
-        return marshal(resp.data, fields)
+        return flask_restful.marshal(resp.data, fields)
     elif 'code' in resp.data:
         return resp
     return (dict(message=resp.data['error']['message'], code='service_error'),
             resp.status)
+
+
+def generate_uuid(is_hex=True):
+    """Generates uuid in hex form."""
+    s = uuid.uuid4()
+    if is_hex:
+        return s.hex
+    return str(s)

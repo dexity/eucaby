@@ -1,8 +1,7 @@
-
 import unittest
-from eucaby_api import models
-from eucaby_api.utils import app as eucaby_app
 
+from eucaby_api import models
+from eucaby_api import app as eucaby_app
 
 class TestCase(unittest.TestCase):
 

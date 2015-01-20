@@ -1,4 +1,5 @@
 
+import datetime
 import mock
 import unittest
 from flask import json
@@ -7,6 +8,7 @@ from eucaby_api import auth
 from eucaby_api import models
 
 from tests.eucaby_api import base as test_base
+from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
@@ -283,42 +285,28 @@ class TestFriends(test_base.TestCase):
         super(TestFriends, self).setUp()
         self.client = self.app.test_client()
         self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)
-        fb_profile = dict(
-            first_name='Test', last_name='User', verified=True,
-            name='Test User', locale='en_US', gender='male',
-            email='test@example.com', id='12345',
-            link='https://www.facebook.com/app_scoped_user_id/12345/',
-            timezone=-8, updated_time='2014-12-06T21:31:50+0000')
-        valid_params = dict(
-            grant_type='password', service='facebook',
-            password='test_password', username='12345')
-        # Create Eucaby and Facebook tokens and user
-        with mock.patch('eucaby_api.auth.facebook.get') as fb_get:
-            with mock.patch(
-                'eucaby_api.auth.facebook.exchange_token') as fb_exchange_token:
-                fb_exchange_token.return_value = self.fb_valid_token
-                fb_get.return_value = mock.Mock(data=fb_profile)
-                self.client.post('/oauth/token', data=valid_params)
+        fixtures.create_user_account(self.client)
 
     @mock.patch('eucaby_api.auth.facebook._tokengetter')
     def test_general_errors(self, fb_tokengetter):
         """Tests general errors."""
-        # No token is passed
+        # Note: Some of the tests are general to all oauth requests
+        # Test A: No token is passed
         ec_unauthorized_error = dict(
             code='invalid_token', message='Invalid access token')
         resp = self.client.get('/friends')
         data = json.loads(resp.data)
         self.assertEqual(ec_unauthorized_error, data)
         self.assertEqual(401, resp.status_code)
-        # Invalid Eucaby token
+
+        # Test B: Invalid Eucaby token
         resp = self.client.get(
             '/friends', headers=dict(Authorization='Bearer {}'.format('wrong')))
         data = json.loads(resp.data)
         self.assertEqual(ec_unauthorized_error, data)
         self.assertEqual(401, resp.status_code)
 
-        # No Facebook token, valid Eucaby token
+        # Test C: No Facebook token, valid Eucaby token
         fb_no_token_error = dict(
             code='service_error', message='No token available')
         fb_tokengetter.return_value = None
@@ -328,7 +316,7 @@ class TestFriends(test_base.TestCase):
         self.assertEqual(fb_no_token_error, data)
         self.assertEqual(400, resp.status_code)
 
-        # Invalid Facebook token, valid Eucaby token
+        # Test D: Invalid Facebook token, valid Eucaby token
         fb_invalid_token_error = dict(
             error=dict(code=190, message='Invalid OAuth access token.',
                        type='OAuthException'))
@@ -343,6 +331,28 @@ class TestFriends(test_base.TestCase):
                     Authorization='Bearer {}'.format(UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_service_error, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Test E: Eucaby token expired
+        ec_token = models.Token.query.filter_by(service=models.EUCABY)[0]
+        ec_token.expires = ec_token.expires - datetime.timedelta(days=31)
+        self.app.db.session.add(ec_token)
+        self.app.db.session.commit()
+        resp = self.client.get(
+            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_unauthorized_error, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Test F: User is not active
+        ec_token.expires = datetime.datetime.now() + datetime.timedelta(days=30)
+        ec_token.user.is_active = False
+        self.app.db.session.add(ec_token)
+        self.app.db.session.commit()
+        resp = self.client.get(
+            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_unauthorized_error, data)
         self.assertEqual(401, resp.status_code)
 
     @mock.patch('eucaby_api.auth.facebook.request')
@@ -373,6 +383,102 @@ class TestFriends(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(dict(data=[]), data)
         self.assertEqual(200, resp.status_code)
+
+
+class TestRequestLocation(test_base.TestCase):
+
+    def setUp(self):
+        super(TestRequestLocation, self).setUp()
+        self.client = self.app.test_client()
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
+        fixtures.create_user_account(self.client)
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # Invalid method
+        ec_invalid_method = dict(
+            message='Method not allowed', code='invalid_method')
+        resp = self.client.get('/location/request')
+        data = json.loads(resp.data)
+        self.assertEqual(ec_invalid_method, data)
+        self.assertEqual(405, resp.status_code)
+
+        # No parameters
+        ec_missing_params = dict(
+            message='Missing email or username parameters',
+            code='invalid_request')
+        resp = self.client.post(
+            '/location/request',
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_missing_params, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Invalid recipient email address
+        ec_invalid_email = dict(
+            fields=dict(email='Missing email or username parameters'),
+            message='Invalid request parameters', code='invalid_request')
+        resp = self.client.post(
+            '/location/request', data=dict(email='wrong'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_invalid_email, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Invalid recipient (not found or inactive)
+        resp = self.client.post(
+            '/location/request', data=dict(username='456'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        ec_user_not_found = dict(message='User not found', code='not_found')
+        self.assertEqual(ec_user_not_found, data)
+        self.assertEqual(404, resp.status_code)
+
+    def test_success(self):
+        # Valid email address
+        resp = self.client.post(
+            '/location/request', data=dict(email='test@example.com'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        # ec_user_not_found = dict(message='User not found', code='not_found')
+        # self.assertEqual(ec_user_not_found, data)
+        self.assertEqual(200, resp.status_code)
+        print data
+
+        # Test: email, ndb objects
+
+        # Valid recipient user
+        # Create valid user
+
+        # Email has preference over username if both are passed
+        pass
+
+
+class TestNotifyLocation(test_base.TestCase):
+
+    def setUp(self):
+        super(TestNotifyLocation, self).setUp()
+        self.client = self.app.test_client()
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
+        fixtures.create_user_account(self.client)
+
+
+class TestUserProfile(test_base.TestCase):
+
+    def setUp(self):
+        super(TestUserProfile, self).setUp()
+        self.client = self.app.test_client()
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
+        fixtures.create_user_account(self.client)
+
+
+class TestUserActivity(test_base.TestCase):
+
+    def setUp(self):
+        super(TestUserActivity, self).setUp()
+        self.client = self.app.test_client()
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
+        fixtures.create_user_account(self.client)
 
 
 if __name__ == '__main__':

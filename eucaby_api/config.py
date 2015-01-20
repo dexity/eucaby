@@ -15,6 +15,7 @@ class Config(object):
     )
     CSRF_ENABLED = True
     CACHE_TYPE = 'gaememcached'
+    NOREPLY_EMAIL = 'alex@eucaby.com'
 
 
 class Development(Config):

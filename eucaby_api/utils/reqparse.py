@@ -3,6 +3,8 @@
 from flask import request
 from flask_restful import reqparse
 
+from eucaby_api.utils import utils as api_utils
+
 
 class InvalidError(Exception):
 
@@ -61,3 +63,23 @@ class RequestParser(reqparse.RequestParser):
         if self.errors or self.unparsed:
             raise InvalidError(self.errors, namespace, self.unparsed)
         return namespace
+
+
+def clean_args(args, strict=False):
+    """Simple parsing handler.
+
+    Returns:
+        Dictionary of arguments or error response.
+    """
+    parser = RequestParser()
+    for arg in args:
+        parser.add_argument(arg)
+    try:
+        return parser.parse_args(strict=strict)
+    except InvalidError as e:
+        errors = e.errors
+        if strict:
+            errors.update(e.unparsed)
+        error = dict(message='Invalid request parameters',
+                     code='invalid_request', fields=errors)
+        return api_utils.make_response(error, 400)

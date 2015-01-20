@@ -1,4 +1,4 @@
-"""Models for API service."""
+"""SQL models for API service."""
 
 import datetime
 import flask_sqlalchemy
@@ -55,10 +55,15 @@ class User(db.Model):
         db.session.commit()
         return user
 
+    @property
+    def name(self):
+        return '{} {}'.format(self.first_name, self.last_name)
+
 
 class Token(db.Model):
 
     """Bearer token for Facebook or Eucaby."""
+
     id = db.Column(db.Integer, primary_key=True)
     service = db.Column(choice.ChoiceType(SERVICE_TYPES), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
