@@ -19,7 +19,7 @@ class Session(ndb.Model):
     def create(cls, sender_username, recipient_username=None,
                recipient_email=None):
         """Create Session entity."""
-        assert (recipient_username or recipient_email,
+        assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
                 'Either recipient username or email should be set')
         obj = cls(
             key=api_utils.generate_uuid(), sender_username=sender_username,
@@ -40,7 +40,7 @@ class LocationRequest(ndb.Model):
     @classmethod
     def create(cls, session):
         obj = cls(
-            token=api_utils.generate_uuid().hex, session=session,
+            token=api_utils.generate_uuid(), session=session,
             created_date=datetime.datetime.now())
         obj.put()
         return obj

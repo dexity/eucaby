@@ -77,7 +77,7 @@ class RequestLocationView(flask_restful.Resource):
         req = ndb_models.LocationRequest.create(session)
 
         # XXX: Add user configuration to receive notifications to email
-        #      (for Eucaby users)
+        #      (for Eucaby users). See #18
         if recipient_email:
             # Send email notification
             # XXX: Make host url configurable
@@ -86,7 +86,7 @@ class RequestLocationView(flask_restful.Resource):
                 url='http://eucaby-dev.appspot.com/{}'.format(req.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
-        logging.info('Location Request: {}'.format(str(req.to_dict())))
+        logging.info('Location Request: %s', str(req.to_dict()))
 
         return flask_restful.marshal(
             req, api_fields.REQUEST_LOCATION_FIELDS, envelope='data')

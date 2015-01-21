@@ -3,9 +3,13 @@ import datetime
 import mock
 import unittest
 from flask import json
+from flask_restful import inputs as fr_inputs
+
+from google.appengine.ext import testbed
 
 from eucaby_api import auth
 from eucaby_api import models
+from eucaby_api import ndb_models
 
 from tests.eucaby_api import base as test_base
 from tests.eucaby_api import fixtures
@@ -47,13 +51,7 @@ class TestOAuthToken(test_base.TestCase):
             error=dict(message=('(#803) Cannot query users by their '
                                 'username (helloworld)'),
                        type='OAuthException', code=803))
-        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)
-        self.fb_profile = dict(
-            first_name='Test', last_name='User', verified=True,
-            name='Test User', locale='en_US', gender='male',
-            email='test@example.com', id='12345',
-            link='https://www.facebook.com/app_scoped_user_id/12345/',
-            timezone=-8, updated_time='2014-12-06T21:31:50+0000')
+        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)\
         # Valid oauth params
         self.valid_params = dict(
             grant_type='password', service='facebook',
@@ -117,7 +115,7 @@ class TestOAuthToken(test_base.TestCase):
         """Tests successful response for access token."""
         # Test A: Valid token, user doesn't exist, fb profile
         fb_exchange_token.return_value = self.fb_valid_token
-        fb_get.return_value = mock.Mock(data=self.fb_profile)
+        fb_get.return_value = mock.Mock(data=fixtures.FB_PROFILE)
         ec_success_resp = dict(
             access_token=UUID,
             expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
@@ -203,7 +201,7 @@ class TestOAuthToken(test_base.TestCase):
         # Test B: Valid token, fb profile, username doesn't match fb profile id
         valid_params = self.valid_params.copy()
         valid_params['username'] = '54321'
-        fb_get.return_value = mock.Mock(data=self.fb_profile)
+        fb_get.return_value = mock.Mock(data=fixtures.FB_PROFILE)
         fb_get.side_effect = None
         resp = self.client.post('/oauth/token', data=valid_params)
         data = json.loads(resp.data)
@@ -248,7 +246,7 @@ class TestOAuthToken(test_base.TestCase):
         self.assertEqual(400, resp.status_code)
         # Create token
         fb_exchange_token.return_value = self.fb_valid_token
-        fb_get.return_value = mock.Mock(data=self.fb_profile)
+        fb_get.return_value = mock.Mock(data=fixtures.FB_PROFILE)
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
         refresh_token = data['refresh_token']
@@ -392,6 +390,14 @@ class TestRequestLocation(test_base.TestCase):
         self.client = self.app.test_client()
         self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
         fixtures.create_user_account(self.client)
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+
+    def tearDown(self):
+        self.testbed.deactivate()
 
     def test_general_errors(self):
         """Tests general errors."""
@@ -434,24 +440,71 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def test_success(self):
-        # Valid email address
+    def validate_email(self, resp, email):
+        """Validates email parameter."""
+        data = json.loads(resp.data)
+        # Check ndb objects
+        req = ndb_models.LocationRequest.query()
+        session = ndb_models.Session.query()
+        self.assertEqual(1, req.count())
+        self.assertEqual(1, session.count())
+        req = req.fetch(1)[0]
+        session = session.fetch(1)[0]
+        # Check response
+        ec_valid_email = dict(data=dict(
+            id=req.token, created_date=fr_inputs.iso8601(req.created_date),
+            session=dict(recipient_username=None, sender_username='12345',
+                         key=session.key, recipient_email=email)))
+        self.assertEqual(ec_valid_email, data)
+        self.assertEqual(200, resp.status_code)
+
+    def test_email(self):
+        """Tests valid email address."""
+        recipient_email = 'test@example.com'
         resp = self.client.post(
-            '/location/request', data=dict(email='test@example.com'),
+            '/location/request', data=dict(email=recipient_email),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        self.validate_email(resp, recipient_email)
+
+    def test_user(self):
+        """Tests valid recipient user."""
+        # Create valid user
+        user = models.User.create(
+            username='345', first_name='Test', last_name='User',
+            email='test2@example.com', gender='male')
+        resp = self.client.post(
+            '/location/request', data=dict(username=user.username),
             headers=dict(Authorization='Bearer {}'.format(UUID)))
         data = json.loads(resp.data)
-        # ec_user_not_found = dict(message='User not found', code='not_found')
-        # self.assertEqual(ec_user_not_found, data)
+        # Check ndb objects
+        req = ndb_models.LocationRequest.query()
+        session = ndb_models.Session.query()
+        self.assertEqual(1, req.count())
+        self.assertEqual(1, session.count())
+        req = req.fetch(1)[0]
+        session = session.fetch(1)[0]
+        # Check response
+        ec_valid_email = dict(data=dict(
+            id=req.token, created_date=fr_inputs.iso8601(req.created_date),
+            session=dict(
+                recipient_username='345', sender_username='12345',
+                key=session.key, recipient_email='test2@example.com')))
+        self.assertEqual(ec_valid_email, data)
         self.assertEqual(200, resp.status_code)
-        print data
 
-        # Test: email, ndb objects
-
-        # Valid recipient user
+    def test_email_user(self):
+        """Tests email and username parameters."""
         # Create valid user
-
-        # Email has preference over username if both are passed
-        pass
+        recipient_email = 'test@example.com'
+        user = models.User.create(
+            username='345', first_name='Test', last_name='User',
+            email='test2@example.com', gender='male')
+        resp = self.client.post(
+            '/location/request',
+            data=dict(email=recipient_email, username=user.username),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        # Email has preference over username if both parameters are passed
+        self.validate_email(resp, recipient_email)
 
 
 class TestNotifyLocation(test_base.TestCase):
