@@ -51,7 +51,7 @@ class TestOAuthToken(test_base.TestCase):
             error=dict(message=('(#803) Cannot query users by their '
                                 'username (helloworld)'),
                        type='OAuthException', code=803))
-        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)\
+        self.fb_valid_token = dict(access_token='someaccesstoken', expires=123)
         # Valid oauth params
         self.valid_params = dict(
             grant_type='password', service='facebook',
