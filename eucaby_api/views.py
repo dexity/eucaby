@@ -59,7 +59,7 @@ class RequestLocationView(flask_restful.Resource):
             return api_utils.make_response(error, 400)
         user = flask.request.user  # Sender
 
-        recipient_username, recipient_email = None, None
+        recipient_username, recipient_name, recipient_email = None, None, None
         # Either recipient username or email will be set, not both
         if email:  # Email has priority over username
             recipient_email = email
@@ -68,6 +68,7 @@ class RequestLocationView(flask_restful.Resource):
             if not recipient or (recipient and not recipient.is_active):
                 error = dict(message=USER_NOT_FOUND, code='not_found')
                 return api_utils.make_response(error, 404)
+            recipient_name = recipient.name
             recipient_username = recipient.username
             recipient_email = recipient.email
 
@@ -82,7 +83,8 @@ class RequestLocationView(flask_restful.Resource):
             # Send email notification
             # XXX: Make host url configurable
             body = flask.render_template(
-                'mail/location_request_body.txt', name=user.name,
+                'mail/location_request_body.txt', sender_name=user.name,
+                recipient_name=recipient_name,
                 url='http://eucaby-dev.appspot.com/{}'.format(req.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])

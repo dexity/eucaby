@@ -19,7 +19,7 @@ REQUEST_LOCATION_FIELDS = dict(
     session=rest_fields.Nested(SESSION_FIELDS)
 )
 
-REQUEST_LOCATION_FIELDS = dict(
+NOTIFY_LOCATION_FIELDS = dict(
     lat=rest_fields.String,
     lng=rest_fields.String,
     created_date=rest_fields.DateTime(dt_format='iso8601'),

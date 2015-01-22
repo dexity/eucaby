@@ -395,6 +395,7 @@ class TestRequestLocation(test_base.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -422,7 +423,7 @@ class TestRequestLocation(test_base.TestCase):
 
         # Invalid recipient email address
         ec_invalid_email = dict(
-            fields=dict(email='Missing email or username parameters'),
+            fields=dict(email='Invalid email'),
             message='Invalid request parameters', code='invalid_request')
         resp = self.client.post(
             '/location/request', data=dict(email='wrong'),
@@ -457,6 +458,10 @@ class TestRequestLocation(test_base.TestCase):
                          key=session.key, recipient_email=email)))
         self.assertEqual(ec_valid_email, data)
         self.assertEqual(200, resp.status_code)
+        # Check email content
+        messages = self.mail_stub.get_sent_messages()
+        test_utils.verify_email(
+            messages, 1, email, ['Test User', req.token, 'Join Eucaby'])
 
     def test_email(self):
         """Tests valid email address."""
@@ -470,7 +475,7 @@ class TestRequestLocation(test_base.TestCase):
         """Tests valid recipient user."""
         # Create valid user
         user = models.User.create(
-            username='345', first_name='Test', last_name='User',
+            username='345', first_name='Test2', last_name='User2',
             email='test2@example.com', gender='male')
         resp = self.client.post(
             '/location/request', data=dict(username=user.username),
@@ -491,13 +496,17 @@ class TestRequestLocation(test_base.TestCase):
                 key=session.key, recipient_email='test2@example.com')))
         self.assertEqual(ec_valid_email, data)
         self.assertEqual(200, resp.status_code)
+        messages = self.mail_stub.get_sent_messages()
+        test_utils.verify_email(
+            messages, 1, 'test2@example.com',
+            ['Hi, Test2 User2', req.token, 'Test User'])
 
     def test_email_user(self):
         """Tests email and username parameters."""
         # Create valid user
         recipient_email = 'test@example.com'
         user = models.User.create(
-            username='345', first_name='Test', last_name='User',
+            username='345', first_name='Test2', last_name='User2',
             email='test2@example.com', gender='male')
         resp = self.client.post(
             '/location/request',
@@ -514,6 +523,9 @@ class TestNotifyLocation(test_base.TestCase):
         self.client = self.app.test_client()
         self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
         fixtures.create_user_account(self.client)
+
+    def test_general_errors(self):
+        pass
 
 
 class TestUserProfile(test_base.TestCase):
