@@ -18,6 +18,7 @@ from tests.utils import utils as test_utils
 
 UUID = '1z2x3c'
 UUID2 = '123qweasd'
+LATLNG = '123.45,-234.56'
 TOKEN_TYPE = 'Bearer'
 
 
@@ -403,12 +404,8 @@ class TestRequestLocation(test_base.TestCase):
     def test_general_errors(self):
         """Tests general errors."""
         # Invalid method
-        ec_invalid_method = dict(
-            message='Method not allowed', code='invalid_method')
-        resp = self.client.get('/location/request')
-        data = json.loads(resp.data)
-        self.assertEqual(ec_invalid_method, data)
-        self.assertEqual(405, resp.status_code)
+        test_utils.verify_invalid_methods(
+            self.client, ['get'], '/location/request')
 
         # No parameters
         ec_missing_params = dict(
@@ -441,7 +438,7 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def validate_email(self, resp, email):
+    def verify_email(self, resp, email):
         """Validates email parameter."""
         data = json.loads(resp.data)
         # Check ndb objects
@@ -469,7 +466,7 @@ class TestRequestLocation(test_base.TestCase):
         resp = self.client.post(
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(UUID)))
-        self.validate_email(resp, recipient_email)
+        self.verify_email(resp, recipient_email)
 
     def test_user(self):
         """Tests valid recipient user."""
@@ -513,7 +510,7 @@ class TestRequestLocation(test_base.TestCase):
             data=dict(email=recipient_email, username=user.username),
             headers=dict(Authorization='Bearer {}'.format(UUID)))
         # Email has preference over username if both parameters are passed
-        self.validate_email(resp, recipient_email)
+        self.verify_email(resp, recipient_email)
 
 
 class TestNotifyLocation(test_base.TestCase):
@@ -523,8 +520,82 @@ class TestNotifyLocation(test_base.TestCase):
         self.client = self.app.test_client()
         self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
         fixtures.create_user_account(self.client)
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
+    def tearDown(self):
+        self.testbed.deactivate()
 
     def test_general_errors(self):
+        """Tests general errors."""
+        # Invalid method
+        test_utils.verify_invalid_methods(
+            self.client, ['get'], '/location/notify')
+
+        # No parameters
+        ec_missing_params = dict(
+            message='Invalid request parameters', code='invalid_request',
+            fields=dict(latlng='Missing or invalid latlng parameter'))
+        resp = self.client.post(
+            '/location/notify',
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_missing_params, data)
+        self.assertEqual(400, resp.status_code)
+
+        # No request_id, email or username
+        ec_missing_params = dict(
+            message='Missing request_id, email or username parameters',
+            code='invalid_request')
+        resp = self.client.post(
+            '/location/notify', data=dict(latlng=LATLNG),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_missing_params, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Invalid recipient email address
+        ec_invalid_email = dict(
+            fields=dict(email='Invalid email'),
+            message='Invalid request parameters', code='invalid_request')
+        resp = self.client.post(
+            '/location/notify', data=dict(latlng=LATLNG, email='wrong'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_invalid_email, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Request not found
+        resp = self.client.post(
+            '/location/notify', data=dict(latlng=LATLNG, request_id='456'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        ec_user_not_found = dict(message='Request not found', code='not_found')
+        self.assertEqual(ec_user_not_found, data)
+        self.assertEqual(404, resp.status_code)
+
+        # Invalid recipient (not found or inactive)
+        resp = self.client.post(
+            '/location/request', data=dict(latlng=LATLNG, username='456'),
+            headers=dict(Authorization='Bearer {}'.format(UUID)))
+        data = json.loads(resp.data)
+        ec_user_not_found = dict(message='User not found', code='not_found')
+        self.assertEqual(ec_user_not_found, data)
+        self.assertEqual(404, resp.status_code)
+
+    def test_request_id(self):
+        pass
+
+
+    def test_email(self):
+        pass
+
+
+    def test_username(self):
         pass
 
 

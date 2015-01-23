@@ -48,31 +48,12 @@ class RequestLocationView(flask_restful.Resource):
     """Performs user's location request."""
     method_decorators = [auth.eucaby_oauth.require_oauth('location')]
 
-    def post(self):  # pylint: disable=no-self-use
-        args = reqparse.clean_args(api_args.REQUEST_LOCATION_ARGS)
-        if isinstance(args, flask.Response):
-            return args
-        username, email = args['username'], args['email']
-        if not (username or email):
-            error = dict(message=api_args.MISSING_EMAIL_USERNAME,
-                         code='invalid_request')
-            return api_utils.make_response(error, 400)
+    @classmethod
+    def handle_request(cls, recipient, recipient_email):
+        """Handles general operations of the request."""
+        recipient_username = (recipient and recipient.username) or None
+        recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
-
-        recipient_username, recipient_name, recipient_email = None, None, None
-        # Either recipient username or email will be set, not both
-        if email:  # Email has priority over username
-            recipient_email = email
-        elif username:
-            recipient = models.User.query.filter_by(username=username).first()
-            if not recipient or (recipient and not recipient.is_active):
-                error = dict(message=USER_NOT_FOUND, code='not_found')
-                return api_utils.make_response(error, 404)
-            recipient_name = recipient.name
-            recipient_username = recipient.username
-            recipient_email = recipient.email
-
-        noreply_email = current_app.config['NOREPLY_EMAIL']
         session = ndb_models.Session.create(
             user.username, recipient_username, recipient_email)
         req = ndb_models.LocationRequest.create(session)
@@ -82,6 +63,7 @@ class RequestLocationView(flask_restful.Resource):
         if recipient_email:
             # Send email notification
             # XXX: Make host url configurable
+            noreply_email = current_app.config['NOREPLY_EMAIL']
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name,
@@ -89,9 +71,46 @@ class RequestLocationView(flask_restful.Resource):
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
-
         return flask_restful.marshal(
             req, api_fields.REQUEST_LOCATION_FIELDS, envelope='data')
+
+    @classmethod
+    def handle_email(cls, email):
+        """Handles email parameter."""
+        return cls.handle_request(None, email)
+
+    @classmethod
+    def handle_username(cls, username):
+        """Handles username parameter."""
+        recipient = models.User.query.filter_by(username=username).first()
+        if not recipient or (recipient and not recipient.is_active):
+            error = dict(message=USER_NOT_FOUND, code='not_found')
+            return api_utils.make_response(error, 404)
+
+        # Note:
+        #     Recipient email can be empty because Facebook doesn't guarantee it
+        # See:
+        #     https://developers.facebook.com/docs/graph-api/reference/v2.2/user
+        #     "This field will not be returned if no valid email address is
+        #     available."
+
+        return cls.handle_request(recipient, recipient.email)
+
+    def post(self):
+        args = reqparse.clean_args(api_args.REQUEST_LOCATION_ARGS)
+        if isinstance(args, flask.Response):
+            return args
+
+        username, email = args['username'], args['email']
+        # Email has priority over username
+        if email:
+            return self.handle_email(email)
+        elif username:
+            return self.handle_username(username)
+
+        error = dict(message=api_args.MISSING_EMAIL_USERNAME,
+                     code='invalid_request')
+        return api_utils.make_response(error, 400)
 
 
 class NotifyLocationView(flask_restful.Resource):
@@ -99,7 +118,61 @@ class NotifyLocationView(flask_restful.Resource):
     """Notifies user's location."""
     method_decorators = [auth.eucaby_oauth.require_oauth('location')]
 
-    def post(self):  # pylint: disable=no-self-use
+    @classmethod
+    def handle_request_id(cls, request_id):
+        """Handles request_id parameter."""
+        loc_req = ndb_models.LocationRequest.query(
+            ndb_models.LocationRequest.token == request_id).fetch(1)
+        if not loc_req:
+            error = dict(message='Request not found', code='not_found')
+            return api_utils.make_response(error, 404)
+
+    @classmethod
+    def handle_email(cls, email):
+        pass
+
+    @classmethod
+    def handle_username(cls, username):
+        pass
+
+    def post(self):
+        args = reqparse.clean_args(api_args.NOTIFY_LOCATION_ARGS)
+        if isinstance(args, flask.Response):
+            return args
+
+        username, email, request_id = (
+            args['username'], args['email'], args['request_id'])
+        # Preference chain: request_id, email, username
+        if request_id:
+            return self.handle_request_id(request_id)
+        elif email:
+            return self.handle_email(email)
+        elif username:
+            return self.handle_username(username)
+
+        error = dict(message=api_args.MISSING_EMAIL_USERNAME_REQ,
+                     code='invalid_request')
+        return api_utils.make_response(error, 400)
+
+        # user = flask.request.user  # Sender
+        # recipient_username, recipient_name, recipient_email = None, None, None
+        # # Either recipient username or email will be set, not both
+        # if email:  # Email has priority over username
+        #     recipient_email = email
+        # elif username:
+        #     recipient = models.User.query.filter_by(username=username).first()
+        #     if not recipient or (recipient and not recipient.is_active):
+        #         error = dict(message=USER_NOT_FOUND, code='not_found')
+        #         return api_utils.make_response(error, 404)
+        #     recipient_name = recipient.name
+        #     recipient_username = recipient.username
+        #     recipient_email = recipient.email
+        #
+        # noreply_email = current_app.config['NOREPLY_EMAIL']
+        # session = ndb_models.Session.create(
+        #     user.username, recipient_username, recipient_email)
+        # req = ndb_models.LocationRequest.create(session)
+
         # XXX: Implement
         # session = core_models.Session.create(
         #     request.sender_email, request.receiver_email)
@@ -107,7 +180,7 @@ class NotifyLocationView(flask_restful.Resource):
         # kwargs = resp.to_dict()
         # logging.info(kwargs)
         # return api_messages.Response(**kwargs)
-        return
+        # return
 
 
 class UserActivityView(flask_restful.Resource):

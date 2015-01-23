@@ -1,4 +1,4 @@
-
+import json
 
 def assert_object(obj, **kwargs):
     for k, v in kwargs.items():
@@ -27,3 +27,14 @@ def verify_email(messages, num, mail_to, in_list):
         assert mail_to[i] == message.to
         for in_str in in_list[i]:
             assert in_str in mail_body
+
+
+def verify_invalid_methods(client, invalid_methods, endpoint):
+    """Verifies invalid methods."""
+    ec_invalid_method = dict(
+        message='Method not allowed', code='invalid_method')
+    for method in invalid_methods:
+        resp = getattr(client, method)(endpoint)
+        data = json.loads(resp.data)
+        assert ec_invalid_method == data
+        assert 405 == resp.status_code
