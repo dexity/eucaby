@@ -55,6 +55,22 @@ class User(db.Model):
         db.session.commit()
         return user
 
+    @classmethod
+    def get_by_username(cls, username):
+        """Returns user by username or None."""
+        return cls.get_by(username=username)
+
+    @classmethod
+    def get_by_email(cls, email):
+        """Returns user by email or None."""
+        return cls.get_by(email=email)
+
+    @classmethod
+    def get_by(cls, **filter_params):
+        """Returns user by filter parameters or None."""
+        filter_params.update(dict(is_active=True))
+        return cls.query.filter_by(**filter_params).first()
+
     @property
     def name(self):
         return '{} {}'.format(self.first_name, self.last_name)

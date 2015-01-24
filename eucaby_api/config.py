@@ -15,6 +15,8 @@ class Config(object):
     )
     CSRF_ENABLED = True
     CACHE_TYPE = 'gaememcached'
+    # XXX: Make host url configurable
+    EUCABY_URL = 'http://eucaby-dev.appspot.com'
     NOREPLY_EMAIL = 'alex@eucaby.com'
 
 

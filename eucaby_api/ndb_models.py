@@ -14,6 +14,7 @@ class Session(ndb.Model):
     sender_username = ndb.StringProperty(required=True, indexed=True)
     recipient_username = ndb.StringProperty(indexed=True)
     recipient_email = ndb.StringProperty(indexed=True)
+    complete = ndb.BooleanProperty(default=False, indexed=True)
 
     @classmethod
     def create(cls, sender_username, recipient_username=None,
@@ -65,7 +66,6 @@ class LocationResponse(ndb.Model):
         return obj
 
     def to_dict(self):
-
         return dict(
             location=dict(
                 lat=self.location.lat, lng=self.location.lon),

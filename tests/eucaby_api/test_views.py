@@ -16,12 +16,6 @@ from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
-UUID = '1z2x3c'
-UUID2 = '123qweasd'
-LATLNG = '123.45,-234.56'
-TOKEN_TYPE = 'Bearer'
-
-
 class GeneralTest(test_base.TestCase):
 
     def setUp(self):
@@ -42,7 +36,8 @@ class TestOAuthToken(test_base.TestCase):
         super(TestOAuthToken, self).setUp()
         # I couldn't mock oauthlib.oauth2.rfc6749.tokens.random_token_generator
         # so I decided to set the config parameter
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
+        generator = lambda(x): fixtures.UUID
+        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = generator
         self.client = self.app.test_client()
         # Facebook responses
         self.fb_invalid_token = dict(
@@ -118,10 +113,10 @@ class TestOAuthToken(test_base.TestCase):
         fb_exchange_token.return_value = self.fb_valid_token
         fb_get.return_value = mock.Mock(data=fixtures.FB_PROFILE)
         ec_success_resp = dict(
-            access_token=UUID,
+            access_token=fixtures.UUID,
             expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=TOKEN_TYPE)
+            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
         self.assertEqual(ec_success_resp, data)
@@ -142,7 +137,7 @@ class TestOAuthToken(test_base.TestCase):
             access_token='someaccesstoken', refresh_token=None)
         test_utils.assert_object(
             ec_token, service=models.EUCABY, user_id=user.id,
-            access_token=UUID, refresh_token=UUID)
+            access_token=fixtures.UUID, refresh_token=fixtures.UUID)
         models.Token.query.delete()  # Clean up tokens
 
         # Test B: Valid token, user exists, fb profile
@@ -169,7 +164,7 @@ class TestOAuthToken(test_base.TestCase):
             access_token='anotheraccesstoken', refresh_token=None)
         test_utils.assert_object(
             ec_token, service=models.EUCABY, user_id=user.id,
-            access_token=UUID, refresh_token=UUID)
+            access_token=fixtures.UUID, refresh_token=fixtures.UUID)
         models.Token.query.delete()
 
         # Test C: Extra parameters are ignored
@@ -218,10 +213,10 @@ class TestOAuthToken(test_base.TestCase):
         # Valid token, user exists, fb profile error
         # FB profile error doesn't affect access tokens creation
         ec_success_resp = dict(
-            access_token=UUID,
+            access_token=fixtures.UUID,
             expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=TOKEN_TYPE)
+            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         fb_get.side_effect = side_effect
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
@@ -258,10 +253,10 @@ class TestOAuthToken(test_base.TestCase):
         valid_params = dict(
             grant_type='refresh_token', refresh_token=refresh_token)
         ec_success_resp = dict(
-            access_token=UUID,
+            access_token=fixtures.UUID,
             expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=TOKEN_TYPE)
+            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
 
         resp = self.client.post('/oauth/token', data=valid_params)
         data = json.loads(resp.data)
@@ -283,8 +278,7 @@ class TestFriends(test_base.TestCase):
     def setUp(self):
         super(TestFriends, self).setUp()
         self.client = self.app.test_client()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        fixtures.create_user_account(self.client)
+        fixtures.create_user()
 
     @mock.patch('eucaby_api.auth.facebook._tokengetter')
     def test_general_errors(self, fb_tokengetter):
@@ -310,7 +304,8 @@ class TestFriends(test_base.TestCase):
             code='service_error', message='No token available')
         fb_tokengetter.return_value = None
         resp = self.client.get(
-            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(fb_no_token_error, data)
         self.assertEqual(400, resp.status_code)
@@ -327,7 +322,7 @@ class TestFriends(test_base.TestCase):
             fb_tokengetter.return_value = ('wrong', '')
             resp = self.client.get(
                 '/friends', headers=dict(
-                    Authorization='Bearer {}'.format(UUID)))
+                    Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_service_error, data)
         self.assertEqual(401, resp.status_code)
@@ -338,7 +333,8 @@ class TestFriends(test_base.TestCase):
         self.app.db.session.add(ec_token)
         self.app.db.session.commit()
         resp = self.client.get(
-            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_unauthorized_error, data)
         self.assertEqual(401, resp.status_code)
@@ -349,7 +345,8 @@ class TestFriends(test_base.TestCase):
         self.app.db.session.add(ec_token)
         self.app.db.session.commit()
         resp = self.client.get(
-            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_unauthorized_error, data)
         self.assertEqual(401, resp.status_code)
@@ -369,7 +366,8 @@ class TestFriends(test_base.TestCase):
                   dict(name='User2', username='456')])
         fb_request.return_value = mock.Mock(data=fb_friends, status=200)
         resp = self.client.get(
-            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_resp, data)
         self.assertEqual(200, resp.status_code)
@@ -378,7 +376,8 @@ class TestFriends(test_base.TestCase):
         fb_friends['data'] = []
         fb_request.return_value = mock.Mock(data=fb_friends, status=200)
         resp = self.client.get(
-            '/friends', headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(dict(data=[]), data)
         self.assertEqual(200, resp.status_code)
@@ -389,8 +388,12 @@ class TestRequestLocation(test_base.TestCase):
     def setUp(self):
         super(TestRequestLocation, self).setUp()
         self.client = self.app.test_client()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        fixtures.create_user_account(self.client)
+        self.user = fixtures.create_user()
+        self.user2 = fixtures.create_user(
+            user_kwargs=dict(username='3456', first_name='Test2',
+                             last_name='User2', email='test2@example.com'),
+            ec_token_kwargs=dict(access_token='111', refresh_token='222'),
+            fb_access_token='someaccesstoken2')
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
@@ -400,6 +403,31 @@ class TestRequestLocation(test_base.TestCase):
 
     def tearDown(self):
         self.testbed.deactivate()
+
+    def _verify_email(self, resp, recipient_username, recipient_email, in_list):
+        """Validates email parameter."""
+        # Assume that self.user is using self.client
+        data = json.loads(resp.data)
+        # Check ndb objects
+        req = ndb_models.LocationRequest.query()
+        session = ndb_models.Session.query()
+        self.assertEqual(1, req.count())
+        self.assertEqual(1, session.count())
+        req = req.fetch(1)[0]
+        session = session.fetch(1)[0]
+        # Check response
+        ec_valid_email = dict(data=dict(
+            id=req.token, created_date=fr_inputs.iso8601(req.created_date),
+            session=dict(
+                recipient_username=recipient_username,
+                sender_username=self.user.username, key=session.key,
+                recipient_email=recipient_email)))
+        self.assertEqual(ec_valid_email, data)
+        self.assertEqual(200, resp.status_code)
+        # Check email content
+        messages = self.mail_stub.get_sent_messages()
+        test_utils.verify_email(
+            messages, 1, recipient_email, in_list + [req.token, ])
 
     def test_general_errors(self):
         """Tests general errors."""
@@ -413,7 +441,7 @@ class TestRequestLocation(test_base.TestCase):
             code='invalid_request')
         resp = self.client.post(
             '/location/request',
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_missing_params, data)
         self.assertEqual(400, resp.status_code)
@@ -424,7 +452,7 @@ class TestRequestLocation(test_base.TestCase):
             message='Invalid request parameters', code='invalid_request')
         resp = self.client.post(
             '/location/request', data=dict(email='wrong'),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_invalid_email, data)
         self.assertEqual(400, resp.status_code)
@@ -432,85 +460,47 @@ class TestRequestLocation(test_base.TestCase):
         # Invalid recipient (not found or inactive)
         resp = self.client.post(
             '/location/request', data=dict(username='456'),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_user_not_found = dict(message='User not found', code='not_found')
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def verify_email(self, resp, email):
-        """Validates email parameter."""
-        data = json.loads(resp.data)
-        # Check ndb objects
-        req = ndb_models.LocationRequest.query()
-        session = ndb_models.Session.query()
-        self.assertEqual(1, req.count())
-        self.assertEqual(1, session.count())
-        req = req.fetch(1)[0]
-        session = session.fetch(1)[0]
-        # Check response
-        ec_valid_email = dict(data=dict(
-            id=req.token, created_date=fr_inputs.iso8601(req.created_date),
-            session=dict(recipient_username=None, sender_username='12345',
-                         key=session.key, recipient_email=email)))
-        self.assertEqual(ec_valid_email, data)
-        self.assertEqual(200, resp.status_code)
-        # Check email content
-        messages = self.mail_stub.get_sent_messages()
-        test_utils.verify_email(
-            messages, 1, email, ['Test User', req.token, 'Join Eucaby'])
-
-    def test_email(self):
-        """Tests valid email address."""
-        recipient_email = 'test@example.com'
+    def test_new_email(self):
+        """Tests valid new email address."""
+        recipient_email = 'testnew@example.com'
         resp = self.client.post(
             '/location/request', data=dict(email=recipient_email),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
-        self.verify_email(resp, recipient_email)
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        self._verify_email(resp, None, recipient_email,
+                           ['from Test User', 'Join Eucaby'])
+
+    def test_existing_email(self):
+        """Tests valid existing email address."""
+        recipient_email = 'test2@example.com'
+        resp = self.client.post(
+            '/location/request', data=dict(email=recipient_email),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        self._verify_email(resp, self.user2.username, recipient_email,
+                           ['Hi, Test2 User2', 'from Test User'])
 
     def test_user(self):
         """Tests valid recipient user."""
-        # Create valid user
-        user = models.User.create(
-            username='345', first_name='Test2', last_name='User2',
-            email='test2@example.com', gender='male')
         resp = self.client.post(
-            '/location/request', data=dict(username=user.username),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
-        data = json.loads(resp.data)
-        # Check ndb objects
-        req = ndb_models.LocationRequest.query()
-        session = ndb_models.Session.query()
-        self.assertEqual(1, req.count())
-        self.assertEqual(1, session.count())
-        req = req.fetch(1)[0]
-        session = session.fetch(1)[0]
-        # Check response
-        ec_valid_email = dict(data=dict(
-            id=req.token, created_date=fr_inputs.iso8601(req.created_date),
-            session=dict(
-                recipient_username='345', sender_username='12345',
-                key=session.key, recipient_email='test2@example.com')))
-        self.assertEqual(ec_valid_email, data)
-        self.assertEqual(200, resp.status_code)
-        messages = self.mail_stub.get_sent_messages()
-        test_utils.verify_email(
-            messages, 1, 'test2@example.com',
-            ['Hi, Test2 User2', req.token, 'Test User'])
+            '/location/request', data=dict(username=self.user2.username),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        self._verify_email(resp, self.user2.username, self.user2.email,
+                           ['Hi, Test2 User2', 'from Test User'])
 
     def test_email_user(self):
         """Tests email and username parameters."""
-        # Create valid user
-        recipient_email = 'test@example.com'
-        user = models.User.create(
-            username='345', first_name='Test2', last_name='User2',
-            email='test2@example.com', gender='male')
+        recipient_email = 'testnew@example.com'
         resp = self.client.post(
-            '/location/request',
-            data=dict(email=recipient_email, username=user.username),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
-        # Email has preference over username if both parameters are passed
-        self.verify_email(resp, recipient_email)
+            '/location/request', data=dict(
+                email=recipient_email, username=self.user2.username),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        self._verify_email(resp, None, recipient_email,
+                           ['from Test User', 'Join Eucaby'])
 
 
 class TestNotifyLocation(test_base.TestCase):
@@ -518,8 +508,7 @@ class TestNotifyLocation(test_base.TestCase):
     def setUp(self):
         super(TestNotifyLocation, self).setUp()
         self.client = self.app.test_client()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        fixtures.create_user_account(self.client)
+        fixtures.create_user()
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
@@ -542,7 +531,7 @@ class TestNotifyLocation(test_base.TestCase):
             fields=dict(latlng='Missing or invalid latlng parameter'))
         resp = self.client.post(
             '/location/notify',
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_missing_params, data)
         self.assertEqual(400, resp.status_code)
@@ -552,8 +541,8 @@ class TestNotifyLocation(test_base.TestCase):
             message='Missing request_id, email or username parameters',
             code='invalid_request')
         resp = self.client.post(
-            '/location/notify', data=dict(latlng=LATLNG),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/location/notify', data=dict(latlng=fixtures.LATLNG),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_missing_params, data)
         self.assertEqual(400, resp.status_code)
@@ -563,16 +552,18 @@ class TestNotifyLocation(test_base.TestCase):
             fields=dict(email='Invalid email'),
             message='Invalid request parameters', code='invalid_request')
         resp = self.client.post(
-            '/location/notify', data=dict(latlng=LATLNG, email='wrong'),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/location/notify', data=dict(
+                latlng=fixtures.LATLNG, email='wrong'),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_invalid_email, data)
         self.assertEqual(400, resp.status_code)
 
         # Request not found
         resp = self.client.post(
-            '/location/notify', data=dict(latlng=LATLNG, request_id='456'),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/location/notify', data=dict(
+                latlng=fixtures.LATLNG, request_id='456'),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_user_not_found = dict(message='Request not found', code='not_found')
         self.assertEqual(ec_user_not_found, data)
@@ -580,20 +571,51 @@ class TestNotifyLocation(test_base.TestCase):
 
         # Invalid recipient (not found or inactive)
         resp = self.client.post(
-            '/location/request', data=dict(latlng=LATLNG, username='456'),
-            headers=dict(Authorization='Bearer {}'.format(UUID)))
+            '/location/request', data=dict(
+                latlng=fixtures.LATLNG, username='456'),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_user_not_found = dict(message='User not found', code='not_found')
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
     def test_request_id(self):
-        pass
-
+        # Create request
+        # XXX: Create user
+        resp = self.client.post(
+            '/location/request', data=dict(email='test@example.com'),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
+        request_id = resp.data['data']['id']
+        # Create second user
+        resp = self.client.post(
+            '/location/notify', data=dict(
+                latlng=fixtures.LATLNG, request_id=request_id),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        print data
+        # # Check ndb objects
+        # req = ndb_models.LocationRequest.query()
+        # session = ndb_models.Session.query()
+        # self.assertEqual(1, req.count())
+        # self.assertEqual(1, session.count())
+        # req = req.fetch(1)[0]
+        # session = session.fetch(1)[0]
+        # # Check response
+        # ec_valid_email = dict(data=dict(
+        #     id=req.token, created_date=fr_inputs.iso8601(req.created_date),
+        #     session=dict(
+        #         recipient_username='345', sender_username='12345',
+        #         key=session.key, recipient_email='test2@example.com')))
+        # self.assertEqual(ec_valid_email, data)
+        self.assertEqual(200, resp.status_code)
+        # messages = self.mail_stub.get_sent_messages()
+        # test_utils.verify_email(
+        #     messages, 1, 'test@example.com',
+        #     ['Hi, Test2 User2', req.token, 'Test User'])
+        # Idempotent operation
 
     def test_email(self):
         pass
-
 
     def test_username(self):
         pass
@@ -604,8 +626,7 @@ class TestUserProfile(test_base.TestCase):
     def setUp(self):
         super(TestUserProfile, self).setUp()
         self.client = self.app.test_client()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        fixtures.create_user_account(self.client)
+        fixtures.create_user()
 
 
 class TestUserActivity(test_base.TestCase):
@@ -613,8 +634,7 @@ class TestUserActivity(test_base.TestCase):
     def setUp(self):
         super(TestUserActivity, self).setUp()
         self.client = self.app.test_client()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
-        fixtures.create_user_account(self.client)
+        fixtures.create_user()
 
 
 if __name__ == '__main__':
