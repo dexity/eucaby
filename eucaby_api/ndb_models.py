@@ -6,7 +6,16 @@ from google.appengine.ext import ndb
 from eucaby_api.utils import utils as api_utils
 
 
-class Session(ndb.Model):
+class BaseModel(ndb.Model):
+
+    """Base model."""
+
+    @property
+    def id(self):
+        return self.key.id()
+
+
+class Session(BaseModel):
 
     """Session model to keep track location requests."""
 
@@ -33,7 +42,7 @@ class Session(ndb.Model):
         return self._to_dict()
 
 
-class LocationRequest(ndb.Model):
+class LocationRequest(BaseModel):
     token = ndb.StringProperty(required=True, indexed=True)  # ?
     session = ndb.StructuredProperty(Session, required=True)
     created_date = ndb.DateTimeProperty(required=True)
@@ -52,7 +61,7 @@ class LocationRequest(ndb.Model):
             created_date=str(self.created_date))
 
 
-class LocationResponse(ndb.Model):
+class LocationResponse(BaseModel):
     location = ndb.GeoPtProperty(required=True)
     session = ndb.StructuredProperty(Session, required=True)
     created_date = ndb.DateTimeProperty(required=True)

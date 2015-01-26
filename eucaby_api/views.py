@@ -61,8 +61,8 @@ class RequestLocationView(flask_restful.Resource):
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
         if recipient_email:
-            # Send email notification to recipient
             # Send email copy to sender?
+            # Send email notification to recipient
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             body = flask.render_template(
@@ -108,8 +108,8 @@ class RequestLocationView(flask_restful.Resource):
         elif username:
             return self.handle_username(username)
 
-        error = dict(message=api_args.MISSING_EMAIL_USERNAME,
-                     code='invalid_request')
+        error = dict(
+            message=api_args.MISSING_EMAIL_USERNAME, code='invalid_request')
         return api_utils.make_response(error, 400)
 
 
@@ -129,13 +129,14 @@ class NotifyLocationView(flask_restful.Resource):
             session = ndb_models.Session.create(
                 user.username, recipient_username, recipient_email)
         # Create location response
+        # Note: There might be several location responses for a single session
         loc_resp = ndb_models.LocationResponse.create(session, latlng)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
         if recipient_email:
-            # Send email notification to recipient
             # Send email copy to sender?
+            # Send email notification to recipient
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             maps_url = 'https://www.google.com/maps/place'
@@ -151,15 +152,15 @@ class NotifyLocationView(flask_restful.Resource):
             loc_resp, api_fields.NOTIFY_LOCATION_FIELDS, envelope='data')
 
     @classmethod
-    def handle_request_id(cls, request_id, latlng):
-        """Handles request_id parameter."""
+    def handle_request_token(cls, request_token, latlng):
+        """Handles request_token parameter."""
         # Get location request
         loc_req = ndb_models.LocationRequest.query(
-            ndb_models.LocationRequest.token == request_id).fetch(1)
+            ndb_models.LocationRequest.token == request_token).fetch(1)
         if not loc_req:
             error = dict(message='Request not found', code='not_found')
             return api_utils.make_response(error, 404)
-        session = loc_req.session
+        session = loc_req[0].session
         # Get recipient which is sender in the session
         recipient = models.User.get_by_username(session.sender_username)
         if not recipient:
@@ -172,23 +173,29 @@ class NotifyLocationView(flask_restful.Resource):
     @classmethod
     def handle_email(cls, email, latlng):
         """Handles email parameter."""
-        pass
+        recipient = models.User.get_by_email(email)
+        return cls.handle_request(recipient, email, latlng)
 
     @classmethod
     def handle_username(cls, username, latlng):
         """Handles username parameter."""
-        pass
+        recipient = models.User.get_by_username(username)
+        if not recipient:
+            error = dict(message=USER_NOT_FOUND, code='not_found')
+            return api_utils.make_response(error, 404)
+        return cls.handle_request(recipient, recipient.email, latlng)
 
     def post(self):
         args = reqparse.clean_args(api_args.NOTIFY_LOCATION_ARGS)
         if isinstance(args, flask.Response):
             return args
 
-        username, email, request_id, latlng = (
-            args['username'], args['email'], args['request_id'], args['latlng'])
-        # Preference chain: request_id, email, username
-        if request_id:
-            return self.handle_request_id(request_id, latlng)
+        username, email, request_token, latlng = (
+            args['username'], args['email'], args['request_token'],
+            args['latlng'])
+        # Preference chain: request_token, email, username
+        if request_token:
+            return self.handle_request_token(request_token, latlng)
         elif email:
             return self.handle_email(email, latlng)
         elif username:

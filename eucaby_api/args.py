@@ -13,7 +13,8 @@ LATLNG_REGEX = re.compile(LATLNG_REGEX_PATTERN)
 INVALID_EMAIL = 'Invalid email'
 INVALID_LATLNG = 'Missing or invalid latlng parameter'
 MISSING_EMAIL_USERNAME = 'Missing email or username parameters'
-MISSING_EMAIL_USERNAME_REQ = 'Missing request_id, email or username parameters'
+MISSING_EMAIL_USERNAME_REQ = (
+    'Missing request_token, email or username parameters')
 
 
 class ValidationError(Exception):
@@ -42,7 +43,7 @@ REQUEST_LOCATION_ARGS = [
 NOTIFY_LOCATION_ARGS = [
     reqparse.Argument(name='email', type=email, help=INVALID_EMAIL),
     reqparse.Argument(name='username', type=str),
-    reqparse.Argument(name='request_id', type=str),
+    reqparse.Argument(name='request_token', type=str),
     reqparse.Argument(name='latlng', type=latlng, required=True,
                       help=INVALID_LATLNG),
 ]

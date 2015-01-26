@@ -2,19 +2,14 @@
 import unittest
 from eucaby_api import models
 from tests.eucaby_api import base as test_base
+from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
-
-
-UUID = '1a2b3c'
-UUID2 = '123qweasd'
-TOKEN_TYPE = 'Bearer'
 
 
 class TestModels(test_base.TestCase):
 
     def setUp(self):
         super(TestModels, self).setUp()
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = lambda(x): UUID
         self.user = models.User(
             username='2345', first_name='Test', last_name='User',
             email='test@example.com')
@@ -34,22 +29,22 @@ class TestModels(test_base.TestCase):
     def test_create_or_update_eucaby_token(self):
         """Tests create and update eucaby token."""
         token_dict = dict(
-            access_token=UUID,
+            access_token=fixtures.UUID,
             expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=TOKEN_TYPE)
+            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         token = models.Token.create_eucaby_token(self.user.id, token_dict)
         test_utils.assert_object(
             token, user_id=self.user.id, service=models.EUCABY,
-            access_token=UUID, refresh_token=UUID)
+            access_token=fixtures.UUID, refresh_token=fixtures.UUID)
         self.assertEqual(1, models.Token.query.count())
 
-        token_dict['access_token'] = UUID2
+        token_dict['access_token'] = fixtures.UUID2
         # Refresh token exists
         token.update_token(token_dict)
         test_utils.assert_object(
             token, user_id=self.user.id, service=models.EUCABY,
-            access_token=UUID2, refresh_token=UUID)
+            access_token=fixtures.UUID2, refresh_token=fixtures.UUID)
 
 
 if __name__ == '__main__':
