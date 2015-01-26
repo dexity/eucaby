@@ -29,3 +29,12 @@ NOTIFY_LOCATION_FIELDS = dict(
     created_date=rest_fields.DateTime(dt_format='iso8601'),
     session=rest_fields.Nested(SESSION_FIELDS)
 )
+
+USER_FIELDS = dict(
+    username=rest_fields.String,
+    first_name=rest_fields.String,
+    last_name=rest_fields.String,
+    gender=rest_fields.String,
+    email=rest_fields.String,
+    date_joined=rest_fields.DateTime(dt_format='iso8601')
+)

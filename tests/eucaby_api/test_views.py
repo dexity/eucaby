@@ -715,7 +715,24 @@ class TestUserProfile(test_base.TestCase):
     def setUp(self):
         super(TestUserProfile, self).setUp()
         self.client = self.app.test_client()
-        fixtures.create_user()
+        self.user = fixtures.create_user()
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # Invalid method
+        test_utils.verify_invalid_methods(self.client, ['post'], '/me')
+
+    def test_user(self):
+        resp = self.client.get('/me',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        ec_valid_resp = dict(
+            data=dict(
+                username=self.user.username, first_name=self.user.first_name,
+                last_name=self.user.last_name, gender=self.user.gender,
+                email=self.user.email,
+                date_joined=fr_inputs.iso8601(self.user.date_joined)))
+        self.assertEqual(ec_valid_resp, data)
 
 
 class TestUserActivity(test_base.TestCase):

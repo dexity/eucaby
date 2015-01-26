@@ -222,8 +222,8 @@ class UserProfileView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
 
     def get(self):  # pylint: disable=no-self-use
-        # XXX: Implement
-        return
+        return flask_restful.marshal(
+            flask.request.user, api_fields.USER_FIELDS, envelope='data')
 
 
 api.add_resource(OAuthToken, '/oauth/token')
