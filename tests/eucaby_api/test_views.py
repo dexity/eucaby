@@ -541,25 +541,25 @@ class TestNotifyLocation(test_base.TestCase):
         """Validates data and email sending."""
         data = json.loads(resp.data)
         # Check ndb objects
-        loc_resp = ndb_models.LocationNotification.query()
+        loc_notif = ndb_models.LocationNotification.query()
         session = ndb_models.Session.query()
-        self.assertEqual(1, loc_resp.count())
+        self.assertEqual(1, loc_notif.count())
         self.assertEqual(1, session.count())
-        loc_resp = loc_resp.fetch(1)[0]
-        session = session.fetch(1)[0]
-        lat, lng = loc_resp.location.lat, loc_resp.location.lon
-        session_out = dict(
-            recipient_username=recipient_username,
-            sender_username=self.user.username,
-            key=session.key, recipient_email=recipient_email)
+        loc_notif = loc_notif.fetch(1)[0]
+        session = loc_notif.session
+        lat, lng = loc_notif.location.lat, loc_notif.location.lon
+        session_out = dict(key=session.key, complete=False)
         if session_dict:
             session_out.update(session_dict)
         # Check response
-        ec_valid_email = dict(data=dict(
-            id=loc_resp.id, type='notification', lat=lat, lng=lng,
-            created_date=fr_inputs.iso8601(loc_resp.created_date),
+        ec_valid_data = dict(data=dict(
+            id=loc_notif.id, type='notification', lat=lat, lng=lng,
+            sender_username=self.user.username,
+            recipient_username=recipient_username,
+            recipient_email=recipient_email,
+            created_date=fr_inputs.iso8601(loc_notif.created_date),
             session=session_out))
-        self.assertEqual(ec_valid_email, data)
+        self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
         messages = self.mail_stub.get_sent_messages()
         if len(messages) == 2:
@@ -591,9 +591,9 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(ec_missing_params, data)
         self.assertEqual(400, resp.status_code)
 
-        # No request_token, email or username
+        # No key, email or username
         ec_missing_params = dict(
-            message='Missing request_token, email or username parameters',
+            message='Missing key, email or username parameters',
             code='invalid_request')
         resp = self.client.post(
             '/location/notify', data=dict(latlng=fixtures.LATLNG),
@@ -617,7 +617,7 @@ class TestNotifyLocation(test_base.TestCase):
         # Request not found
         resp = self.client.post(
             '/location/notify', data=dict(
-                latlng=fixtures.LATLNG, request_token='456'),
+                latlng=fixtures.LATLNG, key='456'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_user_not_found = dict(message='Request not found', code='not_found')
@@ -634,39 +634,31 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def test_request_token(self):
-        """Tests notification by request token."""
+    def test_key(self):
+        """Tests notification by session key."""
         # Create request
         # user2 created request to user: user2 -> user
         resp = self.client.post(
             '/location/request', data=dict(email='test@example.com'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
         data = json.loads(resp.data)
-        request_token = data['data']['token']
+        key = data['data']['session']['key']
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notify', data=dict(
-                latlng=fixtures.LATLNG, request_token=request_token),
+                latlng=fixtures.LATLNG, key=key),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-
-        # Recipient and sender are opposite because notification is a
-        # response to the request
-        session_dict = dict(
-            recipient_username=self.user.username,
-            sender_username=self.user2.username,
-            recipient_email='test@example.com',
-            complete=True)  # Request is complete
-
+        session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user2.username, self.user2.email,
             ['Hi, Test2 User2', 'Test User shared'], session_dict)
 
         # Idempotent operation
-        resp = self.client.post(
+        self.client.post(
             '/location/notify', data=dict(
-                latlng=fixtures.LATLNG, request_token=request_token),
+                latlng=fixtures.LATLNG, key=key),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self.assertEqual(2, ndb_models.LocationNotification.query().count())
@@ -842,7 +834,7 @@ class TestUserActivity(test_base.TestCase):
                 self.client.post(
                     '/location/notify', data=dict(
                         latlng=latlngs[i],
-                        request_token=self.requests[i].token),
+                        key=self.requests[i].session.key),
                     headers=dict(
                         Authorization='Bearer {}'.format(bearer_token)))
                 continue

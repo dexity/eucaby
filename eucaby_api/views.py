@@ -123,13 +123,10 @@ class NotifyLocationView(flask_restful.Resource):
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
-        # Create session if doesn't exist
-        if not session:
-            session = ndb_models.Session.create(
-                user.username, recipient_username, recipient_email)
         # Create location response
         # Note: There might be several location responses for a single session
-        loc_notif = ndb_models.LocationNotification.create(session, latlng)
+        loc_notif = ndb_models.LocationNotification.create(
+            latlng, user.username, recipient_username, recipient_email, session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -151,17 +148,19 @@ class NotifyLocationView(flask_restful.Resource):
             loc_notif, api_fields.NOTIFICATION_FIELDS, envelope='data')
 
     @classmethod
-    def handle_request_token(cls, request_token, latlng):
-        """Handles request_token parameter."""
+    def handle_key(cls, key, latlng):
+        """Handles key parameter."""
         # Get location request
+        session = ndb_models.Session(key=key)
         loc_req = ndb_models.LocationRequest.query(
-            ndb_models.LocationRequest.token == request_token).fetch(1)
+            ndb_models.LocationRequest.session == session).fetch(1)
         if not loc_req:
             error = dict(message='Request not found', code='not_found')
             return api_utils.make_response(error, 404)
-        session = loc_req[0].session
+        loc_req = loc_req[0]
+        session = loc_req.session
         # Get recipient which is sender in the session
-        recipient = models.User.get_by_username(session.sender_username)
+        recipient = models.User.get_by_username(loc_req.sender_username)
         if not recipient:
             error = dict(message=USER_NOT_FOUND, code='not_found')
             return api_utils.make_response(error, 404)
@@ -189,12 +188,12 @@ class NotifyLocationView(flask_restful.Resource):
         if isinstance(args, flask.Response):
             return args
 
-        username, email, request_token, latlng = (
-            args['username'], args['email'], args['request_token'],
+        username, email, key, latlng = (
+            args['username'], args['email'], args['key'],
             args['latlng'])
-        # Preference chain: request_token, email, username
-        if request_token:
-            return self.handle_request_token(request_token, latlng)
+        # Preference chain: key, email, username
+        if key:
+            return self.handle_key(key, latlng)
         elif email:
             return self.handle_email(email, latlng)
         elif username:
