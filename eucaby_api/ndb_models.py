@@ -1,40 +1,21 @@
 """Datastore models for API service."""
 
-import datetime
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb import polymodel
 
 from eucaby_api.utils import utils as api_utils
 
 
-class BaseModel(ndb.Model):
+class Session(ndb.Model):
 
-    """Base model."""
-
-    @property
-    def id(self):
-        return self.key.id()
-
-
-class Session(BaseModel):
-
-    """Session model to keep track location requests."""
+    """Session model to keep track of location requests."""
 
     key = ndb.StringProperty(required=True, indexed=True)
-    sender_username = ndb.StringProperty(required=True, indexed=True)
-    recipient_username = ndb.StringProperty(indexed=True)
-    recipient_email = ndb.StringProperty(indexed=True)
     complete = ndb.BooleanProperty(default=False, indexed=True)
 
     @classmethod
-    def create(cls, sender_username, recipient_username=None,
-               recipient_email=None):
-        """Create Session entity."""
-        assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
-                'Either recipient username or email should be set')
-        obj = cls(
-            key=api_utils.generate_uuid(), sender_username=sender_username,
-            recipient_username=recipient_username,
-            recipient_email=recipient_email)
+    def create(cls):
+        obj = cls(key=api_utils.generate_uuid())
         obj.put()
         return obj
 
@@ -42,41 +23,66 @@ class Session(BaseModel):
         return self._to_dict()
 
 
-class LocationRequest(BaseModel):
-    token = ndb.StringProperty(required=True, indexed=True)  # ?
+class LocationMessage(polymodel.PolyModel):
+
+    """Base model for messages."""
+
     session = ndb.StructuredProperty(Session, required=True)
-    created_date = ndb.DateTimeProperty(required=True)
+    sender_username = ndb.StringProperty(required=True, indexed=True)
+    recipient_username = ndb.StringProperty(indexed=True)
+    recipient_email = ndb.StringProperty(indexed=True)
+    created_date = ndb.DateTimeProperty(required=True, auto_now_add=True)
 
     @classmethod
-    def create(cls, session):
+    def create(cls, sender_username, recipient_username=None,
+               recipient_email=None, session=None, commit=True):
+        """Create LocationMessage entity."""
+        assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
+                'Either recipient username or email should be set')
+        if not session:
+            session = Session.create()
         obj = cls(
-            token=api_utils.generate_uuid(), session=session,
-            created_date=datetime.datetime.now())
-        obj.put()
+            session=session, sender_username=sender_username,
+            recipient_username=recipient_username,
+            recipient_email=recipient_email)
+        if commit:
+            obj.put()
         return obj
 
     def to_dict(self):
         return dict(
-            token=self.token, session=self.session.to_dict(),
-            created_date=str(self.created_date))
-
-
-class LocationNotification(BaseModel):
-    location = ndb.GeoPtProperty(required=True)
-    session = ndb.StructuredProperty(Session, required=True)
-    created_date = ndb.DateTimeProperty(required=True)
-
-    @classmethod
-    def create(cls, session, latlng):
-        obj = cls(
-            location=ndb.GeoPt(latlng), session=session,
-            created_date=datetime.datetime.now())
-        obj.put()
-        return obj
-
-    def to_dict(self):
-        return dict(
-            location=dict(
-                lat=self.location.lat, lng=self.location.lon),
             session=self.session.to_dict(),
+            sender_username=self.sender_username,
+            recipient_username=self.recipient_username,
+            recipient_email=self.recipient_email,
             created_date=str(self.created_date))
+
+    @property
+    def id(self):
+        return self.key.id()
+
+
+class LocationRequest(LocationMessage):
+    """Location request."""
+
+class LocationNotification(LocationMessage):
+    """Location notification."""
+
+    location = ndb.GeoPtProperty(required=True)
+
+    @classmethod
+    def create(cls, latlng, sender_username, recipient_username=None,
+               recipient_email=None, session=None):
+        """Create Location notification entity."""
+        obj = LocationMessage.create(
+            sender_username, recipient_username, recipient_email,
+            session, False)
+        obj.location = ndb.GeoPt(latlng)
+        obj.put()
+        return obj
+
+    def to_dict(self):
+        res = self.to_dict()
+        res['location'] = dict(
+            lat=self.location.lat, lng=self.location.lon)
+        return res

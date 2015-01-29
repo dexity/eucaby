@@ -413,22 +413,22 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(1, req.count())
         self.assertEqual(1, session.count())
         req = req.fetch(1)[0]
-        session = session.fetch(1)[0]
+        session = req.session
 
         # Check response
         ec_valid_email = dict(data=dict(
-            id=req.id, token=req.token, type='request',
+            id=req.id, type='request',
+            recipient_username=recipient_username,
+            sender_username=self.user.username,
+            recipient_email=recipient_email,
             created_date=fr_inputs.iso8601(req.created_date),
-            session=dict(
-                recipient_username=recipient_username,
-                sender_username=self.user.username, key=session.key,
-                recipient_email=recipient_email)))
+            session=dict(key=session.key, complete=False)))
         self.assertEqual(ec_valid_email, data)
         self.assertEqual(200, resp.status_code)
         # Check email content
         messages = self.mail_stub.get_sent_messages()
         test_utils.verify_email(
-            messages, 1, recipient_email, in_list + [req.token, ])
+            messages, 1, recipient_email, in_list + [req.session.key, ])
 
     def test_general_errors(self):
         """Tests general errors."""

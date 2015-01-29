@@ -9,25 +9,23 @@ FRIENDS_FIELDS = dict(
 
 SESSION_FIELDS = dict(
     key=rest_fields.String,
-    sender_username=rest_fields.String,
-    recipient_username=rest_fields.String,
-    recipient_email=rest_fields.String,
     complete=rest_fields.Boolean)
 
 REQUEST_FIELDS = dict(
     id=rest_fields.Integer,
-    token=rest_fields.String,
     type=rest_fields.String(default='request'),
+    sender_username=rest_fields.String,
+    recipient_username=rest_fields.String,
+    recipient_email=rest_fields.String,
     created_date=rest_fields.DateTime(dt_format='iso8601'),
     session=rest_fields.Nested(SESSION_FIELDS))
 
-NOTIFICATION_FIELDS = dict(
-    id=rest_fields.Integer,
+NOTIFICATION_FIELDS = REQUEST_FIELDS.copy()
+NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default='notification'),
     lat=rest_fields.Float(attribute='location.lat'),
-    lng=rest_fields.Float(attribute='location.lon'),
-    created_date=rest_fields.DateTime(dt_format='iso8601'),
-    session=rest_fields.Nested(SESSION_FIELDS))
+    lng=rest_fields.Float(attribute='location.lon')
+))
 
 USER_FIELDS = dict(
     username=rest_fields.String,
