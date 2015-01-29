@@ -44,15 +44,15 @@ def latlng(s):
     raise ValidationError("Latlng should have format: <lat>,<lng>")
 
 
-def positive_int(x):
+def positive_int(v):
     """Validates positive."""
     try:
-        x = int(x)
+        v = int(v)
     except ValueError:
         raise ValidationError(INVALID_INT)
-    if x < 0:
+    if v < 0:
         raise ValidationError(INVALID_INT)
-    return x
+    return v
 
 
 REQUEST_LOCATION_ARGS = [
@@ -69,7 +69,7 @@ NOTIFY_LOCATION_ARGS = [
 ]
 
 ACTIVITY_ARGS = [
-    reqparse.Argument(name='type', type=str,  choices=ACTIVITY_CHOICES,
+    reqparse.Argument(name='type', type=str, choices=ACTIVITY_CHOICES,
                       required=True, help=INVALID_ACTIVITY_TYPE),
     reqparse.Argument(name='offset', type=positive_int, default=0,
                       help=INVALID_INT),

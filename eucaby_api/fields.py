@@ -24,8 +24,7 @@ NOTIFICATION_FIELDS = REQUEST_FIELDS.copy()
 NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default='notification'),
     lat=rest_fields.Float(attribute='location.lat'),
-    lng=rest_fields.Float(attribute='location.lon')
-))
+    lng=rest_fields.Float(attribute='location.lon')))
 
 USER_FIELDS = dict(
     username=rest_fields.String,
@@ -37,8 +36,8 @@ USER_FIELDS = dict(
 
 REQUEST_LIST_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
-    REQUEST_FIELDS)))
+        REQUEST_FIELDS)))
 
 NOTIFICATION_LIST_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
-    NOTIFICATION_FIELDS)))
+        NOTIFICATION_FIELDS)))

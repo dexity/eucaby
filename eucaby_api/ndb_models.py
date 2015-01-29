@@ -80,7 +80,7 @@ class LocationNotification(LocationMessage):
         obj = cls(
             session=session, sender_username=sender_username,
             recipient_username=recipient_username,
-            recipient_email=recipient_email, location = ndb.GeoPt(latlng))
+            recipient_email=recipient_email, location=ndb.GeoPt(latlng))
         obj.put()
         return obj
 

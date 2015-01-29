@@ -1,6 +1,7 @@
 
-import datetime
 import flask_restful
+import datetime
+import itertools
 import mock
 import unittest
 import urllib
@@ -728,8 +729,9 @@ class TestUserProfile(test_base.TestCase):
         self.assertEqual(401, resp.status_code)
 
     def test_user(self):
-        resp = self.client.get('/me',
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        resp = self.client.get(
+            '/me', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_valid_resp = dict(
             data=dict(
@@ -769,43 +771,22 @@ class TestUserActivity(test_base.TestCase):
          #    +----+      +----+
 
         self.requests = self._create_requests()
-        self.notifications = self._create_notifications()
-        # self._complete_some_sessions()
-
-        notif_session = ndb_models.Session(sender_username=self.user.username)
-        notifs = ndb_models.LocationNotification.query(
-                ndb_models.LocationNotification.session == notif_session).fetch()
-        print notifs
+        self._create_notifications()
+        self.notifications = ndb_models.LocationNotification.query().fetch()
 
     def tearDown(self):
         self.testbed.deactivate()
 
-    def _complete_some_sessions(self):
-        """Completes sessions of request 2 (user) and 5 (user2)."""
-        # notif2 (from user2) -> req2 (to user)
-        req2 = self.requests[2]
-        req2.session.complete = True
-        req2.session.put()
-        notif2 = self.notifications[2]
-        notif2.session = req2.session
-        notif2.session.put()
-        # notif5 (from user) -> req5 (to user2)
-        req5 = self.requests[5]
-        req5.session.complete = True
-        req5.session.put()
-        notif5 = self.notifications[5]
-        notif5.session = req5.session
-        notif5.put()
-
-    def _create_params(self, username1, username2):
+    @classmethod
+    def _create_params(cls, username1, username2):
         params = []
         # username1 sends 3 requests or notifications to username2
-        params += [[username1, username2, None] for i in range(3)]
+        params += list(itertools.repeat([username1, username2, None], 3))
         # username1 sends 2 requests or notifications to new emails
         params += [[username1, None, 'testnew{}@example.com'.format(i)]
                    for i in range(2)]
         # username2 sends 2 requests or notifications to username1
-        params += [[username2, username1, None] for i in range(2)]
+        params += list(itertools.repeat([username2, username1, None], 3))
         return params
 
     def _create_requests(self):
@@ -814,22 +795,20 @@ class TestUserActivity(test_base.TestCase):
         requests = []
         # Create requests
         for param in params:
-            session = ndb_models.Session.create(*param)
-            req = ndb_models.LocationRequest.create(session)
+            req = ndb_models.LocationRequest.create(*param)
             requests.append(req)
         return requests
 
     def _create_notifications(self):
         """Creates notifications."""
         params = self._create_params(self.user2.username, self.user.username)
-        notifications = []
         latlngs = ['11,-11', '22,-22', '33,-33', '44,-44', '55,-55', '66,-66',
                    '77,-77']
         for i in range(7):
             if i in [2, 5]:
-                if i == 2:
-                    bearer_token = fixtures.UUID2
-                else:
+                # notif2 (from user2) -> req2 (to user)
+                bearer_token = fixtures.UUID2
+                if i == 5:  # notif5 (from user) -> req5 (to user2)
                     bearer_token = fixtures.UUID
                 self.client.post(
                     '/location/notify', data=dict(
@@ -838,11 +817,7 @@ class TestUserActivity(test_base.TestCase):
                     headers=dict(
                         Authorization='Bearer {}'.format(bearer_token)))
                 continue
-            session = ndb_models.Session.create(*params[i])
-            notif = ndb_models.LocationNotification.create(session, latlngs[i])
-            notifications.append(notif)
-        return notifications
-
+            ndb_models.LocationNotification.create(latlngs[i], *params[i])
 
     def test_general_errors(self):
         """Tests general errors."""
@@ -911,16 +886,15 @@ class TestUserActivity(test_base.TestCase):
             '/history?{}'.format(params),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        print data
-        # self.assertEqual(2, len(data['data']))
-        # for i in range(5):
-        #     req = json.dumps(flask_restful.marshal(
-        #         self.requests[i], api_fields.REQUEST_FIELDS))
-        #     self.assertEqual(req, json.dumps(data['data'][i]))
-        # # Complete requests
-        # self.assertTrue(data['data'][2]['session']['complete'])
-        # # Request to new email is never complete
-        # self.assertFalse(data['data'][3]['session']['complete'])
+        self.assertEqual(2, len(data['data']))
+        for i in range(2):
+            notif = json.dumps(flask_restful.marshal(
+                self.notifications[5+i], api_fields.NOTIFICATION_FIELDS))
+            self.assertEqual(notif, json.dumps(data['data'][i]))
+        # Complete notifications
+        self.assertTrue(data['data'][0]['session']['complete'])
+        # Notification hasn't been complete
+        self.assertFalse(data['data'][1]['session']['complete'])
 
     def test_offset_limit(self):
         """Tests offset and limit."""
@@ -935,7 +909,7 @@ class TestUserActivity(test_base.TestCase):
         # There are no gaps in returned list
         requests = []
         next_offset = 2
-        for i in range(2, 4):  # border between user and email requests
+        for i in range(2, 4):  # border between user and email requests   # pylint: disable=unused-variable
             params = urllib.urlencode(
                 dict(type='request', offset=next_offset, limit=1))
             resp = self.client.get(

@@ -232,18 +232,16 @@ class UserActivityView(flask_restful.Resource):
         elif act_type == api_args.INCOMING:
             pass
         elif act_type == api_args.REQUEST:
-            session = ndb_models.Session(sender_username=username)
             req_class = ndb_models.LocationRequest
             requests = req_class.query(
-                req_class.session == session).fetch(
+                req_class.sender_username == username).fetch(
                     limit, offset=offset)
             resp = flask_restful.marshal(
                 dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
         elif act_type == api_args.NOTIFICATION:
-            notif_session = ndb_models.Session(sender_username=username)
             notif_class = ndb_models.LocationNotification
             notifications = notif_class.query(
-                notif_class.session == notif_session).fetch(
+                notif_class.sender_username == username).fetch(
                     limit, offset=offset)
             resp = flask_restful.marshal(
                 dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
