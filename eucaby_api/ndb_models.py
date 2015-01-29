@@ -61,7 +61,7 @@ class LocationRequest(BaseModel):
             created_date=str(self.created_date))
 
 
-class LocationResponse(BaseModel):
+class LocationNotification(BaseModel):
     location = ndb.GeoPtProperty(required=True)
     session = ndb.StructuredProperty(Session, required=True)
     created_date = ndb.DateTimeProperty(required=True)

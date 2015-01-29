@@ -1,13 +1,17 @@
 
 import datetime
+import flask_restful
 import mock
 import unittest
+import urllib
 from flask import json
 from flask_oauthlib import client as f_oauth_client
 from flask_restful import inputs as fr_inputs
 
 from google.appengine.ext import testbed
 
+from eucaby_api import args
+from eucaby_api import fields as api_fields
 from eucaby_api import models
 from eucaby_api import ndb_models
 
@@ -278,25 +282,23 @@ class TestFriends(test_base.TestCase):
     def setUp(self):
         super(TestFriends, self).setUp()
         self.client = self.app.test_client()
-        fixtures.create_user()
+        self.user = fixtures.create_user()
 
     @mock.patch('eucaby_api.auth.facebook._tokengetter')
     def test_general_errors(self, fb_tokengetter):
         """Tests general errors."""
         # Note: Some of the tests are general to all oauth requests
         # Test A: No token is passed
-        ec_unauthorized_error = dict(
-            code='invalid_token', message='Invalid access token')
         resp = self.client.get('/friends')
         data = json.loads(resp.data)
-        self.assertEqual(ec_unauthorized_error, data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
         # Test B: Invalid Eucaby token
         resp = self.client.get(
             '/friends', headers=dict(Authorization='Bearer {}'.format('wrong')))
         data = json.loads(resp.data)
-        self.assertEqual(ec_unauthorized_error, data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
         # Test C: No Facebook token, valid Eucaby token
@@ -336,7 +338,7 @@ class TestFriends(test_base.TestCase):
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        self.assertEqual(ec_unauthorized_error, data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
         # Test F: User is not active
@@ -348,7 +350,7 @@ class TestFriends(test_base.TestCase):
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        self.assertEqual(ec_unauthorized_error, data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
     @mock.patch('eucaby_api.auth.facebook.request')
@@ -389,11 +391,7 @@ class TestRequestLocation(test_base.TestCase):
         super(TestRequestLocation, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
-        self.user2 = fixtures.create_user(
-            user_kwargs=dict(username='3456', first_name='Test2',
-                             last_name='User2', email='test2@example.com'),
-            ec_token_kwargs=dict(access_token='111', refresh_token='222'),
-            fb_access_token='someaccesstoken2')
+        self.user2 = fixtures.create_user2()
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
@@ -437,6 +435,12 @@ class TestRequestLocation(test_base.TestCase):
         # Invalid method
         test_utils.verify_invalid_methods(
             self.client, ['get'], '/location/request')
+
+        # No token is passed
+        resp = self.client.post('/location/request')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
 
         # No parameters
         ec_missing_params = dict(
@@ -521,12 +525,7 @@ class TestNotifyLocation(test_base.TestCase):
         super(TestNotifyLocation, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
-        self.user2 = fixtures.create_user(
-            user_kwargs=dict(username='3456', first_name='Test2',
-                             last_name='User2', email='test2@example.com'),
-            ec_token_kwargs=dict(
-                access_token=fixtures.UUID2, refresh_token='222'),
-            fb_access_token='someaccesstoken2')
+        self.user2 = fixtures.create_user2()
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
@@ -542,7 +541,7 @@ class TestNotifyLocation(test_base.TestCase):
         """Validates data and email sending."""
         data = json.loads(resp.data)
         # Check ndb objects
-        loc_resp = ndb_models.LocationResponse.query()
+        loc_resp = ndb_models.LocationNotification.query()
         session = ndb_models.Session.query()
         self.assertEqual(1, loc_resp.count())
         self.assertEqual(1, session.count())
@@ -574,6 +573,12 @@ class TestNotifyLocation(test_base.TestCase):
         # Invalid method
         test_utils.verify_invalid_methods(
             self.client, ['get'], '/location/notify')
+
+        # No token is passed
+        resp = self.client.post('/location/notify')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
 
         # No parameters
         ec_missing_params = dict(
@@ -643,13 +648,15 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notify', data=dict(
                 latlng=fixtures.LATLNG, request_token=request_token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
 
         # Recipient and sender are opposite because notification is a
         # response to the request
         session_dict = dict(
             recipient_username=self.user.username,
             sender_username=self.user2.username,
-            recipient_email='test@example.com')
+            recipient_email='test@example.com',
+            complete=True)  # Request is complete
 
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
@@ -662,7 +669,7 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, request_token=request_token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
-        self.assertEqual(2, ndb_models.LocationResponse.query().count())
+        self.assertEqual(2, ndb_models.LocationNotification.query().count())
         self.assertEqual(1, ndb_models.Session.query().count())
 
     def test_new_email(self):
@@ -722,6 +729,12 @@ class TestUserProfile(test_base.TestCase):
         # Invalid method
         test_utils.verify_invalid_methods(self.client, ['post'], '/me')
 
+        # No token is passed
+        resp = self.client.get('/me')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
     def test_user(self):
         resp = self.client.get('/me',
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -740,7 +753,211 @@ class TestUserActivity(test_base.TestCase):
     def setUp(self):
         super(TestUserActivity, self).setUp()
         self.client = self.app.test_client()
-        fixtures.create_user()
+        self.user = fixtures.create_user()
+        self.user2 = fixtures.create_user2()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+
+         # Test Cases
+         #
+         #    Req         Notif
+         #    +----+      +----+
+         #    |    |      |    |        0
+         #    | -> |      | <- |        1
+         #    |    |:----:|    |        2
+         # U1 +----+      +----+ U2
+         #    |****|      |****|        3
+         #    |****|      |****|        2
+         #    +----+      +----+
+         #    | <- |:----:| -> |        5
+         #    |    |      |    |        6
+         #    +----+      +----+
+
+        self.requests = self._create_requests()
+        self.notifications = self._create_notifications()
+        # self._complete_some_sessions()
+
+        notif_session = ndb_models.Session(sender_username=self.user.username)
+        notifs = ndb_models.LocationNotification.query(
+                ndb_models.LocationNotification.session == notif_session).fetch()
+        print notifs
+
+    def tearDown(self):
+        self.testbed.deactivate()
+
+    def _complete_some_sessions(self):
+        """Completes sessions of request 2 (user) and 5 (user2)."""
+        # notif2 (from user2) -> req2 (to user)
+        req2 = self.requests[2]
+        req2.session.complete = True
+        req2.session.put()
+        notif2 = self.notifications[2]
+        notif2.session = req2.session
+        notif2.session.put()
+        # notif5 (from user) -> req5 (to user2)
+        req5 = self.requests[5]
+        req5.session.complete = True
+        req5.session.put()
+        notif5 = self.notifications[5]
+        notif5.session = req5.session
+        notif5.put()
+
+    def _create_params(self, username1, username2):
+        params = []
+        # username1 sends 3 requests or notifications to username2
+        params += [[username1, username2, None] for i in range(3)]
+        # username1 sends 2 requests or notifications to new emails
+        params += [[username1, None, 'testnew{}@example.com'.format(i)]
+                   for i in range(2)]
+        # username2 sends 2 requests or notifications to username1
+        params += [[username2, username1, None] for i in range(2)]
+        return params
+
+    def _create_requests(self):
+        """Creates requests."""
+        params = self._create_params(self.user.username, self.user2.username)
+        requests = []
+        # Create requests
+        for param in params:
+            session = ndb_models.Session.create(*param)
+            req = ndb_models.LocationRequest.create(session)
+            requests.append(req)
+        return requests
+
+    def _create_notifications(self):
+        """Creates notifications."""
+        params = self._create_params(self.user2.username, self.user.username)
+        notifications = []
+        latlngs = ['11,-11', '22,-22', '33,-33', '44,-44', '55,-55', '66,-66',
+                   '77,-77']
+        for i in range(7):
+            if i in [2, 5]:
+                if i == 2:
+                    bearer_token = fixtures.UUID2
+                else:
+                    bearer_token = fixtures.UUID
+                self.client.post(
+                    '/location/notify', data=dict(
+                        latlng=latlngs[i],
+                        request_token=self.requests[i].token),
+                    headers=dict(
+                        Authorization='Bearer {}'.format(bearer_token)))
+                continue
+            session = ndb_models.Session.create(*params[i])
+            notif = ndb_models.LocationNotification.create(session, latlngs[i])
+            notifications.append(notif)
+        return notifications
+
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # No token is passed
+        resp = self.client.get('/history')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Invalid method
+        test_utils.verify_invalid_methods(self.client, ['post'], '/history')
+
+        # Invalid activity type
+        invalid_request = dict(
+            fields=dict(type=args.INVALID_ACTIVITY_TYPE),
+            message='Invalid request parameters', code='invalid_request')
+        params = urllib.urlencode(dict(type='wrong'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(invalid_request, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Invalid offset or limit
+        invalid_request = dict(
+            fields=dict(offset=args.INVALID_INT, limit=args.INVALID_INT),
+            message='Invalid request parameters', code='invalid_request')
+        params = urllib.urlencode(dict(type='outgoing', offset='a', limit='b'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(invalid_request, data)
+        self.assertEqual(400, resp.status_code)
+
+        # Negative offset or limit
+        params = urllib.urlencode(dict(type='outgoing', offset=-1, limit=-2))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(invalid_request, data)
+        self.assertEqual(400, resp.status_code)
+
+    def test_history_request(self):
+        """Tests history activity type."""
+        params = urllib.urlencode(dict(type='request'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(5, len(data['data']))
+        for i in range(5):
+            req = json.dumps(flask_restful.marshal(
+                self.requests[i], api_fields.REQUEST_FIELDS))
+            self.assertEqual(req, json.dumps(data['data'][i]))
+        # Complete requests
+        self.assertTrue(data['data'][2]['session']['complete'])
+        # Request to new email is never complete
+        self.assertFalse(data['data'][3]['session']['complete'])
+
+    def test_history_notification(self):
+        params = urllib.urlencode(dict(type='notification'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        print data
+        # self.assertEqual(2, len(data['data']))
+        # for i in range(5):
+        #     req = json.dumps(flask_restful.marshal(
+        #         self.requests[i], api_fields.REQUEST_FIELDS))
+        #     self.assertEqual(req, json.dumps(data['data'][i]))
+        # # Complete requests
+        # self.assertTrue(data['data'][2]['session']['complete'])
+        # # Request to new email is never complete
+        # self.assertFalse(data['data'][3]['session']['complete'])
+
+    def test_offset_limit(self):
+        """Tests offset and limit."""
+        # Offset larger the number of request
+        params = urllib.urlencode(dict(type='request', offset=10))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual([], data['data'])
+
+        # There are no gaps in returned list
+        requests = []
+        next_offset = 2
+        for i in range(2, 4):  # border between user and email requests
+            params = urllib.urlencode(
+                dict(type='request', offset=next_offset, limit=1))
+            resp = self.client.get(
+                '/history?{}'.format(params),
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            next_offset = data['paging']['next_offset']  # update next_offset
+            requests.append(data['data'][0])
+        req2 = json.dumps(flask_restful.marshal(
+            self.requests[2], api_fields.REQUEST_FIELDS))
+        req3 = json.dumps(flask_restful.marshal(
+            self.requests[3], api_fields.REQUEST_FIELDS))
+        self.assertEqual(req2, json.dumps(requests[0]))  # user -> user2
+        self.assertEqual(req3, json.dumps(requests[1]))  # user -> new email
 
 
 if __name__ == '__main__':

@@ -12,7 +12,8 @@ FB_PROFILE = dict(
     email='test@example.com', id=USERNAME,
     link='https://www.facebook.com/app_scoped_user_id/12345/',
     timezone=-8, updated_time='2014-12-06T21:31:50+0000')
-
+INVALID_TOKEN = dict(
+    code='invalid_token', message='Invalid access token')
 
 def create_user_from_facebook(client):
     """Creates user account with Eucaby and Facebook tokens."""
@@ -44,3 +45,13 @@ def create_user(user_kwargs=None, ec_token_kwargs=None,
     models.Token.create_eucaby_token(user.id, _ec_token_kwargs)
     models.Token.create_facebook_token(user.id, fb_access_token, 123)
     return user
+
+
+def create_user2():
+    """Creates second user."""
+    return create_user(
+        user_kwargs=dict(username='3456', first_name='Test2',
+                         last_name='User2', email='test2@example.com'),
+        ec_token_kwargs=dict(
+            access_token=UUID2, refresh_token='222'),
+        fb_access_token='someaccesstoken2')

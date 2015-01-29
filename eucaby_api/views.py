@@ -73,7 +73,7 @@ class RequestLocationView(flask_restful.Resource):
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
         return flask_restful.marshal(
-            req, api_fields.REQUEST_LOCATION_FIELDS, envelope='data')
+            req, api_fields.REQUEST_FIELDS, envelope='data')
 
     @classmethod
     def handle_email(cls, email):
@@ -130,7 +130,7 @@ class NotifyLocationView(flask_restful.Resource):
                 user.username, recipient_username, recipient_email)
         # Create location response
         # Note: There might be several location responses for a single session
-        loc_resp = ndb_models.LocationResponse.create(session, latlng)
+        loc_notif = ndb_models.LocationNotification.create(session, latlng)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -146,10 +146,10 @@ class NotifyLocationView(flask_restful.Resource):
                 location_url='{}/{}'.format(maps_url, latlng))
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
-        logging.info('Location Notification: %s', str(loc_resp.to_dict()))
+        logging.info('Location Notification: %s', str(loc_notif.to_dict()))
 
         return flask_restful.marshal(
-            loc_resp, api_fields.NOTIFY_LOCATION_FIELDS, envelope='data')
+            loc_notif, api_fields.NOTIFICATION_FIELDS, envelope='data')
 
     @classmethod
     def handle_request_token(cls, request_token, latlng):
@@ -206,16 +206,6 @@ class NotifyLocationView(flask_restful.Resource):
         return api_utils.make_response(error, 400)
 
 
-class UserActivityView(flask_restful.Resource):
-
-    """Returns list of user activity."""
-    method_decorators = [auth.eucaby_oauth.require_oauth('history')]
-
-    def get(self):  # pylint: disable=no-self-use
-        # XXX: Implement
-        return
-
-
 class UserProfileView(flask_restful.Resource):
 
     """Returns user profile details."""
@@ -224,6 +214,56 @@ class UserProfileView(flask_restful.Resource):
     def get(self):  # pylint: disable=no-self-use
         return flask_restful.marshal(
             flask.request.user, api_fields.USER_FIELDS, envelope='data')
+
+
+class UserActivityView(flask_restful.Resource):
+
+    """Returns list of user activity."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('history')]
+
+    @classmethod
+    def handle_request(cls, act_type, offset, limit):
+        """Handles request."""
+        # Note: total number of requests and notifications is not very important
+        username = flask.request.user.username
+        if act_type == api_args.OUTGOING:
+            pass
+            # ndb_models.LocationRequest.
+            # LocationRequest sent to other users
+            # LocationNotification - notifications sent to other users
+        elif act_type == api_args.INCOMING:
+            pass
+        elif act_type == api_args.REQUEST:
+            session = ndb_models.Session(sender_username=username)
+            req_class = ndb_models.LocationRequest
+            requests = req_class.query(
+                req_class.session == session).fetch(
+                    limit, offset=offset)
+            resp = flask_restful.marshal(
+                dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
+        elif act_type == api_args.NOTIFICATION:
+            notif_session = ndb_models.Session(sender_username=username)
+            notif_class = ndb_models.LocationNotification
+            notifications = notif_class.query(
+                notif_class.session == notif_session).fetch(
+                    limit, offset=offset)
+            resp = flask_restful.marshal(
+                dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
+        if resp:
+            resp['paging'] = dict(next_offset=offset+limit, limit=limit)
+            return resp
+
+        error = dict(message=api_args.DEFAULT_ERROR, code='server_error')
+        return api_utils.make_response(error, 500)
+
+    def get(self):  # pylint: disable=no-self-use
+        args = reqparse.clean_args(api_args.ACTIVITY_ARGS)
+        if isinstance(args, flask.Response):
+            return args
+        limit = args['limit']
+        if limit > 100:  # Limit can't exceed 100
+            limit = 100
+        return self.handle_request(args['type'], args['offset'], limit)
 
 
 api.add_resource(OAuthToken, '/oauth/token')
