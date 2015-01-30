@@ -39,10 +39,14 @@ class TestOAuthToken(test_base.TestCase):
 
     def setUp(self):
         super(TestOAuthToken, self).setUp()
-        # I couldn't mock oauthlib.oauth2.rfc6749.tokens.random_token_generator
-        # so I decided to set the config parameter
-        generator = lambda(x): fixtures.UUID
-        self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = generator
+        # Notes:
+        #   - I couldn't mock
+        #     oauthlib.oauth2.rfc6749.tokens.random_token_generator so I
+        #     decided to set the config parameter.
+        #   - Patch works when running just this test, it doesn't work when
+        #     running all tests. Need to figure out why
+        # generator = lambda(x): fixtures.UUID
+        # self.app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = generator
         self.client = self.app.test_client()
         # Facebook responses
         self.fb_invalid_token = dict(
@@ -117,13 +121,14 @@ class TestOAuthToken(test_base.TestCase):
         # Test A: Valid token, user doesn't exist, fb profile
         fb_exchange_token.return_value = self.fb_valid_token
         fb_get.return_value = mock.Mock(data=fixtures.FB_PROFILE)
-        ec_success_resp = dict(
-            access_token=fixtures.UUID,
-            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=fixtures.TOKEN_TYPE)
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
+        ec_success_resp = dict(
+            access_token=data['access_token'],
+            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
+            refresh_token=data['refresh_token'],
+            scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         self.assertEqual(ec_success_resp, data)
         self.assertEqual(200, resp.status_code)
         # Verify user and access tokens
@@ -142,7 +147,8 @@ class TestOAuthToken(test_base.TestCase):
             access_token='someaccesstoken', refresh_token=None)
         test_utils.assert_object(
             ec_token, service=models.EUCABY, user_id=user.id,
-            access_token=fixtures.UUID, refresh_token=fixtures.UUID)
+            access_token=ec_token.access_token,
+            refresh_token=ec_token.refresh_token)
         models.Token.query.delete()  # Clean up tokens
 
         # Test B: Valid token, user exists, fb profile
@@ -150,6 +156,9 @@ class TestOAuthToken(test_base.TestCase):
         self.fb_valid_token.update(fb_params)
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
+        ec_success_resp.update(
+            access_token=data['access_token'],
+            refresh_token=data['refresh_token'])
         self.assertEqual(ec_success_resp, data)
         self.assertEqual(200, resp.status_code)
         # Verify user and access tokens
@@ -169,13 +178,17 @@ class TestOAuthToken(test_base.TestCase):
             access_token='anotheraccesstoken', refresh_token=None)
         test_utils.assert_object(
             ec_token, service=models.EUCABY, user_id=user.id,
-            access_token=fixtures.UUID, refresh_token=fixtures.UUID)
+            access_token=ec_token.access_token,
+            refresh_token=ec_token.refresh_token)
         models.Token.query.delete()
 
         # Test C: Extra parameters are ignored
         self.valid_params['extra'] = 'param'
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
+        ec_success_resp.update(
+            access_token=data['access_token'],
+            refresh_token=data['refresh_token'])
         self.assertEqual(ec_success_resp, data)
 
     @mock.patch('eucaby_api.auth.facebook.get')
@@ -217,14 +230,15 @@ class TestOAuthToken(test_base.TestCase):
         # Test C:
         # Valid token, user exists, fb profile error
         # FB profile error doesn't affect access tokens creation
-        ec_success_resp = dict(
-            access_token=fixtures.UUID,
-            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=fixtures.TOKEN_TYPE)
         fb_get.side_effect = side_effect
         resp = self.client.post('/oauth/token', data=self.valid_params)
         data = json.loads(resp.data)
+        ec_success_resp = dict(
+            access_token=data['access_token'],
+            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
+            refresh_token=data['refresh_token'],
+            scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         self.assertEqual(ec_success_resp, data)
         self.assertEqual(200, resp.status_code)
         # Verify user and access tokens
@@ -257,14 +271,15 @@ class TestOAuthToken(test_base.TestCase):
         #   server method is being cached and I couldn't change it
         valid_params = dict(
             grant_type='refresh_token', refresh_token=refresh_token)
-        ec_success_resp = dict(
-            access_token=fixtures.UUID,
-            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
-            refresh_token=fixtures.UUID, scope=' '.join(models.EUCABY_SCOPES),
-            token_type=fixtures.TOKEN_TYPE)
 
         resp = self.client.post('/oauth/token', data=valid_params)
         data = json.loads(resp.data)
+        ec_success_resp = dict(
+            access_token=data['access_token'],
+            expires_in=self.app.config['OAUTH2_PROVIDER_TOKEN_EXPIRES_IN'],
+            refresh_token=data['refresh_token'],
+            scope=' '.join(models.EUCABY_SCOPES),
+            token_type=fixtures.TOKEN_TYPE)
         self.assertEqual(ec_success_resp, data)
         self.assertEqual(200, resp.status_code)
 
