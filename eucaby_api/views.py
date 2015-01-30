@@ -56,7 +56,8 @@ class RequestLocationView(flask_restful.Resource):
         recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
         req = ndb_models.LocationRequest.create(
-            user.username, recipient_username, recipient_email)
+            user.username, user.name, recipient_username, recipient_name,
+            recipient_email)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -127,7 +128,8 @@ class NotifyLocationView(flask_restful.Resource):
         # Create location response
         # Note: There might be several location responses for a single session
         loc_notif = ndb_models.LocationNotification.create(
-            latlng, user.username, recipient_username, recipient_email, session)
+            latlng, user.username, user.name, recipient_username,
+            recipient_name, recipient_email, session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18

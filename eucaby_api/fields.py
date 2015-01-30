@@ -7,6 +7,13 @@ FRIENDS_FIELDS = dict(
         dict(username=rest_fields.String(attribute='id'),
              name=rest_fields.String()))))
 
+SENDER_FIELDS = dict(
+    username=rest_fields.String,
+    name=rest_fields.String)
+
+RECIPIENT_FIELDS = SENDER_FIELDS.copy()
+RECIPIENT_FIELDS.update(dict(email=rest_fields.String))
+
 SESSION_FIELDS = dict(
     key=rest_fields.String,
     complete=rest_fields.Boolean)
@@ -14,9 +21,8 @@ SESSION_FIELDS = dict(
 REQUEST_FIELDS = dict(
     id=rest_fields.Integer,
     type=rest_fields.String(default='request'),
-    sender_username=rest_fields.String,
-    recipient_username=rest_fields.String,
-    recipient_email=rest_fields.String,
+    sender=rest_fields.Nested(SENDER_FIELDS),
+    recipient=rest_fields.Nested(RECIPIENT_FIELDS),
     created_date=rest_fields.DateTime(dt_format='iso8601'),
     session=rest_fields.Nested(SESSION_FIELDS))
 

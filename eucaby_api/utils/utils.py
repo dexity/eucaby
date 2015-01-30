@@ -9,6 +9,11 @@ import flask_restful
 PARAM_MISSING = 'Missing {param} parameter'
 
 
+class Object(object):
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 def make_response(resp_dict, status_code):
     """This wrapper for flask json response."""
     resp_dict = resp_dict or {}

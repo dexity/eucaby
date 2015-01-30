@@ -29,17 +29,26 @@ class LocationMessage(polymodel.PolyModel):
 
     session = ndb.StructuredProperty(Session, required=True)
     sender_username = ndb.StringProperty(required=True, indexed=True)
+    sender_name = ndb.StringProperty()
     recipient_username = ndb.StringProperty(indexed=True)
+    recipient_name = ndb.StringProperty()
     recipient_email = ndb.StringProperty(indexed=True)
     created_date = ndb.DateTimeProperty(required=True, auto_now_add=True)
 
+    @property
+    def sender(self):
+        return dict(username=self.sender_username, name=self.sender_name)
+
+    @property
+    def recipient(self):
+        return dict(username=self.recipient_username, name=self.recipient_name,
+                    email=self.recipient_email)
+
     def to_dict(self):
-        return dict(
-            session=self.session.to_dict(),
-            sender_username=self.sender_username,
-            recipient_username=self.recipient_username,
-            recipient_email=self.recipient_email,
-            created_date=str(self.created_date))
+        d = self._to_dict()
+        d.update(dict(session=self.session.to_dict(),
+                      created_date=str(self.created_date)))
+        return d
 
     @property
     def id(self):
@@ -50,8 +59,8 @@ class LocationRequest(LocationMessage):
     """Location request."""
 
     @classmethod
-    def create(cls, sender_username, recipient_username=None,
-               recipient_email=None, session=None):
+    def create(cls, sender_username, sender_name, recipient_username=None,
+               recipient_name=None, recipient_email=None, session=None):
         """Create LocationRequest entity."""
         assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
                 'Either recipient username or email should be set')
@@ -59,8 +68,8 @@ class LocationRequest(LocationMessage):
             session = Session.create()
         obj = cls(
             session=session, sender_username=sender_username,
-            recipient_username=recipient_username,
-            recipient_email=recipient_email)
+            sender_name=sender_name, recipient_username=recipient_username,
+            recipient_name=recipient_name, recipient_email=recipient_email)
         obj.put()
         return obj
 
@@ -70,7 +79,8 @@ class LocationNotification(LocationMessage):
     location = ndb.GeoPtProperty(required=True)
 
     @classmethod
-    def create(cls, latlng, sender_username, recipient_username=None,
+    def create(cls, latlng, sender_username, sender_name,
+               recipient_username=None, recipient_name=None,
                recipient_email=None, session=None):
         """Create LocationNotification entity."""
         assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
@@ -79,8 +89,9 @@ class LocationNotification(LocationMessage):
             session = Session.create()
         obj = cls(
             session=session, sender_username=sender_username,
-            recipient_username=recipient_username,
-            recipient_email=recipient_email, location=ndb.GeoPt(latlng))
+            sender_name=sender_name, recipient_username=recipient_username,
+            recipient_name=recipient_name, recipient_email=recipient_email,
+            location=ndb.GeoPt(latlng))
         obj.put()
         return obj
 
