@@ -773,6 +773,7 @@ class TestUserActivity(test_base.TestCase):
         self.requests = self._create_requests()
         self._create_notifications()
         self.notifications = ndb_models.LocationNotification.query().fetch()
+        self._adjust_timeline()
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -786,8 +787,21 @@ class TestUserActivity(test_base.TestCase):
         params += [[username1, None, 'testnew{}@example.com'.format(i)]
                    for i in range(2)]
         # username2 sends 2 requests or notifications to username1
-        params += list(itertools.repeat([username2, username1, None], 3))
+        params += list(itertools.repeat([username2, username1, None], 2))
         return params
+
+    def _adjust_timeline(self):
+        """Adjusts timeline for requests and notifications."""
+        # Set notification 6 before requests
+        notif6 = self.notifications[6]
+        new_created_date = notif6.created_date - datetime.timedelta(minutes=1)
+        notif6.created_date = new_created_date
+        notif6.put()
+        # Set request 6 after notifications
+        req6 = self.requests[6]
+        new_created_date = req6.created_date + datetime.timedelta(minutes=1)
+        req6.created_date = new_created_date
+        req6.put()
 
     def _create_requests(self):
         """Creates requests."""
@@ -864,7 +878,7 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual(400, resp.status_code)
 
     def test_history_request(self):
-        """Tests history activity type."""
+        """Tests request activity type."""
         params = urllib.urlencode(dict(type='request'))
         resp = self.client.get(
             '/history?{}'.format(params),
@@ -896,6 +910,48 @@ class TestUserActivity(test_base.TestCase):
         # Notification hasn't been complete
         self.assertFalse(data['data'][1]['session']['complete'])
 
+    def test_history_outgoing(self):
+        """Tests outgoing activity type."""
+        params = urllib.urlencode(dict(type='outgoing'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(7, len(data['data']))
+        # Check types
+        notif, req = 'notification', 'request'
+        expected_types = [notif, req, req, req, req, req, notif]
+        self.assertEqual(expected_types, [x['type'] for x in data['data']])
+        # Check first element from data
+        notif = json.dumps(flask_restful.marshal(
+            self.notifications[6], api_fields.NOTIFICATION_FIELDS))
+        self.assertEqual(notif, json.dumps(data['data'][0]))
+        # Check completeness
+        self.assertFalse(data['data'][0]['session']['complete'])
+        self.assertTrue(data['data'][3]['session']['complete'])
+        self.assertTrue(data['data'][6]['session']['complete'])
+
+    def test_history_incoming(self):
+        """Tests incoming activity type."""
+        params = urllib.urlencode(dict(type='incoming'))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(5, len(data['data']))
+        # Check types
+        notif, req = 'notification', 'request'
+        expected_types = [req, notif, notif, notif, req]
+        self.assertEqual(expected_types, [x['type'] for x in data['data']])
+        # Check first element from data
+        req = json.dumps(flask_restful.marshal(
+            self.requests[6], api_fields.REQUEST_FIELDS))
+        self.assertEqual(req, json.dumps(data['data'][4]))
+        # Check completeness
+        self.assertTrue(data['data'][0]['session']['complete'])
+        self.assertTrue(data['data'][3]['session']['complete'])
+        self.assertFalse(data['data'][4]['session']['complete'])
+
     def test_offset_limit(self):
         """Tests offset and limit."""
         # Offset larger the number of request
@@ -924,6 +980,19 @@ class TestUserActivity(test_base.TestCase):
             self.requests[3], api_fields.REQUEST_FIELDS))
         self.assertEqual(req2, json.dumps(requests[0]))  # user -> user2
         self.assertEqual(req3, json.dumps(requests[1]))  # user -> new email
+
+        # Offset and limit for outgoing
+        params = urllib.urlencode(
+            dict(type='outgoing', offset=2, limit=5))
+        resp = self.client.get(
+            '/history?{}'.format(params),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(5, len(data['data']))
+        # Check types
+        notif, req = 'notification', 'request'
+        expected_types = [req, req, req, req, notif]
+        self.assertEqual(expected_types, [x['type'] for x in data['data']])
 
 
 if __name__ == '__main__':

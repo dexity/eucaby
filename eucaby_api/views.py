@@ -3,6 +3,7 @@
 import flask
 from flask import current_app
 import flask_restful
+import itertools
 import logging
 
 from eucaby.utils import mail as utils_mail
@@ -220,31 +221,73 @@ class UserActivityView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('history')]
 
     @classmethod
+    def _get_vector_data(cls, req_username, notif_username, offset, limit):
+        username = flask.request.user.username
+        # WARNING: This is not efficient as it loads all requests and
+        #          notifications to memory and sorts them
+        # Get requests sent or received by user
+        requests = ndb_models.LocationRequest.query(
+            req_username == username).fetch()
+        req_resp = flask_restful.marshal(
+            dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
+        # Get notifications sent or received by user
+        notifications = ndb_models.LocationNotification.query(
+            notif_username == username).fetch()
+        notif_resp = flask_restful.marshal(
+            dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
+        data = itertools.chain(req_resp['data'], notif_resp['data'])
+        merged_data = sorted(data, key=lambda x: x['created_date'])
+        return dict(data=merged_data[offset:offset+limit])
+
+    @classmethod
+    def get_outgoing_data(cls, offset, limit):
+        """Returns data for outgoing activities."""
+        return cls._get_vector_data(
+            ndb_models.LocationRequest.sender_username,
+            ndb_models.LocationNotification.sender_username, offset, limit)
+
+    @classmethod
+    def get_incoming_data(cls, offset, limit):
+        """Returns data for request activities."""
+        return cls._get_vector_data(
+            ndb_models.LocationRequest.recipient_username,
+            ndb_models.LocationNotification.recipient_username, offset, limit)
+
+    @classmethod
+    def get_request_data(cls, offset, limit):
+        """Returns data for request activities."""
+        username = flask.request.user.username
+        req_class = ndb_models.LocationRequest
+        requests = req_class.query(
+            req_class.sender_username == username).fetch(
+                limit, offset=offset)
+        return flask_restful.marshal(
+            dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
+
+    @classmethod
+    def get_notification_data(cls, offset, limit):
+        """Returns data for notification activities."""
+        username = flask.request.user.username
+        notif_class = ndb_models.LocationNotification
+        notifications = notif_class.query(
+            notif_class.sender_username == username).fetch(
+                limit, offset=offset)
+        return flask_restful.marshal(
+            dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
+
+    @classmethod
     def handle_request(cls, act_type, offset, limit):
         """Handles request."""
         # Note: total number of requests and notifications is not very important
-        username = flask.request.user.username
         if act_type == api_args.OUTGOING:
-            pass
-            # ndb_models.LocationRequest.
-            # LocationRequest sent to other users
-            # LocationNotification - notifications sent to other users
+            resp = cls.get_outgoing_data(offset, limit)
         elif act_type == api_args.INCOMING:
-            pass
+            resp = cls.get_incoming_data(offset, limit)
         elif act_type == api_args.REQUEST:
-            req_class = ndb_models.LocationRequest
-            requests = req_class.query(
-                req_class.sender_username == username).fetch(
-                    limit, offset=offset)
-            resp = flask_restful.marshal(
-                dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
+            resp = cls.get_request_data(offset, limit)
         elif act_type == api_args.NOTIFICATION:
-            notif_class = ndb_models.LocationNotification
-            notifications = notif_class.query(
-                notif_class.sender_username == username).fetch(
-                    limit, offset=offset)
-            resp = flask_restful.marshal(
-                dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
+            resp = cls.get_notification_data(offset, limit)
+        # Add pagination
         if resp:
             resp['paging'] = dict(next_offset=offset+limit, limit=limit)
             return resp
