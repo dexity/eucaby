@@ -14,6 +14,10 @@ SENDER_FIELDS = dict(
 RECIPIENT_FIELDS = SENDER_FIELDS.copy()
 RECIPIENT_FIELDS.update(dict(email=rest_fields.String))
 
+LOCATION_FIELDS = dict(
+    lat=rest_fields.Float,
+    lng=rest_fields.Float(attribute='lon'))
+
 SESSION_FIELDS = dict(
     key=rest_fields.String,
     complete=rest_fields.Boolean)
@@ -29,8 +33,7 @@ REQUEST_FIELDS = dict(
 NOTIFICATION_FIELDS = REQUEST_FIELDS.copy()
 NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default='notification'),
-    lat=rest_fields.Float(attribute='location.lat'),
-    lng=rest_fields.Float(attribute='location.lon')))
+    location=rest_fields.Nested(LOCATION_FIELDS)))
 
 USER_FIELDS = dict(
     username=rest_fields.String,

@@ -554,13 +554,14 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(1, session.count())
         loc_notif = loc_notif.fetch(1)[0]
         session = loc_notif.session
-        lat, lng = loc_notif.location.lat, loc_notif.location.lon
+        location = loc_notif.location
         session_out = dict(key=session.key, complete=False)
         if session_dict:
             session_out.update(session_dict)
         # Check response
         ec_valid_data = dict(data=dict(
-            id=loc_notif.id, type='notification', lat=lat, lng=lng,
+            id=loc_notif.id, type='notification',
+            location=dict(lat=location.lat, lng=location.lon),
             recipient=dict(
                 username=recipient_username, name=recipient_name,
                 email=recipient_email),
@@ -574,7 +575,8 @@ class TestNotifyLocation(test_base.TestCase):
             messages.pop(0)  # Don't need the first message
         test_utils.verify_email(
             messages, 1, recipient_email, in_list + [
-                'https://www.google.com/maps/place/{},{}'.format(lat, lng)])
+                'https://www.google.com/maps/place/{},{}'.format(
+                    location.lat, location.lon)])
 
     def test_general_errors(self):
         """Tests general errors."""
