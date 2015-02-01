@@ -115,7 +115,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
-REDIS_HOST = '146.148.67.189'  # 'rt.eucaby-dev.appspot.com'  #'localhost'
+REDIS_HOST = '146.148.67.189'  # 'localhost' # 'rt.eucaby-dev.appspot.com'
 REDIS_PORT = 6379
 
 # A sample logging configuration. The only tangible logging

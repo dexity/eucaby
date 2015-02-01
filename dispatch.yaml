@@ -1,0 +1,6 @@
+dispatch:
+- url: '*/api/*'
+  module: api
+
+- url: '*/*'
+  module: default

@@ -1,0 +1,24 @@
+version: rt
+runtime: custom
+api_version: 1
+vm: true
+
+manual_scaling:
+  instances: 1
+
+vm_settings:
+  machine_type: n1-standard-1
+  forwarded_ports: 4000,6379
+
+vm_health_check:
+  enable_health_check: False
+
+handlers:
+
+- url: /.*
+  script: main.application
+
+skip_files:
+- npm-debug.log
+- ^deploy*
+- ^node_modules

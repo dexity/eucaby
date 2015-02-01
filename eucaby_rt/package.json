@@ -1,0 +1,13 @@
+{
+    "name": "eucaby_rt",
+    "version": "0.0.1",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "socket.io": "1.1.0",
+        "redis": "0.12.1",
+        "cookie": "0.1.2",
+        "querystring": "0.2.0"
+    }
+}
