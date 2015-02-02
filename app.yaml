@@ -15,9 +15,6 @@ handlers:
   script: eucaby.wsgi.application
   login: admin
 
-- url: /_ah/spi/.*
-  script: eucaby_api.api.application
-
 - url: /.*
   script: eucaby.wsgi.application
 
@@ -33,9 +30,6 @@ libraries:
 
 - name: ssl
   version: latest
-
-- name: endpoints
-  version: 1.0
 
 builtins:
 - django_wsgi: on

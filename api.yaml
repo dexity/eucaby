@@ -9,8 +9,26 @@ handlers:
   script: eucaby_api.wsgi.app
 
 libraries:
-- name: endpoints
-  version: 1.0
+- name: MySQLdb
+  version: latest
+
+- name: ssl
+  version: latest
 
 #inbound_services:
 #- warmup
+
+skip_files:
+- ^\.git
+- ^\.idea
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^deploy*
+- ^lib/Django.*
+- ^lib/django
+- ^lib/MySQL
+- ^lib/_mysql
+- ^lib/PyYAML*
+- ^lib/yaml
+- ^eucaby_rt
+- ^eucaby_mobile

@@ -9,5 +9,7 @@ app = eucaby_app.create_app()
 
 if gae_project_id and gae_project_id == config.Production.APP_ID:
     app.config.from_object('eucaby_api.config.Production')
-else:
+elif gae_project_id and gae_project_id == config.Development.APP_ID:
     app.config.from_object('eucaby_api.config.Development')
+else:
+    app.config.from_object('eucaby_api.config.LocalDevelopment')
