@@ -24,8 +24,8 @@ class Testing(Config):
 
     """Testing configuration."""
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+mysqldb://test:testpass@localhost/test_eucaby'
-        '?charset=utf8&use_unicode=0')
+        'mysql+mysqldb://test:testpass@localhost/test_eucaby?'
+        'charset=utf8&use_unicode=0')
     FACEBOOK = dict(
         consumer_key='12345',
         consumer_secret='secret'
@@ -40,8 +40,8 @@ class LocalDevelopment(Config):
     DEBUG = True
     APP_ID = 'eucaby-dev'
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+mysqldb://dev:devpass@localhost/eucaby'
-        '?charset=utf8&use_unicode=0')
+        'mysql+mysqldb://dev:devpass@localhost/eucaby?'
+        'charset=utf8&use_unicode=0')
     # Flask-DebugToolbar settings
     DEBUG_TB_PROFILER_ENABLED = True
     DEBUG_TB_INTERCEPT_REDIRECTS = False
@@ -53,8 +53,8 @@ class RemoteProduction(Config):
     # Use Cloud SQL from local command line
     APP_ID = 'eucaby-prd'
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+mysqldb://root:eucaby2pass@173.194.232.127/eucaby'
-        '?charset=utf8&use_unicode=0')
+        'mysql+mysqldb://root:eucaby2pass@173.194.232.127/eucaby?'
+        'charset=utf8&use_unicode=0')
 
 
 class RemoteDevelopment(Config):
@@ -63,8 +63,8 @@ class RemoteDevelopment(Config):
     # Use Cloud SQL from local command line
     APP_ID = 'eucaby-dev'
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+mysqldb://root:devpass@173.194.84.204/eucaby'
-        '?charset=utf8&use_unicode=0')
+        'mysql+mysqldb://root:devpass@173.194.84.204/eucaby?'
+        'charset=utf8&use_unicode=0')
 
 
 class Development(Config):
@@ -73,7 +73,8 @@ class Development(Config):
     DEBUG = False
     APP_ID = 'eucaby-dev'
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+gaerdbms:///eucaby?instance=eucaby-dev:eucaby2')
+        'mysql+gaerdbms:///eucaby?instance=eucaby-dev:eucaby2&'
+        'charset=utf8&use_unicode=0')
     EUCABY_URL = 'http://eucaby-dev.appspot.com'
 
 
@@ -83,5 +84,6 @@ class Production(Config):
     DEBUG = False
     APP_ID = 'eucaby-prd'
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+gaerdbms:///eucaby?instance=eucaby-prd:eucaby')
+        'mysql+gaerdbms:///eucaby?instance=eucaby-prd:eucaby&'
+        'charset=utf8&use_unicode=0')
     EUCABY_URL = 'http://eucaby-prd.appspot.com'
