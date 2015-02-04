@@ -1,28 +1,12 @@
 'use strict';
 
-angular.module('eucaby.services', [])
+angular.module('eucaby.services', ['ngResource'])
 
-/**
- * A simple example service that returns some data.
- */
-.factory('Friends', function() {
-  // Might use a resource here that returns a JSON array
+.factory('Friends', ['$resource', function($resource) {
 
-  // Some fake testing data
-  var friends = [
-    { id: 0, name: 'Scruff McGruff' },
-    { id: 1, name: 'G.I. Joe' },
-    { id: 2, name: 'Miss Frizzle' },
-    { id: 3, name: 'Ash Ketchum' }
-  ];
-
-  return {
-    all: function() {
-      return friends;
-    },
-    get: function(friendId) {
-      // Simple index lookup
-      return friends[friendId];
-    }
-  }
-});
+    return $resource('http://api.eucaby-dev.appspot.com/friends', {}, {
+        query: {method: 'GET',
+            headers: {'Authorization': 'Bearer Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2'}
+        }
+    });
+}]);

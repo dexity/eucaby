@@ -14,6 +14,7 @@ class Config(object):
         consumer_secret='b4b8c000e74e15c294e9d67ce7fca42b'
     )
     CSRF_ENABLED = True
+    CORS_ENABLED = True
     CACHE_TYPE = 'gaememcached'
     # XXX: Make host url configurable
     EUCABY_URL = 'http://localhost:8888'
@@ -87,3 +88,4 @@ class Production(Config):
         'mysql+gaerdbms:///eucaby?instance=eucaby-prd:eucaby&'
         'charset=utf8&use_unicode=0')
     EUCABY_URL = 'http://eucaby-prd.appspot.com'
+    CORS_ENABLED = False

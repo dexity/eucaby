@@ -1,18 +1,20 @@
 'use strict';
 
 angular.module('eucaby',
-    ['ionic', 'openfb', 'btford.socket-io', 'eucaby.controllers',
+    ['ionic', 'openfb', 'eucaby.controllers', //'btford.socket-io',
      'eucaby.services'])
 
+/*
 .factory('socket', function (socketFactory) {
     return socketFactory({
         ioSocket: io('http://localhost:4000') // rt.eucaby-dev.appspot.com, 146.148.67.189
     });
 })
+*/
 
 .run(function($rootScope, $state, $ionicPlatform, $window, OpenFB) {
 
-    OpenFB.init('809426419123624'); //, 'http://localhost:8100/oauthcallback.html');
+    OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html');
 
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
@@ -22,7 +24,8 @@ angular.module('eucaby',
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
-        if (toState.name !== 'app.login' && toState.name !== 'app.logout' && !$window.sessionStorage['fbtoken']) {
+        if (toState.name !== 'app.login' && toState.name !== 'app.logout' &&
+            !$window.sessionStorage['fbtoken']) {
             $state.go('app.login');
             event.preventDefault();
         }
@@ -85,12 +88,12 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.map.request', { // Not working
+    .state('app.tabs.map.request', {
         url: '/request',
         views: {
             'tab-map': {
-                template: 'templates/tab-down.html',
-                controller: 'RequestCtrl'
+                template: 'templates/request.html',
+                controller: 'ActionCtrl'
             }
         }
     })

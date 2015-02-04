@@ -2,9 +2,10 @@
 
 angular.module('eucaby.controllers', [])
 
-.controller('MapCtrl', ['$scope', 'socket', '$http', '$ionicModal',
-    '$ionicPopup', '$ionicLoading',
-    function($scope, socket, $http, $ionicModal, $ionicPopup, $ionicLoading) {
+.controller('MapCtrl', ['$scope', // 'socket',
+    '$http', '$ionicModal', '$ionicPopup', '$ionicLoading',
+    function($scope, //socket,
+             $http, $ionicModal, $ionicPopup, $ionicLoading) {
 
     var SENDER_EMAIL = 'alex@eucaby.com';
 //    var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
@@ -122,6 +123,7 @@ angular.module('eucaby.controllers', [])
         });
     };
 
+    /*
     // Socket.io
     socket.on('connect', function(){
         console.log("Connected");
@@ -135,11 +137,12 @@ angular.module('eucaby.controllers', [])
             msg.session.receiver_email);
         $scope.markers.push(marker);
     });
+    */
 }])
 
-.controller('RequestCtrl', function($scope) {
-
-})
+.controller('ActionCtrl', ['$scope', 'Friends', function($scope, Friends) {
+    $scope.friends = Friends.query();
+}])
 
 .controller('LoginCtrl', function($scope, $location, $state, OpenFB) {
     $scope.facebookLogin = function(){
@@ -157,9 +160,9 @@ angular.module('eucaby.controllers', [])
 .controller('LogoutCtrl', function($scope) {
 })
 
-.controller('FriendsCtrl', function($scope, Friends) {
-    $scope.friends = Friends.all();
-})
+.controller('FriendsCtrl', ['$scope', 'Friends', function($scope, Friends) {
+    $scope.friends = Friends.query();
+}])
 
 .controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
     $scope.friend = Friends.get($stateParams.friendId);
@@ -169,6 +172,11 @@ angular.module('eucaby.controllers', [])
 })
 
 .controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
+
+    $scope.showSideMenu = function(){
+        return $scope.showHeader();
+    }
+
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     }

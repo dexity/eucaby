@@ -25,3 +25,9 @@ input {
 .login-text {
     margin-left: 20px;
 }
+
+.help {
+    margin: 5px 5px 5px 17px;
+    font-style: italic;
+    color: #888;
+}
