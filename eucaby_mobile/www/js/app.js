@@ -88,12 +88,21 @@ angular.module('eucaby',
             }
         }
     })
+    .state('app.tabs.map.notify', {
+        url: '/notify',
+        views: {
+            'tab-map': {
+                template: 'templates/notify.html',
+                controller: 'MessageCtrl'
+            }
+        }
+    })
     .state('app.tabs.map.request', {
         url: '/request',
         views: {
             'tab-map': {
                 template: 'templates/request.html',
-                controller: 'ActionCtrl'
+                controller: 'MessageCtrl'
             }
         }
     })

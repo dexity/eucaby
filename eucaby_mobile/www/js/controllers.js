@@ -1,5 +1,10 @@
 'use strict';
 
+var EUCABY_ENDPOINT = 'http://api.eucaby-dev.appspot.com';
+var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
+var SF_LAT = 37.7833;
+var SF_LNG = -122.4167;
+
 angular.module('eucaby.controllers', [])
 
 .controller('MapCtrl', ['$scope', // 'socket',
@@ -7,13 +12,6 @@ angular.module('eucaby.controllers', [])
     function($scope, //socket,
              $http, $ionicModal, $ionicPopup, $ionicLoading) {
 
-    var SENDER_EMAIL = 'alex@eucaby.com';
-//    var REQUEST_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/request';
-//    var NOTIFY_URL = 'https://eucaby-dev.appspot.com/_ah/api/eucaby/v1/location/notify';
-    var REQUEST_URL = 'http://localhost:8888/_ah/api/eucaby/v1/location/request';
-    var NOTIFY_URL = 'http://localhost:8888/_ah/api/eucaby/v1/location/notify';
-    var SF_LAT = 37.7833;
-    var SF_LNG = -122.4167;
     var RT_URL = 'localhost'; //'146.148.67.189'; //'rt.eucaby-dev.appspot.com'; //
     var RT_PORT = 4000;
 
@@ -58,48 +56,28 @@ angular.module('eucaby.controllers', [])
 
     $scope.map = mapFactory(SF_LAT, SF_LNG);
     $scope.markers = [];
-    $scope.requestData = {};
 
-    $ionicModal.fromTemplateUrl('templates/request.html', {
-        scope: $scope
-    }).then(function(modal) {
-        $scope.modal = modal;
-    });
+    var registerModal = function(template, modal_name){
+        $ionicModal.fromTemplateUrl(template, {
+            scope: $scope
+        }).then(function(modal) {
+            $scope[modal_name + 'Modal'] = modal;
+        });
+    }
 
-    // Triggered in the login modal to close it
-    $scope.closeRequest = function() {
-        $scope.modal.hide();
-    };
+    registerModal('templates/request.html', 'request');
+    registerModal('templates/notify.html', 'notify');
 
-    // Open the login modal
-    $scope.request = function() {
-        $scope.modal.show();
-    };
-
-    // Send request action
-    $scope.sendRequest = function() {
-        console.log('Sending request', $scope.requestData);
-        $http.post(REQUEST_URL, {receiver_email: $scope.requestData.email,
-            sender_email: SENDER_EMAIL})
-            .success(function(data){
-                console.log(data);
-                $scope.closeRequest();
-            })
-            .error(function(e){
-                console.log(e);
-            });
-    };
-
-    // I am here action
-    $scope.showIamhere = function() {
-       var alertPopup = $ionicPopup.alert({
-         title: 'I am here',
-         template: 'Send location notification to specified email'
-       });
-       alertPopup.then(function(res) {
-         console.log('Location notification has been sent');
-       });
-    };
+//    // I am here action
+//    $scope.showIamhere = function() {
+//       var alertPopup = $ionicPopup.alert({
+//         title: 'I am here',
+//         template: 'Send location notification to specified email'
+//       });
+//       alertPopup.then(function(res) {
+//         console.log('Location notification has been sent');
+//       });
+//    };
 
     // Center on me action
     $scope.centerOnMe = function() {
@@ -140,8 +118,51 @@ angular.module('eucaby.controllers', [])
     */
 }])
 
-.controller('ActionCtrl', ['$scope', 'Friends', function($scope, Friends) {
-    $scope.friends = Friends.query();
+.controller('MessageCtrl', ['$scope', '$http', 'Friends',
+                function($scope, $http, Friends) {
+
+    $scope.form = {};
+    $scope.friends = Friends.all();
+
+    var sendMessage = function(modal_name, url, extra_params) {
+        var email = $scope.form.email;
+        var username = $scope.form.username;
+
+        if (email && username){
+            // XXX: Display error
+        }
+        // XXX: If not email or username set also display error
+        var params = {};
+        if (email){
+            params.email = email;
+        } else if (username){
+            params.username = username;
+        }
+        // Update params
+        for (var key in extra_params){
+            if (extra_params.hasOwnProperty(key)){
+                params[key] = extra_params[key];
+            }
+        }
+        console.log('Sending message', params);
+        $http.post(url, params, {headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}})
+            .success(function(data){
+                console.log(data);
+                $scope[modal_name + 'Modal'].hide();
+            })
+            .error(function(e){
+                console.log(e);
+            });
+    }
+
+    // Send request action
+    $scope.sendRequest = function(){
+        sendMessage('request', EUCABY_ENDPOINT + '/location/request');
+    }
+    $scope.sendLocation = function(){
+        sendMessage('notify', EUCABY_ENDPOINT + '/location/notify',
+                    {latlng: SF_LAT + ',' + SF_LNG});
+    }
 }])
 
 .controller('LoginCtrl', function($scope, $location, $state, OpenFB) {
@@ -161,7 +182,7 @@ angular.module('eucaby.controllers', [])
 })
 
 .controller('FriendsCtrl', ['$scope', 'Friends', function($scope, Friends) {
-    $scope.friends = Friends.query();
+    $scope.friends = Friends.all();
 }])
 
 .controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
