@@ -31,3 +31,8 @@ input {
     font-style: italic;
     color: #888;
 }
+
+.item-container .item-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}

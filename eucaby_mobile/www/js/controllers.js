@@ -181,16 +181,38 @@ angular.module('eucaby.controllers', [])
 .controller('LogoutCtrl', function($scope) {
 })
 
-.controller('FriendsCtrl', ['$scope', 'Friends', function($scope, Friends) {
-    $scope.friends = Friends.all();
+.controller('ActivityCtrl', ['$scope', 'Activity', function($scope, Activity) {
+    var formatOutgoing = function(data){
+        var items = [];
+        console.debug(data);
+        for (var i=0; i < data.length; i++){
+            var item = data[i];
+            var description = item.type.charAt(0).toUpperCase()
+                + item.type.slice(1);
+            description += ' sent on ' + item.created_date;  // XXX: Format date
+            var url = '';
+            if (item.type ==='notification' || item.session.complete){
+                url = '#/app/tabs/map'; // XXX: Fix url
+            }
+            items.push({
+                item: item,
+                complete: item.session.complete,
+                name: item.recipient.name || item.recipient.email,
+                description: description,
+                url: url
+            });
+        }
+        return items;
+    }
+    Activity.outgoing(function(data){
+        $scope.outgoing = formatOutgoing(data.data);
+    })
+    $scope.incoming = Activity.incoming();
 }])
 
-.controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
-    $scope.friend = Friends.get($stateParams.friendId);
-})
-
-.controller('DownCtrl', function($scope) {
-})
+//.controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
+//    $scope.friend = Friends.get($stateParams.friendId);
+//})
 
 .controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
 

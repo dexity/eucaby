@@ -2,7 +2,7 @@
 
 angular.module('eucaby',
     ['ionic', 'openfb', 'eucaby.controllers', //'btford.socket-io',
-     'eucaby.services'])
+     'eucaby.services', 'eucaby.filters'])
 
 /*
 .factory('socket', function (socketFactory) {
@@ -106,34 +106,33 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.friends', {
-        url: '/friends',
+    .state('app.tabs.outgoing', {
+        url: '/outgoing',
         views: {
-            'tab-friends': {
-                templateUrl: 'templates/tab-friends.html',
-                controller: 'FriendsCtrl'
+            'tab-outgoing': {
+                templateUrl: 'templates/tab-outgoing.html',
+                controller: 'ActivityCtrl'
             }
         }
     })
-    .state('app.tabs.friend-detail', {
-        url: '/friend/:friendId',
+    .state('app.tabs.incoming', {
+        url: '/incoming',
         views: {
-            'tab-friends': {
-                templateUrl: 'templates/friend-detail.html',
-                controller: 'FriendDetailCtrl'
+            'tab-incoming': {
+                templateUrl: 'templates/tab-incoming.html',
+                controller: 'ActivityCtrl'
             }
         }
     })
-
-    .state('app.tabs.down', {
-        url: '/down',
-        views: {
-            'tab-down': {
-                templateUrl: 'templates/tab-down.html',
-                controller: 'DownCtrl'
-            }
-        }
-    });
+//    .state('app.tabs.friend-detail', {
+//        url: '/friend/:friendId',
+//        views: {
+//            'tab-friends': {
+//                templateUrl: 'templates/friend-detail.html',
+//                controller: 'FriendDetailCtrl'
+//            }
+//        }
+//    })
 
   $urlRouterProvider.otherwise('/app/tab/map');
 

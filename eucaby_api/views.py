@@ -238,7 +238,8 @@ class UserActivityView(flask_restful.Resource):
         notif_resp = flask_restful.marshal(
             dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
         data = itertools.chain(req_resp['data'], notif_resp['data'])
-        merged_data = sorted(data, key=lambda x: x['created_date'])
+        merged_data = sorted(
+            data, key=lambda x: x['created_date'], reverse=True)
         return dict(data=merged_data[offset:offset+limit])
 
     @classmethod
