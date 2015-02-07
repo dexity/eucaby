@@ -1,0 +1,22 @@
+<ion-view title="Notification">
+  <ion-nav-bar class="bar-stable">
+    <ion-nav-back-button class="button-icon ion-chevron-left">
+    </ion-nav-back-button>
+  </ion-nav-bar>
+  <ion-content ng-controller="ActivityDetailCtrl">
+    <div id="locmap"></div>
+    <div class="card">
+        <div class="item item-text-wrap" ng-switch on="out_item.item.type">
+            <!-- XXX: Add related object metadata -->
+            <div ng-switch-when="notification">
+                Notification sent to <b>{{ out_item.name }}</b><br>
+                {{ out_item.item.created_date}}
+            </div>
+            <div ng-switch-when="request">
+                Request send to <b>{{ out_item.name }}</b><br>
+                {{ out_item.item.created_date}}
+            </div>
+        </div>
+    </div>
+  </ion-content>
+</ion-view>

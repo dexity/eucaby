@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="eucaby">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
@@ -24,9 +24,9 @@
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
     <script src="js/filters.js"></script>
+    <script src="js/utils.js"></script>
   </head>
-  <body ng-app="eucaby" animation="slide-right-left-ios7"
-        ng-controller="MainCtrl">
+  <body ng-controller="MainCtrl">
 
     <ion-header-bar align-title="left" class="bar-stable" ng-show="showHeader()">
         <h1 class="title">Eucaby</h1>
@@ -35,11 +35,6 @@
                     ng-click="toggleRight()"></button>
         </div>
     </ion-header-bar>
-
-      <!--<ion-nav-bar class="bar-stable" animation="nav-title-slide-ios7">
-        <ion-nav-back-button class="button-icon ion-ios7-arrow-back">
-        </ion-nav-back-button>
-      </ion-nav-bar>-->
 
     <ion-nav-view id="main"></ion-nav-view>
   </body>

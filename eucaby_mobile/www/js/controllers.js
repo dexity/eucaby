@@ -5,56 +5,17 @@ var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
 var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
-angular.module('eucaby.controllers', [])
+angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
 
 .controller('MapCtrl', ['$scope', // 'socket',
-    '$http', '$ionicModal', '$ionicPopup', '$ionicLoading',
+    '$http', '$ionicModal', '$ionicPopup', '$ionicLoading', 'map',
     function($scope, //socket,
-             $http, $ionicModal, $ionicPopup, $ionicLoading) {
+             $http, $ionicModal, $ionicPopup, $ionicLoading, map) {
 
     var RT_URL = 'localhost'; //'146.148.67.189'; //'rt.eucaby-dev.appspot.com'; //
     var RT_PORT = 4000;
 
-    var mapFactory = function(lat, lng) {
-        // Creates map
-        var mapOptions = {
-            center: new google.maps.LatLng(lat, lng),
-            zoom: 13,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-        var map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-        // Stop the side bar from dragging when mousedown/tapdown on the map
-        google.maps.event.addDomListener(document.getElementById('map'), 'mousedown', function(e) {
-            e.preventDefault();
-            return false;
-        });
-
-        return map
-    }
-
-    var markerFactory = function(map, lat, lng, username) {
-        var position = new google.maps.LatLng(lat, lng);
-        map.setCenter(position);
-        // Creates marker
-        return new google.maps.Marker({
-            position:  	position,
-            title:      username,
-            map:        map
-        });
-    }
-
-    var clearOverlays = function(markers) {
-        // Clears markers from the map
-        if (markers) {
-            for (var i = 0; i < markers.length; i++) {
-                markers[i].setMap(null);
-            }
-        }
-        markers = [];
-    }
-
-    $scope.map = mapFactory(SF_LAT, SF_LNG);
+    $scope.map = map.createMap('map', SF_LAT, SF_LNG);
     $scope.markers = [];
 
     var registerModal = function(template, modal_name){
@@ -118,8 +79,11 @@ angular.module('eucaby.controllers', [])
     */
 }])
 
-.controller('MessageCtrl', ['$scope', '$http', 'Friends',
-                function($scope, $http, Friends) {
+.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'map',
+                function($scope, $http, Friends, map) {
+
+//    $scope.notify_map = map.createMap('notifymap', SF_LAT, SF_LNG);
+//    $scope.current_marker = map.createMarker($scope.notify_map, SF_LAT, SF_LNG, 'Hello');
 
     $scope.form = {};
     $scope.friends = Friends.all();
@@ -144,7 +108,6 @@ angular.module('eucaby.controllers', [])
                 params[key] = extra_params[key];
             }
         }
-        console.log('Sending message', params);
         $http.post(url, params, {headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}})
             .success(function(data){
                 console.log(data);
@@ -181,10 +144,11 @@ angular.module('eucaby.controllers', [])
 .controller('LogoutCtrl', function($scope) {
 })
 
-.controller('ActivityCtrl', ['$scope', 'Activity', function($scope, Activity) {
+.controller('ActivityCtrl', ['$scope', '$rootScope', '$stateParams', 'Activity',
+    function($scope, $rootScope, $stateParams, Activity) {
+
     var formatOutgoing = function(data){
         var items = [];
-        console.debug(data);
         for (var i=0; i < data.length; i++){
             var item = data[i];
             var description = item.type.charAt(0).toUpperCase()
@@ -192,7 +156,7 @@ angular.module('eucaby.controllers', [])
             description += ' sent on ' + item.created_date;  // XXX: Format date
             var url = '';
             if (item.type ==='notification' || item.session.complete){
-                url = '#/app/tabs/map'; // XXX: Fix url
+                url = '#/app/tab/detail/' + i;
             }
             items.push({
                 item: item,
@@ -204,15 +168,44 @@ angular.module('eucaby.controllers', [])
         }
         return items;
     }
+    var formatIncoming = function(data){
+        var items = [];
+        for (var i=0; i < data.length; i++){
+            var item = data[i];
+            var description = item.type.charAt(0).toUpperCase()
+                + item.type.slice(1);
+            description += ' received on ' + item.created_date;  // XXX: Format date
+            var url = '';
+            if (item.type ==='notification' || item.session.complete){
+                url = '#/app/tab/detail/' + i;
+            }
+            items.push({
+                item: item,
+                complete: item.session.complete,
+                name: item.sender.name,
+                description: description,
+                url: url
+            });
+        }
+        return items;
+    }
     Activity.outgoing(function(data){
-        $scope.outgoing = formatOutgoing(data.data);
+        $rootScope.outgoing = formatOutgoing(data.data);
+    });
+    Activity.incoming(function(data){
+        $scope.incoming = formatIncoming(data.data);
     })
-    $scope.incoming = Activity.incoming();
 }])
 
-//.controller('FriendDetailCtrl', function($scope, $stateParams, Friends) {
-//    $scope.friend = Friends.get($stateParams.friendId);
-//})
+.controller('ActivityDetailCtrl',
+            ['$scope', '$rootScope', '$stateParams', 'map',
+    function($scope, $rootScope, $stateParams, map) {
+        $scope.out_item = $rootScope.outgoing[$stateParams.id];
+        var loc = $scope.out_item.item.location;
+        $scope.map = map.createMap('locmap', loc.lat, loc.lng);
+        $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
+    }
+])
 
 .controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
 
@@ -225,7 +218,7 @@ angular.module('eucaby.controllers', [])
     }
 
     $scope.showHeader = function(){
-        return !$state.is('app.login');
+        return $state.is('app.tabs.map');  //!$state.is('app.login') || !
     }
 
     $scope.logout = function () {

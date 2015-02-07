@@ -2,7 +2,7 @@
 
 angular.module('eucaby',
     ['ionic', 'openfb', 'eucaby.controllers', //'btford.socket-io',
-     'eucaby.services', 'eucaby.filters'])
+     'eucaby.filters'])
 
 /*
 .factory('socket', function (socketFactory) {
@@ -121,6 +121,15 @@ angular.module('eucaby',
             'tab-incoming': {
                 templateUrl: 'templates/tab-incoming.html',
                 controller: 'ActivityCtrl'
+            }
+        }
+    })
+    .state('app.tabs.detail', {
+        url: '/detail/:id',
+        views: {
+            'tab-outgoing': {
+                templateUrl: 'templates/message-detail.html',
+                controller: 'ActivityDetailCtrl'
             }
         }
     })
