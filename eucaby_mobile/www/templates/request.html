@@ -7,11 +7,12 @@
   </ion-header-bar>
   <ion-content ng-controller="MessageCtrl">
     <form ng-submit="sendRequest()">
+        <div class="item item-divider">Enter email address</div>
         <label class="item item-input">
-          <input type="text" placeholder="Enter email address"
+          <input type="text" placeholder="Email"
                  ng-model="form.email">
         </label>
-        <div class="help"> or select a friend</div>
+        <div class="item item-divider">or select a friend</div>
         <div class="list">
             <ion-radio ng-repeat="friend in friends.data" ng-value="friend.username"
                     ng-model="form.username">

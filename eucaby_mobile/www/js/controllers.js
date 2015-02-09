@@ -18,16 +18,32 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     $scope.map = map.createMap('map', SF_LAT, SF_LNG);
     $scope.markers = [];
 
-    var registerModal = function(template, modal_name){
+    var registerModal = function(template, modalName){
+        var name = modalName + 'Modal';
         $ionicModal.fromTemplateUrl(template, {
             scope: $scope
         }).then(function(modal) {
-            $scope[modal_name + 'Modal'] = modal;
+            $scope[name] = modal;
         });
     }
 
     registerModal('templates/request.html', 'request');
     registerModal('templates/notify.html', 'notify');
+
+
+//    $scope.showNotifyModal = function(){
+//        $scope.notifyModal.show();
+//        console.debug('Hello');
+//    }
+    $scope.$on('modal.shown', function(a, b) {
+        // 1. Move to current location
+        // 2. Display map for notifyModal
+        $scope.notify_map = map.createMap('notifymap', SF_LAT, SF_LNG);
+        $scope.current_marker = map.createMarker($scope.notify_map, SF_LAT, SF_LNG, 'Hello');
+//        console.debug(a, b)
+    });
+
+
 
 //    // I am here action
 //    $scope.showIamhere = function() {
@@ -82,9 +98,6 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
 .controller('MessageCtrl', ['$scope', '$http', 'Friends', 'map',
                 function($scope, $http, Friends, map) {
 
-//    $scope.notify_map = map.createMap('notifymap', SF_LAT, SF_LNG);
-//    $scope.current_marker = map.createMarker($scope.notify_map, SF_LAT, SF_LNG, 'Hello');
-
     $scope.form = {};
     $scope.friends = Friends.all();
 
@@ -123,7 +136,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
         sendMessage('request', EUCABY_ENDPOINT + '/location/request');
     }
     $scope.sendLocation = function(){
-        sendMessage('notify', EUCABY_ENDPOINT + '/location/notify',
+        sendMessage('notify', EUCABY_ENDPOINT + '/location/notification',
                     {latlng: SF_LAT + ',' + SF_LNG});
     }
 }])
@@ -142,6 +155,12 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
 })
 
 .controller('LogoutCtrl', function($scope) {
+})
+
+.controller('ProfileCtrl', function($scope) {
+})
+
+.controller('SettingsCtrl', function($scope) {
 })
 
 .controller('ActivityCtrl', ['$scope', '$rootScope', '$stateParams', 'Activity',

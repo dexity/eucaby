@@ -78,7 +78,24 @@ angular.module('eucaby',
             }
         }
     })
-
+    .state('app.profile', {
+        url: '/profile',
+        views: {
+            'menu-content': {
+                templateUrl: 'templates/profile.html',
+                controller: 'ProfileCtrl'
+            }
+        }
+    })
+    .state('app.settings', {
+        url: '/settings',
+        views: {
+            'menu-content': {
+                templateUrl: 'templates/settings.html',
+                controller: 'SettingsCtrl'
+            }
+        }
+    })
     .state('app.tabs.map', {
         url: '/map',
         views: {
@@ -133,15 +150,6 @@ angular.module('eucaby',
             }
         }
     })
-//    .state('app.tabs.friend-detail', {
-//        url: '/friend/:friendId',
-//        views: {
-//            'tab-friends': {
-//                templateUrl: 'templates/friend-detail.html',
-//                controller: 'FriendDetailCtrl'
-//            }
-//        }
-//    })
 
   $urlRouterProvider.otherwise('/app/tab/map');
 
