@@ -779,20 +779,30 @@ class TestUserActivity(test_base.TestCase):
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
 
-         # Test Cases
-         #
-         #    Req         Notif
-         #    +----+      +----+
-         #    |    |      |    |        0
-         #    | -> |      | <- |        1
-         #    |    |:----:|    |        2
-         # U1 +----+      +----+ U2
-         #    |****|      |****|        3
-         #    |****|      |****|        2
-         #    +----+      +----+
-         #    | <- |:----:| -> |        5
-         #    |    |      |    |        6
-         #    +----+      +----+
+        # Test Cases
+        # ----------
+        # Reverse order: array is counted from the top
+        #
+        #    Req         Notif
+        #    +----+      +----+       Time  Array
+        #    |    |      |    |        6      0
+        #    | <- |:----:| -> |        5      1
+        # U1 +----+      +----+ U2
+        #    |****|      |****|        4      2
+        #    |****|      |****|        3      3
+        #    +----+      +----+
+        #    |    |:----:|    |        2      4
+        #    | -> |      | <- |        1      5
+        #    |    |      |    |        0      6
+        #    +----+      +----+
+        #
+        # Comment notations:
+        # ------------------
+        # > sent to U2
+        # ] sent to U2 and complete
+        # * sent to email
+        # [ received from U2 and complete
+        # < received from U2
 
         self.requests = self._create_requests()
         self._create_notifications()
@@ -843,8 +853,8 @@ class TestUserActivity(test_base.TestCase):
     def _create_notifications(self):
         """Creates notifications."""
         params = self._create_params(self.user2, self.user)
-        latlngs = ['11,-11', '22,-22', '33,-33', '44,-44', '55,-55', '66,-66',
-                   '77,-77']
+        latlngs = ['0,0', '11,-11', '22,-22', '33,-33', '44,-44', '55,-55',
+                   '66,-66']
         for i in range(7):
             if i in [2, 5]:
                 # notif2 (from user2) -> req2 (to user)
@@ -905,7 +915,13 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual(400, resp.status_code)
 
     def test_history_request(self):
-        """Tests request activity type."""
+        """Tests request activity type.
+
+        time:       0 1 2 3 4 5 6
+        requests:   0 1 2 3 4 5 6
+        data:       4 3 2 1 0 - -
+                    > > ] * * [ <
+        """
         params = urllib.urlencode(dict(type='request'))
         resp = self.client.get(
             '/history?{}'.format(params),
@@ -915,13 +931,20 @@ class TestUserActivity(test_base.TestCase):
         for i in range(5):
             req = json.dumps(flask_restful.marshal(
                 self.requests[i], api_fields.REQUEST_FIELDS))
-            self.assertEqual(req, json.dumps(data['data'][i]))
+            self.assertEqual(req, json.dumps(data['data'][4-i]))
         # Complete requests
         self.assertTrue(data['data'][2]['session']['complete'])
         # Request to new email is never complete
         self.assertFalse(data['data'][3]['session']['complete'])
 
     def test_history_notification(self):
+        """Tests notification activity type.
+
+        time:           0 1 2 3 4 5 6
+        notifications:  6 0 1 2 3 4 5   # moved notif 6 as earliest
+        data:           1 - - - - - 0
+                        > - - - - - ]
+        """
         params = urllib.urlencode(dict(type='notification'))
         resp = self.client.get(
             '/history?{}'.format(params),
@@ -938,7 +961,16 @@ class TestUserActivity(test_base.TestCase):
         self.assertFalse(data['data'][1]['session']['complete'])
 
     def test_history_outgoing(self):
-        """Tests outgoing activity type."""
+        """Tests outgoing activity type.
+
+        time:           0  1  2  3  4  5  6  7  8  9  10 11 12 13
+        requests:          0  1  2  3  4  5                    6
+                           r> r> r] r* r* -                    -
+        notifications:  6                    0  1  2  3  4  5
+                        n>                   -  -  -  -  -  n]
+        data:           6  5  4  3  2  1  0  # not in time scale
+                        n> r> r> r] r* r* n]
+        """
         params = urllib.urlencode(dict(type='outgoing'))
         resp = self.client.get(
             '/history?{}'.format(params),
@@ -952,14 +984,23 @@ class TestUserActivity(test_base.TestCase):
         # Check first element from data
         notif = json.dumps(flask_restful.marshal(
             self.notifications[6], api_fields.NOTIFICATION_FIELDS))
-        self.assertEqual(notif, json.dumps(data['data'][0]))
+        self.assertEqual(notif, json.dumps(data['data'][6]))
         # Check completeness
-        self.assertFalse(data['data'][0]['session']['complete'])
+        self.assertFalse(data['data'][6]['session']['complete'])
         self.assertTrue(data['data'][3]['session']['complete'])
-        self.assertTrue(data['data'][6]['session']['complete'])
+        self.assertTrue(data['data'][0]['session']['complete'])
 
     def test_history_incoming(self):
-        """Tests incoming activity type."""
+        """Tests incoming activity type.
+
+        time:           0  1  2  3  4  5  6  7  8  9  10 11 12 13
+        requests:          0  1  2  3  4  5                    6
+                           -  -  -  -  -  r[                   r<
+        notifications:  6                    0  1  2  3  4  5
+                        -                    n< n< n[ -  -  -
+        data:           4  3  2  1  0  # not in time scale
+                        r[ n< n< n[ r<
+        """
         params = urllib.urlencode(dict(type='incoming'))
         resp = self.client.get(
             '/history?{}'.format(params),
@@ -973,11 +1014,11 @@ class TestUserActivity(test_base.TestCase):
         # Check first element from data
         req = json.dumps(flask_restful.marshal(
             self.requests[6], api_fields.REQUEST_FIELDS))
-        self.assertEqual(req, json.dumps(data['data'][4]))
+        self.assertEqual(req, json.dumps(data['data'][0]))
         # Check completeness
-        self.assertTrue(data['data'][0]['session']['complete'])
-        self.assertTrue(data['data'][3]['session']['complete'])
-        self.assertFalse(data['data'][4]['session']['complete'])
+        self.assertTrue(data['data'][1]['session']['complete'])
+        self.assertTrue(data['data'][4]['session']['complete'])
+        self.assertFalse(data['data'][0]['session']['complete'])
 
     def test_offset_limit(self):
         """Tests offset and limit."""
@@ -990,9 +1031,13 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual([], data['data'])
 
         # There are no gaps in returned list
+        # time:       0 1 2 3 4 5 6
+        # requests:   0 1 2 3 4 5 6
+        # data:       4 3|2 1|0 - -
+        #             > >|] *|* [ <
         requests = []
-        next_offset = 2
-        for i in range(2, 4):  # border between user and email requests   # pylint: disable=unused-variable
+        next_offset = 1
+        for i in range(1, 3):  # border between user and email requests   # pylint: disable=unused-variable
             params = urllib.urlencode(
                 dict(type='request', offset=next_offset, limit=1))
             resp = self.client.get(
@@ -1005,10 +1050,12 @@ class TestUserActivity(test_base.TestCase):
             self.requests[2], api_fields.REQUEST_FIELDS))
         req3 = json.dumps(flask_restful.marshal(
             self.requests[3], api_fields.REQUEST_FIELDS))
-        self.assertEqual(req2, json.dumps(requests[0]))  # user -> user2
-        self.assertEqual(req3, json.dumps(requests[1]))  # user -> new email
+        self.assertEqual(req3, json.dumps(requests[0]))  # user -> new email
+        self.assertEqual(req2, json.dumps(requests[1]))  # user -> user2
 
         # Offset and limit for outgoing
+        # data: |6  5  4  3  2 |1  0
+        #       |n> r> r> r] r*|r* n]
         params = urllib.urlencode(
             dict(type='outgoing', offset=2, limit=5))
         resp = self.client.get(

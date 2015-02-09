@@ -2,6 +2,9 @@
 
 from flask_restful import fields as rest_fields
 
+REQUEST = 'request'
+NOTIFICATION = 'notification'
+
 FRIENDS_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
         dict(username=rest_fields.String(attribute='id'),
@@ -24,7 +27,7 @@ SESSION_FIELDS = dict(
 
 REQUEST_FIELDS = dict(
     id=rest_fields.Integer,
-    type=rest_fields.String(default='request'),
+    type=rest_fields.String(default=REQUEST),
     sender=rest_fields.Nested(SENDER_FIELDS),
     recipient=rest_fields.Nested(RECIPIENT_FIELDS),
     created_date=rest_fields.DateTime(dt_format='iso8601'),
@@ -32,7 +35,7 @@ REQUEST_FIELDS = dict(
 
 NOTIFICATION_FIELDS = REQUEST_FIELDS.copy()
 NOTIFICATION_FIELDS.update(dict(
-    type=rest_fields.String(default='notification'),
+    type=rest_fields.String(default=NOTIFICATION),
     location=rest_fields.Nested(LOCATION_FIELDS)))
 
 USER_FIELDS = dict(

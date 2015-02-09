@@ -229,18 +229,25 @@ class UserActivityView(flask_restful.Resource):
         #          notifications to memory and sorts them
         # Get requests sent or received by user
         requests = ndb_models.LocationRequest.query(
-            req_username == username).fetch()
-        req_resp = flask_restful.marshal(
-            dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
+            req_username == username).order(
+                -ndb_models.LocationRequest.created_date).fetch()
         # Get notifications sent or received by user
         notifications = ndb_models.LocationNotification.query(
-            notif_username == username).fetch()
-        notif_resp = flask_restful.marshal(
-            dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
-        data = itertools.chain(req_resp['data'], notif_resp['data'])
-        merged_data = sorted(
-            data, key=lambda x: x['created_date'], reverse=True)
-        return dict(data=merged_data[offset:offset+limit])
+            notif_username == username).order(
+                -ndb_models.LocationNotification.created_date).fetch()
+        items = itertools.chain(requests, notifications)
+        merged_items = sorted(
+            items, key=lambda x: x.created_date, reverse=True)
+        data = []
+        for item in merged_items[offset:offset+limit]:
+            if isinstance(item, ndb_models.LocationRequest):
+                data_item = flask_restful.marshal(
+                    item, api_fields.REQUEST_FIELDS)
+            else:
+                data_item = flask_restful.marshal(
+                    item, api_fields.NOTIFICATION_FIELDS)
+            data.append(data_item)
+        return dict(data=data)
 
     @classmethod
     def get_outgoing_data(cls, offset, limit):
@@ -262,8 +269,8 @@ class UserActivityView(flask_restful.Resource):
         username = flask.request.user.username
         req_class = ndb_models.LocationRequest
         requests = req_class.query(
-            req_class.sender_username == username).fetch(
-                limit, offset=offset)
+            req_class.sender_username == username).order(
+                -req_class.created_date).fetch(limit, offset=offset)
         return flask_restful.marshal(
             dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
 
@@ -273,8 +280,8 @@ class UserActivityView(flask_restful.Resource):
         username = flask.request.user.username
         notif_class = ndb_models.LocationNotification
         notifications = notif_class.query(
-            notif_class.sender_username == username).fetch(
-                limit, offset=offset)
+            notif_class.sender_username == username).order(
+                -notif_class.created_date).fetch(limit, offset=offset)
         return flask_restful.marshal(
             dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
 
