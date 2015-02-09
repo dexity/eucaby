@@ -305,7 +305,7 @@ class UserActivityView(flask_restful.Resource):
         error = dict(message=api_args.DEFAULT_ERROR, code='server_error')
         return api_utils.make_response(error, 500)
 
-    def get(self):  # pylint: disable=no-self-use
+    def get(self):
         args = reqparse.clean_args(api_args.ACTIVITY_ARGS)
         if isinstance(args, flask.Response):
             return args
@@ -315,9 +315,47 @@ class UserActivityView(flask_restful.Resource):
         return self.handle_request(args['type'], args['offset'], limit)
 
 
+class RequestDetailView(flask_restful.Resource):
+
+    """Returns request detail view."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('history')]
+
+    def get(self, req_id):  # pylint: disable=no-self-use
+        request = ndb_models.LocationRequest.get_by_id(req_id)
+        if not request:
+            error = dict(message='Location request not found', code='not_found')
+            return api_utils.make_response(error, 404)
+
+        # If user is sender or recipient return authorization error
+        username = flask.request.user.username
+        if not (request.sender_username == username or
+                request.recipient_username == username):
+            error = dict(
+                message='Not authorized to access the data', code='auth_error')
+            return api_utils.make_response(error, 401)
+        # Look up related notifications
+        notif_class = ndb_models.LocationNotification
+        notifications = notif_class.query(
+            notif_class.session == request.session).order(
+                -notif_class.created_date).fetch()
+        request.notifications = notifications
+        req_data = flask_restful.marshal(
+            request, api_fields.DETAIL_REQUEST_FIELDS)
+        return req_data
+
+
+class NotificationDetailView(flask_restful.Resource):
+
+    """Returns notification detail view."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('history')]
+
+
+
 api.add_resource(OAuthToken, '/oauth/token')
 api.add_resource(FriendsView, '/friends')
 api.add_resource(RequestLocationView, '/location/request')
-api.add_resource(NotifyLocationView, '/location/notify')
+api.add_resource(RequestDetailView, '/location/request/<int:req_id>')
+api.add_resource(NotifyLocationView, '/location/notification')
+api.add_resource(NotificationDetailView, '/location/notification/<int:id>')
 api.add_resource(UserProfileView, '/me')
 api.add_resource(UserActivityView, '/history')

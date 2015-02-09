@@ -38,6 +38,13 @@ NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default=NOTIFICATION),
     location=rest_fields.Nested(LOCATION_FIELDS)))
 
+INLINE_NOTIFICATION_FIELDS = NOTIFICATION_FIELDS.copy()
+INLINE_NOTIFICATION_FIELDS.pop('session')
+
+DETAIL_REQUEST_FIELDS = REQUEST_FIELDS.copy()
+DETAIL_REQUEST_FIELDS['notifications'] = rest_fields.List(
+    rest_fields.Nested(INLINE_NOTIFICATION_FIELDS))
+
 USER_FIELDS = dict(
     username=rest_fields.String,
     first_name=rest_fields.String,

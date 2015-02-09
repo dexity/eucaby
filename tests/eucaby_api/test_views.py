@@ -540,6 +540,102 @@ class TestRequestLocation(test_base.TestCase):
                                 ['from Test User', 'Join Eucaby'])
 
 
+class TestRequestById(test_base.TestCase):
+
+    def setUp(self):
+        super(TestRequestById, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.user2 = fixtures.create_user2()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
+    def tearDown(self):
+        self.testbed.deactivate()
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # Invalid method
+        test_utils.verify_invalid_methods(
+            self.client, ['post'], '/location/request/123')
+
+        # No token is passed
+        resp = self.client.get('/location/request/123')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Id is not integer
+        resp = self.client.get('/location/request/abc')
+        data = json.loads(resp.data)
+        self.assertIn('Not found', data['message'])
+        self.assertEqual(404, resp.status_code)
+
+        # Request is not found
+        resp = self.client.get(
+            '/location/request/123',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        not_found = dict(message='Location request not found', code='not_found')
+        self.assertEqual(not_found, data)
+
+        # user places request to a new email address
+        req = ndb_models.LocationRequest.create(
+            self.user.username, self.user.name, None, None,
+            'testnew@example.com')
+        req_id = req.key.id()
+
+        # user2 is not authorized: neither sender or recipient
+        resp = self.client.get(
+            '/location/request/{}'.format(req_id),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
+        data = json.loads(resp.data)
+        auth_error = dict(
+            message='Not authorized to access the data', code='auth_error')
+        self.assertEqual(auth_error, data)
+
+    def test_success(self):
+        """Tests successful response."""
+        # Create request with two notifications
+        req = ndb_models.LocationRequest.create(
+            self.user.username, self.user.name, self.user2.username,
+            self.user.name)
+        req_id = req.key.id()
+        for latlng in ['11,-11', '22,-22']:
+            self.client.post(
+                '/location/notification', data=dict(
+                    latlng=latlng, key=req.session.key),
+                headers=dict(
+                    Authorization='Bearer {}'.format(fixtures.UUID2)))
+
+        # User is request sender or request recipient
+        for access_token in [fixtures.UUID, fixtures.UUID2]:
+            resp = self.client.get(
+                '/location/request/{}'.format(req_id),
+                headers=dict(Authorization='Bearer {}'.format(access_token)))
+            data = json.loads(resp.data)
+            self.validate_request(req_id, data)
+
+    def validate_request(self, req_id, data):
+        """Validate request with two notifications."""
+        username2 = self.user2.username
+        notifications = data['notifications']
+        self.assertEqual(self.user.username, data['sender']['username'])
+        self.assertEqual(req_id, data['id'])
+        self.assertEqual(2, len(notifications))
+        self.assertFalse('session' in notifications[0])
+        self.assertEqual(
+            [dict(lat=22, lng=-22), dict(lat=11, lng=-11)],
+            [notif['location'] for notif in notifications])
+        self.assertEqual(
+            [username2, username2],
+            [notif['sender']['username'] for notif in notifications])
+
+
 class TestNotifyLocation(test_base.TestCase):
 
     def setUp(self):
@@ -597,10 +693,10 @@ class TestNotifyLocation(test_base.TestCase):
         """Tests general errors."""
         # Invalid method
         test_utils.verify_invalid_methods(
-            self.client, ['get'], '/location/notify')
+            self.client, ['get'], '/location/notification')
 
         # No token is passed
-        resp = self.client.post('/location/notify')
+        resp = self.client.post('/location/notification')
         data = json.loads(resp.data)
         self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
@@ -610,7 +706,7 @@ class TestNotifyLocation(test_base.TestCase):
             message='Invalid request parameters', code='invalid_request',
             fields=dict(latlng='Missing or invalid latlng parameter'))
         resp = self.client.post(
-            '/location/notify',
+            '/location/notification',
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_missing_params, data)
@@ -621,7 +717,7 @@ class TestNotifyLocation(test_base.TestCase):
             message='Missing key, email or username parameters',
             code='invalid_request')
         resp = self.client.post(
-            '/location/notify', data=dict(latlng=fixtures.LATLNG),
+            '/location/notification', data=dict(latlng=fixtures.LATLNG),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         self.assertEqual(ec_missing_params, data)
@@ -632,7 +728,7 @@ class TestNotifyLocation(test_base.TestCase):
             fields=dict(email='Invalid email'),
             message='Invalid request parameters', code='invalid_request')
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email='wrong'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
@@ -641,7 +737,7 @@ class TestNotifyLocation(test_base.TestCase):
 
         # Request not found
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, key='456'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
@@ -670,7 +766,7 @@ class TestNotifyLocation(test_base.TestCase):
         key = data['data']['session']['key']
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, key=key),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
@@ -682,7 +778,7 @@ class TestNotifyLocation(test_base.TestCase):
 
         # Idempotent operation
         self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, key=key),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
@@ -693,7 +789,7 @@ class TestNotifyLocation(test_base.TestCase):
         """Tests notification new email."""
         # user --> new email
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email='test3@example.com'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
@@ -704,7 +800,7 @@ class TestNotifyLocation(test_base.TestCase):
         """Tests notification to existing email."""
         # user sends notification to user2: user --> user2
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user2.email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
@@ -715,7 +811,7 @@ class TestNotifyLocation(test_base.TestCase):
         """Tests notification his own email."""
         # user sends notification to self: user --> user
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user.email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
@@ -726,7 +822,7 @@ class TestNotifyLocation(test_base.TestCase):
         """Tests notification by username."""
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
-            '/location/notify', data=dict(
+            '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
@@ -862,7 +958,7 @@ class TestUserActivity(test_base.TestCase):
                 if i == 5:  # notif5 (from user) -> req5 (to user2)
                     bearer_token = fixtures.UUID
                 self.client.post(
-                    '/location/notify', data=dict(
+                    '/location/notification', data=dict(
                         latlng=latlngs[i],
                         key=self.requests[i].session.key),
                     headers=dict(

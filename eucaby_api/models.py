@@ -4,7 +4,7 @@ import datetime
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
-db = flask_sqlalchemy.SQLAlchemy()
+db = flask_sqlalchemy.SQLAlchemy(session_options=dict(expire_on_commit=False))
 
 FACEBOOK = 'facebook'
 EUCABY = 'eucaby'
