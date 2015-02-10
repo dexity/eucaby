@@ -321,26 +321,26 @@ class RequestDetailView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('history')]
 
     def get(self, req_id):  # pylint: disable=no-self-use
-        request = ndb_models.LocationRequest.get_by_id(req_id)
-        if not request:
+        loc_req = ndb_models.LocationRequest.get_by_id(req_id)
+        if not loc_req:
             error = dict(message='Location request not found', code='not_found')
             return api_utils.make_response(error, 404)
 
         # If user is sender or recipient return authorization error
         username = flask.request.user.username
-        if not (request.sender_username == username or
-                request.recipient_username == username):
+        if not (loc_req.sender_username == username or
+                loc_req.recipient_username == username):
             error = dict(
                 message='Not authorized to access the data', code='auth_error')
             return api_utils.make_response(error, 401)
         # Look up related notifications
         notif_class = ndb_models.LocationNotification
         notifications = notif_class.query(
-            notif_class.session == request.session).order(
+            notif_class.session == loc_req.session).order(
                 -notif_class.created_date).fetch()
-        request.notifications = notifications
+        loc_req.notifications = notifications
         req_data = flask_restful.marshal(
-            request, api_fields.DETAIL_REQUEST_FIELDS)
+            loc_req, api_fields.DETAIL_REQUEST_FIELDS)
         return req_data
 
 

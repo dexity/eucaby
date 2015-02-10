@@ -669,6 +669,17 @@ class TestNotifyLocation(test_base.TestCase):
         session_out = dict(key=session.key, complete=False)
         if session_dict:
             session_out.update(session_dict)
+
+        # For complete session check the request
+        if session_out['complete']:
+            req_class = ndb_models.LocationRequest
+            loc_req = req_class.query(
+                req_class.session == ndb_models.Session(
+                    key=session.key)).fetch(1)[0]
+            self.assertEqual(session.key, loc_req.session.key)
+            # Session should also be complete
+            self.assertTrue(loc_req.session.complete)
+
         # Check response
         ec_valid_data = dict(data=dict(
             id=loc_notif.id, type='notification',
@@ -764,19 +775,19 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
         data = json.loads(resp.data)
         key = data['data']['session']['key']
+
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, key=key),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             ['Hi, Test2 User2', 'Test User shared'], session_dict)
 
-        # Idempotent operation
+        # Idempotent operation: user repeats the operation
         self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, key=key),
@@ -784,6 +795,27 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self.assertEqual(2, ndb_models.LocationNotification.query().count())
         self.assertEqual(1, ndb_models.Session.query().count())
+
+    def test_self_key(self):
+        """Tests notification by session key to himself."""
+        # Create request
+        # user created request to user: user -> user
+        resp = self.client.post(
+            '/location/request', data=dict(email='test@example.com'),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        key = data['data']['session']['key']
+
+        # user notifies himself
+        resp = self.client.post(
+            '/location/notification', data=dict(
+                latlng=fixtures.LATLNG, key=key),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        session_dict = dict(complete=True)  # Request is complete
+        self.assertEqual(1, ndb_models.LocationRequest.query().count())
+        self._verify_data_email(
+            resp, self.user.username, self.user.name, self.user.email,
+            ['Hi, Test User', 'Test User shared'], session_dict)
 
     def test_new_email(self):
         """Tests notification new email."""

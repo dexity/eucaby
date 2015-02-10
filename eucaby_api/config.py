@@ -39,7 +39,7 @@ class LocalDevelopment(Config):
 
     """Development configuration."""
     DEBUG = True
-    APP_ID = 'eucaby-dev'
+    APP_ID = 'local-dev'
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://dev:devpass@localhost/eucaby?'
         'charset=utf8&use_unicode=0')
