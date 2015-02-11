@@ -10,12 +10,12 @@ class Session(ndb.Model):
 
     """Session model to keep track of location requests."""
 
-    key = ndb.StringProperty(required=True, indexed=True)
+    token = ndb.StringProperty(required=True, indexed=True)
     complete = ndb.BooleanProperty(default=False, indexed=True)
 
     @classmethod
     def create(cls):
-        obj = cls(key=api_utils.generate_uuid())
+        obj = cls(token=api_utils.generate_uuid())
         obj.put()
         return obj
 

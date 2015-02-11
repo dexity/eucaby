@@ -22,7 +22,7 @@ LOCATION_FIELDS = dict(
     lng=rest_fields.Float(attribute='lon'))
 
 SESSION_FIELDS = dict(
-    key=rest_fields.String,
+    token=rest_fields.String,
     complete=rest_fields.Boolean)
 
 REQUEST_FIELDS = dict(
@@ -39,6 +39,7 @@ NOTIFICATION_FIELDS.update(dict(
     location=rest_fields.Nested(LOCATION_FIELDS)))
 
 INLINE_NOTIFICATION_FIELDS = NOTIFICATION_FIELDS.copy()
+INLINE_NOTIFICATION_FIELDS.pop('type')
 INLINE_NOTIFICATION_FIELDS.pop('session')
 
 DETAIL_REQUEST_FIELDS = REQUEST_FIELDS.copy()

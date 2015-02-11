@@ -440,13 +440,13 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email),
             sender=dict(username=self.user.username, name=self.user.name),
             created_date=fr_inputs.iso8601(req.created_date),
-            session=dict(key=session.key, complete=False)))
+            session=dict(token=session.token, complete=False)))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
         # Check email content
         messages = self.mail_stub.get_sent_messages()
         test_utils.verify_email(
-            messages, 1, recipient_email, in_list + [req.session.key, ])
+            messages, 1, recipient_email, in_list + [req.session.token, ])
 
     def test_general_errors(self):
         """Tests general errors."""
@@ -608,7 +608,7 @@ class TestRequestById(test_base.TestCase):
         for latlng in ['11,-11', '22,-22']:
             self.client.post(
                 '/location/notification', data=dict(
-                    latlng=latlng, key=req.session.key),
+                    latlng=latlng, token=req.session.token),
                 headers=dict(
                     Authorization='Bearer {}'.format(fixtures.UUID2)))
 
@@ -666,7 +666,7 @@ class TestNotifyLocation(test_base.TestCase):
         loc_notif = loc_notif.fetch(1)[0]
         session = loc_notif.session
         location = loc_notif.location
-        session_out = dict(key=session.key, complete=False)
+        session_out = dict(token=session.token, complete=False)
         if session_dict:
             session_out.update(session_dict)
 
@@ -674,9 +674,8 @@ class TestNotifyLocation(test_base.TestCase):
         if session_out['complete']:
             req_class = ndb_models.LocationRequest
             loc_req = req_class.query(
-                req_class.session == ndb_models.Session(
-                    key=session.key)).fetch(1)[0]
-            self.assertEqual(session.key, loc_req.session.key)
+                req_class.session.token == session.token).fetch(1)[0]
+            self.assertEqual(session.token, loc_req.session.token)
             # Session should also be complete
             self.assertTrue(loc_req.session.complete)
 
@@ -723,9 +722,9 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(ec_missing_params, data)
         self.assertEqual(400, resp.status_code)
 
-        # No key, email or username
+        # No token, email or username
         ec_missing_params = dict(
-            message='Missing key, email or username parameters',
+            message='Missing token, email or username parameters',
             code='invalid_request')
         resp = self.client.post(
             '/location/notification', data=dict(latlng=fixtures.LATLNG),
@@ -749,7 +748,7 @@ class TestNotifyLocation(test_base.TestCase):
         # Request not found
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, key='456'),
+                latlng=fixtures.LATLNG, token='456'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         ec_user_not_found = dict(message='Request not found', code='not_found')
@@ -766,20 +765,22 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def test_key(self):
-        """Tests notification by session key."""
+        # XXX: Add test deny access for non-sender and non-receiver user
+
+    def test_token(self):
+        """Tests notification by session token."""
         # Create request
         # user2 created request to user: user2 -> user
         resp = self.client.post(
             '/location/request', data=dict(email='test@example.com'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
         data = json.loads(resp.data)
-        key = data['data']['session']['key']
+        token = data['data']['session']['token']
 
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, key=key),
+                latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
@@ -790,26 +791,26 @@ class TestNotifyLocation(test_base.TestCase):
         # Idempotent operation: user repeats the operation
         self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, key=key),
+                latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self.assertEqual(2, ndb_models.LocationNotification.query().count())
         self.assertEqual(1, ndb_models.Session.query().count())
 
-    def test_self_key(self):
-        """Tests notification by session key to himself."""
+    def test_self_token(self):
+        """Tests notification by session token to himself."""
         # Create request
         # user created request to user: user -> user
         resp = self.client.post(
             '/location/request', data=dict(email='test@example.com'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        key = data['data']['session']['key']
+        token = data['data']['session']['token']
 
         # user notifies himself
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, key=key),
+                latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
@@ -992,7 +993,7 @@ class TestUserActivity(test_base.TestCase):
                 self.client.post(
                     '/location/notification', data=dict(
                         latlng=latlngs[i],
-                        key=self.requests[i].session.key),
+                        token=self.requests[i].session.token),
                     headers=dict(
                         Authorization='Bearer {}'.format(bearer_token)))
                 continue

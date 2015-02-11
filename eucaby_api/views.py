@@ -69,7 +69,7 @@ class RequestLocationView(flask_restful.Resource):
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                url='{}/{}'.format(eucaby_url, req.session.key))
+                url='{}/{}'.format(eucaby_url, req.session.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
@@ -151,15 +151,17 @@ class NotifyLocationView(flask_restful.Resource):
             loc_notif, api_fields.NOTIFICATION_FIELDS, envelope='data')
 
     @classmethod
-    def handle_key(cls, key, latlng):
-        """Handles key parameter."""
+    def handle_token(cls, token, latlng):
+        """Handles token parameter."""
         # Get location request
-        session = ndb_models.Session(key=key)
+        session = ndb_models.Session(token=token)
         loc_req = ndb_models.LocationRequest.query(
-            ndb_models.LocationRequest.session == session).fetch(1)
+            ndb_models.LocationRequest.session.token == token).fetch(1)
+            # ndb_models.LocationRequest.session == session).fetch(1)
         if not loc_req:
             error = dict(message='Request not found', code='not_found')
             return api_utils.make_response(error, 404)
+        # XXX: Only sender or receiver can notify location
         loc_req = loc_req[0]
         session = loc_req.session
         # Get recipient which is sender in the session
@@ -168,7 +170,8 @@ class NotifyLocationView(flask_restful.Resource):
             error = dict(message=USER_NOT_FOUND, code='not_found')
             return api_utils.make_response(error, 404)
         session.complete = True
-        session.put()
+        loc_req.session = session
+        loc_req.put()
         return cls.handle_request(recipient, recipient.email, latlng, session)
 
     @classmethod
@@ -191,12 +194,12 @@ class NotifyLocationView(flask_restful.Resource):
         if isinstance(args, flask.Response):
             return args
 
-        username, email, key, latlng = (
-            args['username'], args['email'], args['key'],
+        username, email, token, latlng = (
+            args['username'], args['email'], args['token'],
             args['latlng'])
-        # Preference chain: key, email, username
-        if key:
-            return self.handle_key(key, latlng)
+        # Preference chain: token, email, username
+        if token:
+            return self.handle_token(token, latlng)
         elif email:
             return self.handle_email(email, latlng)
         elif username:
@@ -271,6 +274,7 @@ class UserActivityView(flask_restful.Resource):
         requests = req_class.query(
             req_class.sender_username == username).order(
                 -req_class.created_date).fetch(limit, offset=offset)
+
         return flask_restful.marshal(
             dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
 
@@ -336,7 +340,7 @@ class RequestDetailView(flask_restful.Resource):
         # Look up related notifications
         notif_class = ndb_models.LocationNotification
         notifications = notif_class.query(
-            notif_class.session == loc_req.session).order(
+            notif_class.session.token == loc_req.session.token).order(
                 -notif_class.created_date).fetch()
         loc_req.notifications = notifications
         req_data = flask_restful.marshal(
@@ -348,7 +352,6 @@ class NotificationDetailView(flask_restful.Resource):
 
     """Returns notification detail view."""
     method_decorators = [auth.eucaby_oauth.require_oauth('history')]
-
 
 
 api.add_resource(OAuthToken, '/oauth/token')
