@@ -353,12 +353,37 @@ class NotificationDetailView(flask_restful.Resource):
     """Returns notification detail view."""
     method_decorators = [auth.eucaby_oauth.require_oauth('history')]
 
+    def get(self, notif_id):  # pylint: disable=no-self-use
+        loc_notif = ndb_models.LocationNotification.get_by_id(notif_id)
+        if not loc_notif:
+            error = dict(
+                message='Location notification not found', code='not_found')
+            return api_utils.make_response(error, 404)
+
+        # If user is sender or recipient return authorization error
+        username = flask.request.user.username
+        if not (loc_notif.sender_username == username or
+                loc_notif.recipient_username == username):
+            error = dict(
+                message='Not authorized to access the data', code='auth_error')
+            return api_utils.make_response(error, 401)
+        # Look up related notifications
+        req_class = ndb_models.LocationRequest
+        request = req_class.query(
+            req_class.session.token == loc_notif.session.token).order(
+                -req_class.created_date).fetch()
+        loc_notif.request = (request and request[0]) or None
+        req_data = flask_restful.marshal(
+            loc_notif, api_fields.DETAIL_NOTIFICATION_FIELDS)
+        return req_data
+
 
 api.add_resource(OAuthToken, '/oauth/token')
 api.add_resource(FriendsView, '/friends')
 api.add_resource(RequestLocationView, '/location/request')
 api.add_resource(RequestDetailView, '/location/request/<int:req_id>')
 api.add_resource(NotifyLocationView, '/location/notification')
-api.add_resource(NotificationDetailView, '/location/notification/<int:id>')
+api.add_resource(NotificationDetailView,
+                 '/location/notification/<int:notif_id>')
 api.add_resource(UserProfileView, '/me')
 api.add_resource(UserActivityView, '/history')

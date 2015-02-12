@@ -25,7 +25,7 @@ SESSION_FIELDS = dict(
     token=rest_fields.String,
     complete=rest_fields.Boolean)
 
-REQUEST_FIELDS = dict(
+MESSAGE_FIELDS = dict(
     id=rest_fields.Integer,
     type=rest_fields.String(default=REQUEST),
     sender=rest_fields.Nested(SENDER_FIELDS),
@@ -33,10 +33,16 @@ REQUEST_FIELDS = dict(
     created_date=rest_fields.DateTime(dt_format='iso8601'),
     session=rest_fields.Nested(SESSION_FIELDS))
 
-NOTIFICATION_FIELDS = REQUEST_FIELDS.copy()
+REQUEST_FIELDS = MESSAGE_FIELDS.copy()
+
+NOTIFICATION_FIELDS = MESSAGE_FIELDS.copy()
 NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default=NOTIFICATION),
     location=rest_fields.Nested(LOCATION_FIELDS)))
+
+INLINE_REQUEST_FIELDS = REQUEST_FIELDS.copy()
+INLINE_REQUEST_FIELDS.pop('type')
+INLINE_REQUEST_FIELDS.pop('session')
 
 INLINE_NOTIFICATION_FIELDS = NOTIFICATION_FIELDS.copy()
 INLINE_NOTIFICATION_FIELDS.pop('type')
@@ -45,6 +51,10 @@ INLINE_NOTIFICATION_FIELDS.pop('session')
 DETAIL_REQUEST_FIELDS = REQUEST_FIELDS.copy()
 DETAIL_REQUEST_FIELDS['notifications'] = rest_fields.List(
     rest_fields.Nested(INLINE_NOTIFICATION_FIELDS))
+
+DETAIL_NOTIFICATION_FIELDS = NOTIFICATION_FIELDS.copy()
+DETAIL_NOTIFICATION_FIELDS['request'] = rest_fields.Nested(
+    INLINE_REQUEST_FIELDS)
 
 USER_FIELDS = dict(
     username=rest_fields.String,

@@ -603,7 +603,7 @@ class TestRequestById(test_base.TestCase):
         # Create request with two notifications
         req = ndb_models.LocationRequest.create(
             self.user.username, self.user.name, self.user2.username,
-            self.user.name)
+            self.user2.name, self.user2.email)
         req_id = req.key.id()
         for latlng in ['11,-11', '22,-22']:
             self.client.post(
@@ -613,7 +613,7 @@ class TestRequestById(test_base.TestCase):
                     Authorization='Bearer {}'.format(fixtures.UUID2)))
 
         # User is request sender or request recipient
-        for access_token in [fixtures.UUID, fixtures.UUID2]:
+        for access_token in [fixtures.UUID,]:# fixtures.UUID2]:
             resp = self.client.get(
                 '/location/request/{}'.format(req_id),
                 headers=dict(Authorization='Bearer {}'.format(access_token)))
@@ -622,18 +622,123 @@ class TestRequestById(test_base.TestCase):
 
     def validate_request(self, req_id, data):
         """Validate request with two notifications."""
-        username2 = self.user2.username
+        user_a = dict(username=self.user.username, name=self.user.name)
+        user_aa = user_a.copy()
+        user_aa['email'] = self.user.email
+        user_b = dict(username=self.user2.username, name=self.user2.name)
+        user_bb = user_b.copy()
+        user_bb['email'] = self.user2.email
         notifications = data['notifications']
-        self.assertEqual(self.user.username, data['sender']['username'])
+        self.assertEqual(user_a, data['sender'])
+        self.assertEqual(user_bb, data['recipient'])
         self.assertEqual(req_id, data['id'])
         self.assertEqual(2, len(notifications))
         self.assertFalse('session' in notifications[0])
-        self.assertEqual(
-            [dict(lat=22, lng=-22), dict(lat=11, lng=-11)],
-            [notif['location'] for notif in notifications])
-        self.assertEqual(
-            [username2, username2],
-            [notif['sender']['username'] for notif in notifications])
+        locations = [dict(lat=22, lng=-22), dict(lat=11, lng=-11)]
+        for i in range(2):
+            notif = notifications[i]
+            self.assertEqual(locations[i], notif['location'])
+            self.assertEqual(user_b, notif['sender'])
+            self.assertEqual(user_aa, notif['recipient'])
+
+
+class TestNotificationById(test_base.TestCase):
+
+    def setUp(self):
+        super(TestNotificationById, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.user2 = fixtures.create_user2()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
+    def tearDown(self):
+        self.testbed.deactivate()
+
+    def test_general_errors(self):
+        """Tests general errors."""
+        # Invalid method
+        test_utils.verify_invalid_methods(
+            self.client, ['post'], '/location/notification/123')
+
+        # No token is passed
+        resp = self.client.get('/location/notification/123')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Id is not integer
+        resp = self.client.get('/location/notification/abc')
+        data = json.loads(resp.data)
+        self.assertIn('Not found', data['message'])
+        self.assertEqual(404, resp.status_code)
+
+        # Request is not found
+        resp = self.client.get(
+            '/location/notification/123',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        not_found = dict(
+            message='Location notification not found', code='not_found')
+        self.assertEqual(not_found, data)
+
+        # user places notification to a new email address
+        notif = ndb_models.LocationNotification.create(
+            fixtures.LATLNG, self.user.username, self.user.name, None, None,
+            'testnew@example.com')
+        notif_id = notif.key.id()
+
+        # user2 is not authorized: neither sender or recipient
+        resp = self.client.get(
+            '/location/notification/{}'.format(notif_id),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
+        data = json.loads(resp.data)
+        auth_error = dict(
+            message='Not authorized to access the data', code='auth_error')
+        self.assertEqual(auth_error, data)
+
+    def test_success(self):
+        # Create request with the notification
+        # Request: user -> user2
+        req = ndb_models.LocationRequest.create(
+            self.user.username, self.user.name, self.user2.username,
+            self.user2.name, self.user2.email)
+        # Notification: user2 -> user
+        resp = self.client.post(
+            '/location/notification', data=dict(
+                latlng='11,-11', token=req.session.token),
+            headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID2)))
+        data = json.loads(resp.data)
+        notif_id = data['data']['id']
+
+        # User is notification sender or notification recipient
+        for access_token in [fixtures.UUID, fixtures.UUID2]:
+            resp = self.client.get(
+                '/location/notification/{}'.format(notif_id),
+                headers=dict(Authorization='Bearer {}'.format(access_token)))
+            data = json.loads(resp.data)
+            self.validate_notification(notif_id, data)
+
+    def validate_notification(self, notif_id, data):
+        user_a = dict(username=self.user.username, name=self.user.name)
+        user_aa = user_a.copy()
+        user_aa['email'] = self.user.email
+        user_b = dict(username=self.user2.username, name=self.user2.name)
+        user_bb = user_b.copy()
+        user_bb['email'] = self.user2.email
+        self.assertEqual(user_b, data['sender'])
+        self.assertEqual(user_aa, data['recipient'])
+        self.assertEqual(notif_id, data['id'])
+        self.assertEqual(dict(lat=11, lng=-11), data['location'])
+        request = data['request']
+        self.assertFalse('session' in request)
+        self.assertEqual(request['sender'], user_a)
+        self.assertEqual(request['recipient'], user_bb)
 
 
 class TestNotifyLocation(test_base.TestCase):
