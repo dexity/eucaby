@@ -21,6 +21,7 @@ libraries:
 skip_files:
 - ^\.git
 - ^\.idea
+- ^(.*/)?index\.yaml
 - ^(.*/)?.*~$
 - ^(.*/)?.*\.py[co]$
 - ^deploy*

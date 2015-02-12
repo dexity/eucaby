@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-gcloud preview app deploy app.yaml api.yaml --project eucaby-prd
+gcloud preview app deploy app.yaml api.yaml index.yaml --project eucaby-prd
