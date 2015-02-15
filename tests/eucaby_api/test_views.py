@@ -598,7 +598,17 @@ class TestRequestById(test_base.TestCase):
             message='Not authorized to access the data', code='auth_error')
         self.assertEqual(auth_error, data)
 
-    def test_success(self):
+    def test_no_notifications(self):
+        """Tests request with no notifications."""
+        # Request: user -> user2
+        req = ndb_models.LocationRequest.create(
+            self.user.username, self.user.name, self.user2.username,
+            self.user2.name, self.user2.email)
+        req_id = req.key.id()
+
+        self.validate_request(req_id, False)
+
+    def test_complete_request(self):
         """Tests successful response."""
         # Create request with two notifications
         req = ndb_models.LocationRequest.create(
@@ -613,34 +623,37 @@ class TestRequestById(test_base.TestCase):
                     Authorization='Bearer {}'.format(fixtures.UUID2)))
 
         # User is request sender or request recipient
-        for access_token in [fixtures.UUID,]:# fixtures.UUID2]:
+        self.validate_request(req_id, True)
+
+    def validate_request(self, req_id, has_notification):
+        """Validate request."""
+        for access_token in [fixtures.UUID, fixtures.UUID2]:
             resp = self.client.get(
                 '/location/request/{}'.format(req_id),
                 headers=dict(Authorization='Bearer {}'.format(access_token)))
-            data = json.loads(resp.data)
-            self.validate_request(req_id, data)
-
-    def validate_request(self, req_id, data):
-        """Validate request with two notifications."""
-        user_a = dict(username=self.user.username, name=self.user.name)
-        user_aa = user_a.copy()
-        user_aa['email'] = self.user.email
-        user_b = dict(username=self.user2.username, name=self.user2.name)
-        user_bb = user_b.copy()
-        user_bb['email'] = self.user2.email
-        notifications = data['notifications']
-        self.assertEqual(user_a, data['sender'])
-        self.assertEqual(user_bb, data['recipient'])
-        self.assertEqual(req_id, data['id'])
-        self.assertEqual(2, len(notifications))
-        self.assertFalse('session' in notifications[0])
-        locations = [dict(lat=22, lng=-22), dict(lat=11, lng=-11)]
-        for i in range(2):
-            notif = notifications[i]
-            self.assertEqual(locations[i], notif['location'])
-            self.assertEqual(user_b, notif['sender'])
-            self.assertEqual(user_aa, notif['recipient'])
-
+            data = json.loads(resp.data)['data']
+            user_a = dict(username=self.user.username, name=self.user.name)
+            user_aa = user_a.copy()
+            user_aa['email'] = self.user.email
+            user_b = dict(username=self.user2.username, name=self.user2.name)
+            user_bb = user_b.copy()
+            user_bb['email'] = self.user2.email
+            notifications = data['notifications']
+            if has_notification:
+                # Request has two notifications
+                self.assertEqual(user_a, data['sender'])
+                self.assertEqual(user_bb, data['recipient'])
+                self.assertEqual(req_id, data['id'])
+                self.assertEqual(2, len(notifications))
+                self.assertFalse('session' in notifications[0])
+                locations = [dict(lat=22, lng=-22), dict(lat=11, lng=-11)]
+                for i in range(2):
+                    notif = notifications[i]
+                    self.assertEqual(locations[i], notif['location'])
+                    self.assertEqual(user_b, notif['sender'])
+                    self.assertEqual(user_aa, notif['recipient'])
+            else:
+                self.assertEqual([], notifications)
 
 class TestNotificationById(test_base.TestCase):
 
@@ -701,7 +714,22 @@ class TestNotificationById(test_base.TestCase):
             message='Not authorized to access the data', code='auth_error')
         self.assertEqual(auth_error, data)
 
-    def test_success(self):
+    def test_no_request(self):
+        """Tests notification with no requests."""
+        # Notification: user2 -> user
+        resp = self.client.post(
+            '/location/notification', data=dict(
+                latlng='11,-11', username=self.user.username),
+            headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID2)))
+        data = json.loads(resp.data)
+        notif_id = data['data']['id']
+
+        # User is notification sender or notification recipient
+        self.validate_notification(notif_id, False)
+
+    def test_complete_notification(self):
+        """Tests notification with request."""
         # Create request with the notification
         # Request: user -> user2
         req = ndb_models.LocationRequest.create(
@@ -717,28 +745,32 @@ class TestNotificationById(test_base.TestCase):
         notif_id = data['data']['id']
 
         # User is notification sender or notification recipient
+        self.validate_notification(notif_id, True)
+
+    def validate_notification(self, notif_id, has_request):
+        """Validates notification."""
         for access_token in [fixtures.UUID, fixtures.UUID2]:
             resp = self.client.get(
                 '/location/notification/{}'.format(notif_id),
                 headers=dict(Authorization='Bearer {}'.format(access_token)))
-            data = json.loads(resp.data)
-            self.validate_notification(notif_id, data)
-
-    def validate_notification(self, notif_id, data):
-        user_a = dict(username=self.user.username, name=self.user.name)
-        user_aa = user_a.copy()
-        user_aa['email'] = self.user.email
-        user_b = dict(username=self.user2.username, name=self.user2.name)
-        user_bb = user_b.copy()
-        user_bb['email'] = self.user2.email
-        self.assertEqual(user_b, data['sender'])
-        self.assertEqual(user_aa, data['recipient'])
-        self.assertEqual(notif_id, data['id'])
-        self.assertEqual(dict(lat=11, lng=-11), data['location'])
-        request = data['request']
-        self.assertFalse('session' in request)
-        self.assertEqual(request['sender'], user_a)
-        self.assertEqual(request['recipient'], user_bb)
+            data = json.loads(resp.data)['data']
+            user_a = dict(username=self.user.username, name=self.user.name)
+            user_aa = user_a.copy()
+            user_aa['email'] = self.user.email
+            user_b = dict(username=self.user2.username, name=self.user2.name)
+            user_bb = user_b.copy()
+            user_bb['email'] = self.user2.email
+            self.assertEqual(user_b, data['sender'])
+            self.assertEqual(user_aa, data['recipient'])
+            self.assertEqual(notif_id, data['id'])
+            self.assertEqual(dict(lat=11, lng=-11), data['location'])
+            request = data['request']
+            if has_request:
+                self.assertFalse('session' in request)
+                self.assertEqual(request['sender'], user_a)
+                self.assertEqual(request['recipient'], user_bb)
+            else:
+                self.assertIsNone(request)
 
 
 class TestNotifyLocation(test_base.TestCase):

@@ -54,7 +54,7 @@ DETAIL_REQUEST_FIELDS['notifications'] = rest_fields.List(
 
 DETAIL_NOTIFICATION_FIELDS = NOTIFICATION_FIELDS.copy()
 DETAIL_NOTIFICATION_FIELDS['request'] = rest_fields.Nested(
-    INLINE_REQUEST_FIELDS)
+    INLINE_REQUEST_FIELDS, allow_null=True)
 
 USER_FIELDS = dict(
     username=rest_fields.String,

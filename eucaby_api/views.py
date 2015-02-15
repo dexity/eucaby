@@ -343,9 +343,8 @@ class RequestDetailView(flask_restful.Resource):
             notif_class.session.token == loc_req.session.token).order(
                 -notif_class.created_date).fetch()
         loc_req.notifications = notifications
-        req_data = flask_restful.marshal(
-            loc_req, api_fields.DETAIL_REQUEST_FIELDS)
-        return req_data
+        return flask_restful.marshal(
+            loc_req, api_fields.DETAIL_REQUEST_FIELDS, envelope='data')
 
 
 class NotificationDetailView(flask_restful.Resource):
@@ -373,9 +372,8 @@ class NotificationDetailView(flask_restful.Resource):
             req_class.session.token == loc_notif.session.token).order(
                 -req_class.created_date).fetch()
         loc_notif.request = (request and request[0]) or None
-        req_data = flask_restful.marshal(
-            loc_notif, api_fields.DETAIL_NOTIFICATION_FIELDS)
-        return req_data
+        return flask_restful.marshal(
+            loc_notif, api_fields.DETAIL_NOTIFICATION_FIELDS, envelope='data')
 
 
 api.add_resource(OAuthToken, '/oauth/token')
