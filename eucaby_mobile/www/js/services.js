@@ -25,5 +25,19 @@ angular.module('eucaby.services', ['ngResource'])
         }
     });
 }])
+.factory('NotificationDetail', ['$resource', function($resource) {
 
-;
+    return $resource(EUCABY_ENDPOINT + '/location/notification/:id', {}, {
+        get: {method: 'GET',
+            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+        }
+    });
+}])
+.factory('RequestDetail', ['$resource', function($resource) {
+
+    return $resource(EUCABY_ENDPOINT + '/location/request/:id', {}, {
+        get: {method: 'GET',
+            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+        }
+    });
+}]);

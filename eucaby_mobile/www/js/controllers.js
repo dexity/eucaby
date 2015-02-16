@@ -163,8 +163,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
 .controller('SettingsCtrl', function($scope) {
 })
 
-.controller('ActivityCtrl', ['$scope', '$rootScope', '$stateParams', 'Activity',
-    function($scope, $rootScope, $stateParams, Activity) {
+.controller('ActivityCtrl', ['$scope', '$stateParams', 'Activity',
+    function($scope, $stateParams, Activity) {
 
     var formatOutgoing = function(data){
         var items = [];
@@ -174,8 +174,10 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
                 + item.type.slice(1);
             description += ' sent on ' + item.created_date;  // XXX: Format date
             var url = '';
-            if (item.type ==='notification' || item.session.complete){
-                url = '#/app/tab/detail/' + i;
+            if (item.type === 'notification'){
+                url = '#/app/tab/notification/' + item.id;
+            } else if (item.type === 'request' && item.session.complete) {
+                url = '#/app/tab/outgoing/request/' + item.id;
             }
             items.push({
                 item: item,
@@ -209,22 +211,38 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
         return items;
     }
     Activity.outgoing(function(data){
-        $rootScope.outgoing = formatOutgoing(data.data);
+        $scope.outgoing = formatOutgoing(data.data);
     });
-    Activity.incoming(function(data){
-        $scope.incoming = formatIncoming(data.data);
-    })
+//    Activity.incoming(function(data){
+//        $scope.incoming = formatIncoming(data.data);
+//    })
 }])
 
-.controller('ActivityDetailCtrl',
-            ['$scope', '$rootScope', '$stateParams', 'map',
-    function($scope, $rootScope, $stateParams, map) {
-        $scope.out_item = $rootScope.outgoing[$stateParams.id];
-        var loc = $scope.out_item.item.location;
-        $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-        $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
+.controller('NotificationDetailCtrl',
+            ['$scope', '$stateParams', 'map',
+             'NotificationDetail',
+    function($scope, $stateParams, map, NotificationDetail) {
+        NotificationDetail.get({id: $stateParams.id}, function(data){
+            var item = {
+                data: data.data
+            };
+            $scope.item = item;
+            var loc = $scope.item.data.location;
+            $scope.map = map.createMap('locmap', loc.lat, loc.lng);
+            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
+        });
     }
 ])
+
+//.controller('ActivityDetailCtrl',
+//            ['$scope', '$rootScope', '$stateParams', 'map',
+//    function($scope, $rootScope, $stateParams, map) {
+//        $scope.out_item = $rootScope.outgoing[$stateParams.id];
+//        var loc = $scope.out_item.item.location;
+//        $scope.map = map.createMap('locmap', loc.lat, loc.lng);
+//        $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
+//    }
+//])
 
 .controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
 

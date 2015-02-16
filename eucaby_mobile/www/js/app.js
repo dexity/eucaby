@@ -132,6 +132,15 @@ angular.module('eucaby',
             }
         }
     })
+    .state('app.tabs.notification', {
+        url: '/notification/:id',
+        views: {
+            'tab-outgoing': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
+            }
+        }
+    })
     .state('app.tabs.incoming', {
         url: '/incoming',
         views: {
@@ -141,16 +150,6 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.detail', {
-        url: '/detail/:id',
-        views: {
-            'tab-outgoing': {
-                templateUrl: 'templates/message-detail.html',
-                controller: 'ActivityDetailCtrl'
-            }
-        }
-    })
-
   $urlRouterProvider.otherwise('/app/tab/map');
 
 });

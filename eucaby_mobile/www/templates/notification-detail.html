@@ -1,0 +1,19 @@
+<ion-view title="Notification">
+  <ion-nav-bar class="bar-stable">
+    <ion-nav-back-button class="button-icon ion-chevron-left">
+    </ion-nav-back-button>
+  </ion-nav-bar>
+  <ion-content ng-controller="NotificationDetailCtrl">
+    <div id="locmap"></div>
+    <div class="card">
+        <div class="item item-text-wrap">
+            Notification sent to <b>{{ item.data.recipient | userName }}</b><br>
+            {{ item.data.created_date }}
+        </div>
+    </div>
+    <div ng-show="{{ item.data.request }}">
+        Request received from <b>{{ item.data.request.sender | userName }}</b>
+        {{ item.data.request.created_date }}
+    </div>
+  </ion-content>
+</ion-view>
