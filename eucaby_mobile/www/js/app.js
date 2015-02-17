@@ -48,7 +48,7 @@ angular.module('eucaby',
         templateUrl: 'templates/menu.html'
     })
 
-    .state('app.tabs', {
+    .state('app.tab', {
         url: '/tab',
         abstract: true,
         views: {
@@ -96,7 +96,7 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.map', {
+    .state('app.tab.map', {
         url: '/map',
         views: {
             'tab-map': {
@@ -105,7 +105,7 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.map.notify', {
+    .state('app.tab.map.notify', {
         url: '/notify',
         views: {
             'tab-map': {
@@ -114,7 +114,7 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.map.request', {
+    .state('app.tab.map.request', {
         url: '/request',
         views: {
             'tab-map': {
@@ -123,7 +123,7 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.outgoing', {
+    .state('app.tab.outgoing', {
         url: '/outgoing',
         views: {
             'tab-outgoing': {
@@ -132,8 +132,8 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.notification', {
-        url: '/notification/:id',
+    .state('app.tab.outgoing_notification', {
+        url: '/outgoing_notification/:id',
         views: {
             'tab-outgoing': {
                 templateUrl: 'templates/notification-detail.html',
@@ -141,12 +141,40 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tabs.incoming', {
+    .state('app.tab.outgoing_request', {
+        url: '/outgoing_request/:id',
+        views: {
+            'tab-outgoing': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.incoming', {
         url: '/incoming',
         views: {
             'tab-incoming': {
                 templateUrl: 'templates/tab-incoming.html',
                 controller: 'ActivityCtrl'
+            }
+        }
+    })
+
+    .state('app.tab.incoming_notification', {
+        url: '/incoming_notification/:id',
+        views: {
+            'tab-incoming': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.incoming_request', {
+        url: '/incoming_request/:id',
+        views: {
+            'tab-incoming': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
             }
         }
     })

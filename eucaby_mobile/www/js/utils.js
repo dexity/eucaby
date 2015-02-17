@@ -42,3 +42,40 @@ angular.module('eucaby.utils', [])
         }
     }
 })
+
+.factory('utils', function(){
+    return {
+        sendMessage: function(scope, http, modal_name, url, extra_params) {
+            var email = scope.form.email;
+            var username = scope.form.username;
+            var token = scope.form.token;
+
+            if (email && username){
+                // XXX: Display error
+            }
+            // XXX: If not email or username set also display error
+            var params = {};
+            if (email){
+                params.email = email;
+            } else if (username){
+                params.username = username;
+            } else if (token) {
+                params.token = token
+            }
+            // Update params
+            for (var key in extra_params){
+                if (extra_params.hasOwnProperty(key)){
+                    params[key] = extra_params[key];
+                }
+            }
+            http.post(url, params, {headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}})
+                .success(function(data){
+                    console.log(data);
+                    modal_name && scope[modal_name + 'Modal'] && scope[modal_name + 'Modal'].hide();
+                })
+                .error(function(e){
+                    console.log(e);
+                });
+        }
+    }
+})

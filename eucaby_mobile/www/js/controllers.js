@@ -95,48 +95,18 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     */
 }])
 
-.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'map',
-                function($scope, $http, Friends, map) {
+.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'utils',
+                function($scope, $http, Friends, utils) {
 
     $scope.form = {};
     $scope.friends = Friends.all();
 
-    var sendMessage = function(modal_name, url, extra_params) {
-        var email = $scope.form.email;
-        var username = $scope.form.username;
-
-        if (email && username){
-            // XXX: Display error
-        }
-        // XXX: If not email or username set also display error
-        var params = {};
-        if (email){
-            params.email = email;
-        } else if (username){
-            params.username = username;
-        }
-        // Update params
-        for (var key in extra_params){
-            if (extra_params.hasOwnProperty(key)){
-                params[key] = extra_params[key];
-            }
-        }
-        $http.post(url, params, {headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}})
-            .success(function(data){
-                console.log(data);
-                $scope[modal_name + 'Modal'].hide();
-            })
-            .error(function(e){
-                console.log(e);
-            });
-    }
-
     // Send request action
     $scope.sendRequest = function(){
-        sendMessage('request', EUCABY_ENDPOINT + '/location/request');
+        utils.sendMessage($scope, $http, 'request', EUCABY_ENDPOINT + '/location/request');
     }
     $scope.sendLocation = function(){
-        sendMessage('notify', EUCABY_ENDPOINT + '/location/notification',
+        utils.sendMessage($scope, $http, 'notify', EUCABY_ENDPOINT + '/location/notification',
                     {latlng: SF_LAT + ',' + SF_LNG});
     }
 }])
@@ -175,9 +145,9 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
             description += ' sent on ' + item.created_date;  // XXX: Format date
             var url = '';
             if (item.type === 'notification'){
-                url = '#/app/tab/notification/' + item.id;
+                url = '#/app/tab/outgoing_notification/' + item.id;
             } else if (item.type === 'request' && item.session.complete) {
-                url = '#/app/tab/outgoing/request/' + item.id;
+                url = '#/app/tab/outgoing_request/' + item.id;
             }
             items.push({
                 item: item,
@@ -197,8 +167,10 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
                 + item.type.slice(1);
             description += ' received on ' + item.created_date;  // XXX: Format date
             var url = '';
-            if (item.type ==='notification' || item.session.complete){
-                url = '#/app/tab/detail/' + i;
+            if (item.type === 'notification'){
+                url = '#/app/tab/incoming_notification/' + item.id;
+            } else if (item.type === 'request') {
+                url = '#/app/tab/incoming_request/' + item.id;
             }
             items.push({
                 item: item,
@@ -213,15 +185,19 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     Activity.outgoing(function(data){
         $scope.outgoing = formatOutgoing(data.data);
     });
-//    Activity.incoming(function(data){
-//        $scope.incoming = formatIncoming(data.data);
-//    })
+    Activity.incoming(function(data){
+        $scope.incoming = formatIncoming(data.data);
+    })
 }])
 
 .controller('NotificationDetailCtrl',
             ['$scope', '$stateParams', 'map',
              'NotificationDetail',
     function($scope, $stateParams, map, NotificationDetail) {
+
+        var stateName = $scope.$viewHistory.currentView.stateName;
+        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
+
         NotificationDetail.get({id: $stateParams.id}, function(data){
             var item = {
                 data: data.data
@@ -234,15 +210,38 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 ])
 
-//.controller('ActivityDetailCtrl',
-//            ['$scope', '$rootScope', '$stateParams', 'map',
-//    function($scope, $rootScope, $stateParams, map) {
-//        $scope.out_item = $rootScope.outgoing[$stateParams.id];
-//        var loc = $scope.out_item.item.location;
-//        $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-//        $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
-//    }
-//])
+.controller('RequestDetailCtrl',
+            ['$scope', '$http', '$stateParams', 'map', 'utils',
+             'RequestDetail',
+    function($scope, $http, $stateParams, map, utils, RequestDetail) {
+
+        var stateName = $scope.$viewHistory.currentView.stateName;
+        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
+        $scope.form = {};
+        $scope.sendLocation = function(){
+            utils.sendMessage($scope, $http, null, EUCABY_ENDPOINT + '/location/notification',
+                        {latlng: SF_LAT + ',' + SF_LNG});
+            // XXX: Reload the request view
+        }
+        RequestDetail.get({id: $stateParams.id}, function(data){
+            var item = {
+                data: data.data
+            };
+            $scope.markers = [];
+            $scope.map;
+            $scope.item = item;
+            $scope.form.token = item.data.session.token;
+            for (var i = 0; i < item.data.notifications.length; i++){
+                var notif = item.data.notifications[i];
+                var loc = notif.location;
+                if (!$scope.map) {
+                    $scope.map = map.createMap('locmap', loc.lat, loc.lng);
+                }
+                $scope.markers.push(map.createMarker($scope.map, loc.lat, loc.lng, 'Hello'));
+            }
+        });
+    }
+])
 
 .controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
 
@@ -255,7 +254,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 
     $scope.showHeader = function(){
-        return $state.is('app.tabs.map');  //!$state.is('app.login') || !
+        return $state.is('app.tab.map');  //!$state.is('app.login') || !
     }
 
     $scope.logout = function () {

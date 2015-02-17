@@ -7,13 +7,31 @@
     <div id="locmap"></div>
     <div class="card">
         <div class="item item-text-wrap">
-            Notification sent to <b>{{ item.data.recipient | userName }}</b><br>
+            <div ng-switch on="isOutgoing">
+                <div ng-switch-when="true">
+                    Notification sent to <b>{{ item.data.recipient | userName }}</b><br>
+                </div>
+                <div ng-switch-when="false">
+                    Notification received from <b>{{ item.data.sender | userName }}</b><br>
+                </div>
+            </div>
             {{ item.data.created_date }}
         </div>
     </div>
-    <div ng-show="{{ item.data.request }}">
-        Request received from <b>{{ item.data.request.sender | userName }}</b>
-        {{ item.data.request.created_date }}
+    <div ng-show="item.data.request">
+        <div class="card">
+            <div class="item item-text-wrap">
+                <div ng-switch on="isOutgoing">
+                    <div ng-switch-when="true">
+                        Request received from <b>{{ item.data.request.sender | userName }}</b><br>
+                    </div>
+                    <div ng-switch-when="false">
+                        Request sent to <b>{{ item.data.request.recipient | userName }}</b><br>
+                    </div>
+                </div>
+                {{ item.data.request.created_date }}
+            </div>
+        </div>
     </div>
   </ion-content>
 </ion-view>
