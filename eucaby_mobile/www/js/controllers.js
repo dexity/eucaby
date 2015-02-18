@@ -111,18 +111,21 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 }])
 
-.controller('LoginCtrl', function($scope, $location, $state, OpenFB) {
+.controller('LoginCtrl', ['$scope', '$http', '$location', '$state', 'EucabyApi',
+                function($scope, $http, $location, $state, EucabyApi) {
     $scope.facebookLogin = function(){
-        OpenFB.login('email,user_friends').then(
+        EucabyApi.login().then(
             function () {
                 $location.path('/app/tab/map');
                 //$state.go('app.tabs.map')
+                // Authenticate with Eucaby service using FB token
+
             },
             function () {
-                alert('OpenFB login failed');
+                alert('EucabyApi login failed');
             });
     }
-})
+}])
 
 .controller('LogoutCtrl', function($scope) {
 })
@@ -243,7 +246,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 ])
 
-.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, OpenFB) {
+.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, EucabyApi) {
 
     $scope.showSideMenu = function(){
         return $scope.showHeader();
@@ -258,7 +261,6 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 
     $scope.logout = function () {
-        OpenFB.logout();
         $state.go('app.login');
     };
 

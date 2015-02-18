@@ -3,15 +3,11 @@
 var EUCABY_ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
 
-angular.module('eucaby.services', ['ngResource'])
+angular.module('eucaby.services', ['ngResource', 'eucaby.api'])
 
-.factory('Friends', ['$resource', function($resource) {
+.factory('Friends', ['EucabyApi', function(EucabyApi) {
 
-    return $resource(EUCABY_ENDPOINT + '/friends', {}, {
-        all: {method: 'GET',
-            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
-        }
-    });
+    return EucabyApi.api({path: '/friends'});
 }])
 
 .factory('Activity', ['$resource', function($resource) {

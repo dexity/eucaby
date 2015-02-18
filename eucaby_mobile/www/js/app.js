@@ -2,7 +2,7 @@
 
 angular.module('eucaby',
     ['ionic', 'openfb', 'eucaby.controllers', //'btford.socket-io',
-     'eucaby.filters'])
+     'eucaby.filters', 'eucaby.api'])
 
 /*
 .factory('socket', function (socketFactory) {
@@ -12,9 +12,9 @@ angular.module('eucaby',
 })
 */
 
-.run(function($rootScope, $state, $ionicPlatform, $window, OpenFB) {
+.run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
 
-    OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html');
+    EucabyApi.init();
 
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
@@ -178,6 +178,7 @@ angular.module('eucaby',
             }
         }
     })
+
   $urlRouterProvider.otherwise('/app/tab/map');
 
 });
