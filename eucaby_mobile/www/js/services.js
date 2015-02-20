@@ -7,33 +7,36 @@ angular.module('eucaby.services', ['ngResource', 'eucaby.api'])
 
 .factory('Friends', ['EucabyApi', function(EucabyApi) {
 
-    return EucabyApi.api({path: '/friends'});
+    return {
+        all: function(){
+            return EucabyApi.api({path: '/friends'});
+        }
+    };
 }])
 
-.factory('Activity', ['$resource', function($resource) {
-
-    return $resource(EUCABY_ENDPOINT + '/history', {}, {
-        outgoing: {method: 'GET', params: {type: 'outgoing'},
-            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+.factory('Activity', ['EucabyApi', function(EucabyApi) {
+    return {
+        outgoing: function(){
+            return EucabyApi.api({path: '/history', params: {type: 'outgoing'}});
         },
-        incoming: {method: 'GET', params: {type: 'incoming'},
-            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+        incoming: function(){
+            return EucabyApi.api({path: '/history', params: {type: 'incoming'}});
         }
-    });
+    }
 }])
-.factory('NotificationDetail', ['$resource', function($resource) {
+.factory('NotificationDetail', ['EucabyApi', function(EucabyApi) {
 
-    return $resource(EUCABY_ENDPOINT + '/location/notification/:id', {}, {
-        get: {method: 'GET',
-            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+    return {
+        get: function(id){
+            return EucabyApi.api({path: '/location/notification/' + id});
         }
-    });
+    }
 }])
-.factory('RequestDetail', ['$resource', function($resource) {
+.factory('RequestDetail', ['EucabyApi', function(EucabyApi) {
 
-    return $resource(EUCABY_ENDPOINT + '/location/request/:id', {}, {
-        get: {method: 'GET',
-            headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}
+    return {
+        get: function(id){
+            return EucabyApi.api({path: '/location/request/' + id});
         }
-    });
+    }
 }]);

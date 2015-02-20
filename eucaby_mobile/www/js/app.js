@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('eucaby',
-    ['ionic', 'openfb', 'eucaby.controllers', //'btford.socket-io',
+    ['ionic', 'eucaby.controllers', //'btford.socket-io',
      'eucaby.filters', 'eucaby.api'])
 
 /*
@@ -25,7 +25,7 @@ angular.module('eucaby',
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
         if (toState.name !== 'app.login' && toState.name !== 'app.logout' &&
-            !$window.sessionStorage['fbtoken']) {
+            !$window.localStorage.getItem('ec_access_token')) {
             $state.go('app.login');
             event.preventDefault();
         }

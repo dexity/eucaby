@@ -5,7 +5,7 @@ var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
 var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
-angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
+angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
 
 .controller('MapCtrl', ['$scope', // 'socket',
     '$http', '$ionicModal', '$ionicPopup', '$ionicLoading', 'map',
@@ -99,7 +99,9 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
                 function($scope, $http, Friends, utils) {
 
     $scope.form = {};
-    $scope.friends = Friends.all();
+    Friends.all().then(function(data){
+        $scope.friends = data;
+    });
 
     // Send request action
     $scope.sendRequest = function(){
@@ -112,7 +114,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
 }])
 
 .controller('LoginCtrl', ['$scope', '$http', '$location', '$state', 'EucabyApi',
-                function($scope, $http, $location, $state, EucabyApi) {
+                function($scope, $http, $location, $state, EucabyApi
+                    ) {
     $scope.facebookLogin = function(){
         EucabyApi.login().then(
             function () {
@@ -185,10 +188,10 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
         }
         return items;
     }
-    Activity.outgoing(function(data){
+    Activity.outgoing().then(function(data){
         $scope.outgoing = formatOutgoing(data.data);
     });
-    Activity.incoming(function(data){
+    Activity.incoming().then(function(data){
         $scope.incoming = formatIncoming(data.data);
     })
 }])
@@ -201,7 +204,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
         var stateName = $scope.$viewHistory.currentView.stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
 
-        NotificationDetail.get({id: $stateParams.id}, function(data){
+        NotificationDetail.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
             };
@@ -226,7 +229,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
                         {latlng: SF_LAT + ',' + SF_LNG});
             // XXX: Reload the request view
         }
-        RequestDetail.get({id: $stateParams.id}, function(data){
+        RequestDetail.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
             };
@@ -246,7 +249,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils'])
     }
 ])
 
-.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, EucabyApi) {
+.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate){//, EucabyApi) {
 
     $scope.showSideMenu = function(){
         return $scope.showHeader();
