@@ -12,7 +12,6 @@ angular.module('eucaby.api', ['openfb'])
     var storage = window.localStorage;
     var deferredLogin = $q.defer();
     $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
-//    var ACCESS_TOKEN =
 
     document.addEventListener("deviceready", function () {
         runningInCordova = true;

@@ -1,9 +1,6 @@
 'use strict';
 
-var EUCABY_ENDPOINT = 'http://api.eucaby-dev.appspot.com';
-var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
-
-angular.module('eucaby.services', ['ngResource', 'eucaby.api'])
+angular.module('eucaby.services', ['ngResource', 'eucaby.api', 'eucaby.utils'])
 
 .factory('Friends', ['EucabyApi', function(EucabyApi) {
 
@@ -24,19 +21,28 @@ angular.module('eucaby.services', ['ngResource', 'eucaby.api'])
         }
     }
 }])
-.factory('NotificationDetail', ['EucabyApi', function(EucabyApi) {
+.factory('Notification', ['EucabyApi', 'utils', function(EucabyApi, utils) {
 
     return {
         get: function(id){
             return EucabyApi.api({path: '/location/notification/' + id});
+        },
+        post: function(form, lat, lng){
+            var params = utils.activityParams(form);
+            params.latlng = lat + ',' + lng;
+            return EucabyApi.api({method: 'POST', path: '/location/notification', params: params})
         }
     }
 }])
-.factory('RequestDetail', ['EucabyApi', function(EucabyApi) {
+.factory('Request', ['EucabyApi', 'utils', function(EucabyApi, utils) {
 
     return {
         get: function(id){
             return EucabyApi.api({path: '/location/request/' + id});
+        },
+        post: function(form){
+            var params = utils.activityParams(form);
+            return EucabyApi.api({method: 'POST', path: '/location/request', params: params})
         }
     }
 }]);

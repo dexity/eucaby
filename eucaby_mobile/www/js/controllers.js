@@ -1,7 +1,5 @@
 'use strict';
 
-var EUCABY_ENDPOINT = 'http://api.eucaby-dev.appspot.com';
-var TEMP_TOKEN = 'Dvhn5yO4E6EMtJnJ0PQDI0fpROMqN2';
 var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
@@ -95,8 +93,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     */
 }])
 
-.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'utils',
-                function($scope, $http, Friends, utils) {
+.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'Request', 'Notification',
+                function($scope, $http, Friends, Request, Notification) {
 
     $scope.form = {};
     Friends.all().then(function(data){
@@ -105,11 +103,16 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
     // Send request action
     $scope.sendRequest = function(){
-        utils.sendMessage($scope, $http, 'request', EUCABY_ENDPOINT + '/location/request');
+        Request.post($scope.form).then(function(data){
+            console.debug('Request submitted');
+            $scope['requestModal'].hide();
+        });
     }
     $scope.sendLocation = function(){
-        utils.sendMessage($scope, $http, 'notify', EUCABY_ENDPOINT + '/location/notification',
-                    {latlng: SF_LAT + ',' + SF_LNG});
+        Notification.post($scope.form, SF_LAT, SF_LNG).then(function(data){
+            console.debug('Location submitted');
+            $scope['notifyModal'].hide();
+        });
     }
 }])
 
@@ -198,13 +201,13 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
 .controller('NotificationDetailCtrl',
             ['$scope', '$stateParams', 'map',
-             'NotificationDetail',
-    function($scope, $stateParams, map, NotificationDetail) {
+             'Notification',
+    function($scope, $stateParams, map, Notification) {
 
         var stateName = $scope.$viewHistory.currentView.stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
 
-        NotificationDetail.get($stateParams.id).then(function(data){
+        Notification.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
             };
@@ -218,18 +221,19 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
 .controller('RequestDetailCtrl',
             ['$scope', '$http', '$stateParams', 'map', 'utils',
-             'RequestDetail',
-    function($scope, $http, $stateParams, map, utils, RequestDetail) {
+             'Request', 'Notification',
+    function($scope, $http, $stateParams, map, utils, Request, Notification) {
 
         var stateName = $scope.$viewHistory.currentView.stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
         $scope.form = {};
         $scope.sendLocation = function(){
-            utils.sendMessage($scope, $http, null, EUCABY_ENDPOINT + '/location/notification',
-                        {latlng: SF_LAT + ',' + SF_LNG});
-            // XXX: Reload the request view
+            Notification.post($scope.form, SF_LAT, SF_LNG).then(function(data){
+                console.debug('Location submitted');
+                // XXX: Reload the request view
+            });
         }
-        RequestDetail.get($stateParams.id).then(function(data){
+        Request.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
             };

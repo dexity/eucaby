@@ -45,10 +45,10 @@ angular.module('eucaby.utils', [])
 
 .factory('utils', function(){
     return {
-        sendMessage: function(scope, http, modal_name, url, extra_params) {
-            var email = scope.form.email;
-            var username = scope.form.username;
-            var token = scope.form.token;
+        activityParams: function(form){
+            var email = form.email;
+            var username = form.username;
+            var token = form.token;
 
             if (email && username){
                 // XXX: Display error
@@ -62,20 +62,7 @@ angular.module('eucaby.utils', [])
             } else if (token) {
                 params.token = token
             }
-            // Update params
-            for (var key in extra_params){
-                if (extra_params.hasOwnProperty(key)){
-                    params[key] = extra_params[key];
-                }
-            }
-            http.post(url, params, {headers: {'Authorization': 'Bearer ' + TEMP_TOKEN}})
-                .success(function(data){
-                    console.log(data);
-                    modal_name && scope[modal_name + 'Modal'] && scope[modal_name + 'Modal'].hide();
-                })
-                .error(function(e){
-                    console.log(e);
-                });
+            return params;
         }
     }
 })
