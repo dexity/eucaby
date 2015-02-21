@@ -5,15 +5,37 @@ var SF_LNG = -122.4167;
 
 angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
 
-.controller('MapCtrl', ['$scope', // 'socket',
+.controller('MapCtrl', ['$scope', '$rootScope', // 'socket',
     '$http', '$ionicModal', '$ionicPopup', '$ionicLoading', 'map',
-    function($scope, //socket,
+    function($scope, $rootScope, //socket,
              $http, $ionicModal, $ionicPopup, $ionicLoading, map) {
 
     var RT_URL = 'localhost'; //'146.148.67.189'; //'rt.eucaby-dev.appspot.com'; //
     var RT_PORT = 4000;
 
-    $scope.map = map.createMap('map', SF_LAT, SF_LNG);
+    // Center on me action
+    $scope.centerOnMe = function() {
+
+//        $scope.loading = $ionicLoading.show({
+//            content: 'Getting current location...',
+//            showBackdrop: false
+//        });
+
+        map.currentLocation(function(lat, lng){
+            $scope.map = map.createMap('map', lat, lng);
+            $scope.marker = map.createMarker($scope.map, lat, lng, 'Hello');
+//            $scope.loading.hide();
+        },
+        function(data){
+            $scope.map = map.createMap('map', SF_LAT, SF_LNG);
+            $ionicPopup.alert({
+                title: 'Location Error',
+                template: 'Unable to get location: ' + error.message
+            });
+        });
+    };
+
+    $scope.centerOnMe();
     $scope.markers = [];
 
     var registerModal = function(template, modalName){
@@ -36,9 +58,13 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     $scope.$on('modal.shown', function(a, b) {
         // 1. Move to current location
         // 2. Display map for notifyModal
-        $scope.notify_map = map.createMap('notifymap', SF_LAT, SF_LNG);
-        $scope.current_marker = map.createMarker($scope.notify_map, SF_LAT, SF_LNG, 'Hello');
-//        console.debug(a, b)
+        map.currentLocation(function(lat, lng){
+            $scope.notifyMap = map.createMap('notifymap', lat, lng, {zoom: 16});
+            $scope.currentMarker = map.createMarker($scope.notifyMap, lat, lng, 'Hello');
+            $rootScope.currentLatLng = {lat: lat, lng: lng};
+        }, function(data){
+            console.debug('Error');
+        })
     });
 
 
@@ -53,28 +79,6 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 //         console.log('Location notification has been sent');
 //       });
 //    };
-
-    // Center on me action
-    $scope.centerOnMe = function() {
-        if(!$scope.map) {
-            return;
-        }
-//        $scope.loading = $ionicLoading.show({
-//            content: 'Getting current location...',
-//            showBackdrop: false
-//        });
-
-        // Not working yet
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            $scope.map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-            $scope.loading.hide();
-        }, function(error) {
-            $ionicPopup.alert({
-                title: 'Location Error',
-                template: 'Unable to get location: ' + error.message
-            });
-        });
-    };
 
     /*
     // Socket.io
@@ -93,8 +97,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     */
 }])
 
-.controller('MessageCtrl', ['$scope', '$http', 'Friends', 'Request', 'Notification',
-                function($scope, $http, Friends, Request, Notification) {
+.controller('MessageCtrl', ['$scope', '$rootScope', '$http', 'Friends', 'Request', 'Notification',
+                function($scope, $rootScope, $http, Friends, Request, Notification) {
 
     $scope.form = {};
     Friends.all().then(function(data){
@@ -109,7 +113,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         });
     }
     $scope.sendLocation = function(){
-        Notification.post($scope.form, SF_LAT, SF_LNG).then(function(data){
+        console.debug($rootScope.currentLatLng);
+        Notification.post($scope.form, $rootScope.currentLatLng.lat, $rootScope.currentLatLng.lng).then(function(data){
             console.debug('Location submitted');
             $scope['notifyModal'].hide();
         });
@@ -220,9 +225,9 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 ])
 
 .controller('RequestDetailCtrl',
-            ['$scope', '$http', '$stateParams', 'map', 'utils',
+            ['$scope', '$http', '$stateParams', 'map',
              'Request', 'Notification',
-    function($scope, $http, $stateParams, map, utils, Request, Notification) {
+    function($scope, $http, $stateParams, map, Request, Notification) {
 
         var stateName = $scope.$viewHistory.currentView.stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;

@@ -4,11 +4,11 @@ angular.module('eucaby.utils', [])
 
 .factory('map', function(){
     return {
-        createMap: function(id, lat, lng){
+        createMap: function(id, lat, lng, config){
             // Creates map
             var mapOptions = {
                 center: new google.maps.LatLng(lat, lng),
-                zoom: 13,
+                zoom: (config && config.zoom) || 13,
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             };
             var map = new google.maps.Map(document.getElementById(id), mapOptions);
@@ -39,6 +39,13 @@ angular.module('eucaby.utils', [])
                 }
             }
             markers = [];
+        },
+        currentLocation: function(success, error){
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                success(pos.coords.latitude, pos.coords.longitude);
+            }, function(data) {
+                error && error(data);
+            });
         }
     }
 })
