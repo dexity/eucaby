@@ -22,6 +22,7 @@ api = eucaby_api.Api(api_app, catch_all_404s=True)
 
 
 USER_NOT_FOUND = 'User not found'
+MAP_BASE = 'https://maps.google.com/maps'
 
 
 class OAuthToken(flask_restful.Resource):
@@ -69,7 +70,7 @@ class RequestLocationView(flask_restful.Resource):
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                url='{}/{}'.format(eucaby_url, req.session.token))
+                url='{}?q={}'.format(eucaby_url, req.session.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
@@ -138,11 +139,10 @@ class NotifyLocationView(flask_restful.Resource):
             # Send email notification to recipient
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
-            maps_url = 'https://www.google.com/maps/place'
             body = flask.render_template(
                 'mail/location_response_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                location_url='{}/{}'.format(maps_url, latlng))
+                location_url='{}?q={}'.format(MAP_BASE, latlng))
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
         logging.info('Location Notification: %s', str(loc_notif.to_dict()))

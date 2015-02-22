@@ -833,7 +833,7 @@ class TestNotifyLocation(test_base.TestCase):
             messages.pop(0)  # Don't need the first message
         test_utils.verify_email(
             messages, 1, recipient_email, in_list + [
-                'https://www.google.com/maps/place/{},{}'.format(
+                'https://maps.google.com/maps?q={},{}'.format(
                     location.lat, location.lon)])
 
     def test_general_errors(self):
