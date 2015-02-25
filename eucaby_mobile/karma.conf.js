@@ -5,7 +5,9 @@ module.exports = function(config) {
     basePath: '',
     frameworks: ['jasmine'],
     files: [
+      'www/lib/ionic/js/angular/angular.js',
       'www/js/*.js',
+      '../tests/eucaby_mobile/lib/*.js',
       '../tests/eucaby_mobile/**/*Spec.js'
     ],
     exclude: [
