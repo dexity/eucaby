@@ -1,13 +1,12 @@
-'use strict'
+'use strict';
 
 angular.module('eucaby.api', ['openfb'])
 
-//.factory('EucabyApi', ['$http', function($http){
+.constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 
-.factory('EucabyApi', ['$rootScope', '$http', '$q', '$window', 'OpenFB',
-         function ($rootScope, $http, $q, $window, OpenFB) {
+.factory('EucabyApi', ['$rootScope', '$http', '$q', '$window', 'OpenFB', 'ENDPOINT',
+         function ($rootScope, $http, $q, $window, OpenFB, ENDPOINT) {
 
-    var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
     var runningInCordova = false;
     var storage = window.localStorage;
     var deferredLogin = $q.defer();
@@ -59,25 +58,25 @@ angular.module('eucaby.api', ['openfb'])
                         })
                         .error(function(data, status, headers, config) {
                             console.log('OpenFB failed: ' + data);
-                        })
+                        });
                 })
                 .error(function(){
                     // Handle error
-                })
+                });
 
 
             },
             function() {
                 // XXX: Handle FB error
             });
-        }
+        };
 
 
     return {
         init: function(){
             OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html', storage);
         },
-        api: function(obj, deferred){
+        api: function(obj){
             var method = obj.method || 'GET';
             var params = obj.params || {};
             var deferred = $q.defer();
@@ -94,7 +93,7 @@ angular.module('eucaby.api', ['openfb'])
 //                    if (data.error && data.error.type === 'OAuthException') {
 //                        $rootScope.$emit('OAuthException');
 //                    }
-                })
+                });
             return deferred.promise;
         },
         login: function(){
@@ -105,5 +104,5 @@ angular.module('eucaby.api', ['openfb'])
 
             OpenFB.logout();
         }
-    }
+    };
 }]);

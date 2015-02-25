@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 angular.module('eucaby.utils', [])
 
@@ -19,7 +19,7 @@ angular.module('eucaby.utils', [])
                     e.preventDefault();
                     return false;
                 });
-            return map
+            return map;
         },
         createMarker: function(map, lat, lng, title){
             var position = new google.maps.LatLng(lat, lng);
@@ -47,7 +47,7 @@ angular.module('eucaby.utils', [])
                 error && error(data);
             });
         }
-    }
+    };
 })
 
 .factory('utils', function(){
@@ -67,9 +67,9 @@ angular.module('eucaby.utils', [])
             } else if (username){
                 params.username = username;
             } else if (token) {
-                params.token = token
+                params.token = token;
             }
             return params;
         }
-    }
-})
+    };
+});

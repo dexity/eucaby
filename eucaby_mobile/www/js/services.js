@@ -19,7 +19,7 @@ angular.module('eucaby.services', ['ngResource', 'eucaby.api', 'eucaby.utils'])
         incoming: function(){
             return EucabyApi.api({path: '/history', params: {type: 'incoming'}});
         }
-    }
+    };
 }])
 .factory('Notification', ['EucabyApi', 'utils', function(EucabyApi, utils) {
 
@@ -30,9 +30,9 @@ angular.module('eucaby.services', ['ngResource', 'eucaby.api', 'eucaby.utils'])
         post: function(form, lat, lng){
             var params = utils.activityParams(form);
             params.latlng = lat + ',' + lng;
-            return EucabyApi.api({method: 'POST', path: '/location/notification', params: params})
+            return EucabyApi.api({method: 'POST', path: '/location/notification', params: params});
         }
-    }
+    };
 }])
 .factory('Request', ['EucabyApi', 'utils', function(EucabyApi, utils) {
 
@@ -42,7 +42,7 @@ angular.module('eucaby.services', ['ngResource', 'eucaby.api', 'eucaby.utils'])
         },
         post: function(form){
             var params = utils.activityParams(form);
-            return EucabyApi.api({method: 'POST', path: '/location/request', params: params})
+            return EucabyApi.api({method: 'POST', path: '/location/request', params: params});
         }
-    }
+    };
 }]);

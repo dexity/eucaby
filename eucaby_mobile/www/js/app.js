@@ -19,7 +19,7 @@ angular.module('eucaby',
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
             // org.apache.cordova.statusbar required
-            StatusBar.styleDefault();
+            window.StatusBar.styleDefault();
         }
     });
 
@@ -177,7 +177,7 @@ angular.module('eucaby',
                 controller: 'RequestDetailCtrl'
             }
         }
-    })
+    });
 
   $urlRouterProvider.otherwise('/app/tab/map');
 

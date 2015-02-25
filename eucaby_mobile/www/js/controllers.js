@@ -30,7 +30,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             $scope.map = map.createMap('map', SF_LAT, SF_LNG);
             $ionicPopup.alert({
                 title: 'Location Error',
-                template: 'Unable to get location: ' + error.message
+                template: 'Unable to get location: ' + data.message
             });
         });
     };
@@ -45,7 +45,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         }).then(function(modal) {
             $scope[name] = modal;
         });
-    }
+    };
 
     registerModal('templates/request.html', 'request');
     registerModal('templates/notify.html', 'notify');
@@ -64,7 +64,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             $rootScope.currentLatLng = {lat: lat, lng: lng};
         }, function(data){
             console.debug('Error');
-        })
+        });
     });
 
 
@@ -111,14 +111,14 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             console.debug('Request submitted');
             $scope['requestModal'].hide();
         });
-    }
+    };
     $scope.sendLocation = function(){
         console.debug($rootScope.currentLatLng);
         Notification.post($scope.form, $rootScope.currentLatLng.lat, $rootScope.currentLatLng.lng).then(function(data){
             console.debug('Location submitted');
             $scope['notifyModal'].hide();
         });
-    }
+    };
 }])
 
 .controller('LoginCtrl', ['$scope', '$http', '$location', '$state', 'EucabyApi',
@@ -135,7 +135,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             function () {
                 alert('EucabyApi login failed');
             });
-    }
+    };
 }])
 
 .controller('LogoutCtrl', function($scope) {
@@ -172,7 +172,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             });
         }
         return items;
-    }
+    };
     var formatIncoming = function(data){
         var items = [];
         for (var i=0; i < data.length; i++){
@@ -195,13 +195,13 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             });
         }
         return items;
-    }
+    };
     Activity.outgoing().then(function(data){
         $scope.outgoing = formatOutgoing(data.data);
     });
     Activity.incoming().then(function(data){
         $scope.incoming = formatIncoming(data.data);
-    })
+    });
 }])
 
 .controller('NotificationDetailCtrl',
@@ -237,7 +237,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
                 console.debug('Location submitted');
                 // XXX: Reload the request view
             });
-        }
+        };
         Request.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
@@ -262,15 +262,15 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
     $scope.showSideMenu = function(){
         return $scope.showHeader();
-    }
+    };
 
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
-    }
+    };
 
     $scope.showHeader = function(){
         return $state.is('app.tab.map');  //!$state.is('app.login') || !
-    }
+    };
 
     $scope.logout = function () {
         $state.go('app.login');
