@@ -5,13 +5,48 @@ var SF_LNG = -122.4167;
 
 angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
 
-.controller('MapCtrl', ['$scope', '$rootScope', // 'socket',
-    '$http', '$ionicModal', '$ionicPopup', '$ionicLoading', 'map',
-    function($scope, $rootScope, //socket,
-             $http, $ionicModal, $ionicPopup, $ionicLoading, map) {
+.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate, EucabyApi) {
 
-    var RT_URL = 'localhost'; //'146.148.67.189'; //'rt.eucaby-dev.appspot.com'; //
-    var RT_PORT = 4000;
+    $scope.showSideMenu = function(){
+        return $scope.showHeader();
+    };
+
+    $scope.toggleRight = function(){
+        $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
+    };
+
+    $scope.showHeader = function(){
+        return $state.is('app.tab.map');  //!$state.is('app.login') || !
+    };
+
+    $scope.logout = function () {
+        EucabyApi.logout();
+        $state.go('app.login');
+    };
+
+//  $scope.rightButtons = [{
+//    type: 'button-icon button-clear ion-navicon',
+//    tap: function(e) {
+//      $ionicSideMenuDelegate.toggleRight($scope.$$childHead);
+//    }
+//  }];
+})
+
+.controller('LoginCtrl', ['$scope', '$location', 'EucabyApi',
+                function($scope, $location, EucabyApi) {
+    $scope.facebookLogin = function(){
+        EucabyApi.login().then(function () {
+                $location.path('/app/tab/map');
+            }, function(data) {
+                alert('EucabyApi login failed');
+            });
+    };
+}])
+
+.controller('MapCtrl', ['$scope', '$rootScope',
+    '$http', '$ionicModal', '$ionicPopup', '$ionicLoading', 'map', 'Friends',
+    function($scope, $rootScope,
+             $http, $ionicModal, $ionicPopup, $ionicLoading, map, Friends) {
 
     // Center on me action
     $scope.centerOnMe = function() {
@@ -39,32 +74,30 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     $scope.markers = [];
 
     var registerModal = function(template, modalName){
-        var name = modalName + 'Modal';
         $ionicModal.fromTemplateUrl(template, {
             scope: $scope
         }).then(function(modal) {
-            $scope[name] = modal;
+            $scope[modalName] = modal;
         });
     };
 
-    registerModal('templates/request.html', 'request');
-    registerModal('templates/notify.html', 'notify');
+    registerModal('templates/request.html', 'requestModal');
+    registerModal('templates/notify.html', 'notifyModal');
 
-
-//    $scope.showNotifyModal = function(){
-//        $scope.notifyModal.show();
-//        console.debug('Hello');
-//    }
-    $scope.$on('modal.shown', function(a, b) {
-        // 1. Move to current location
-        // 2. Display map for notifyModal
-        map.currentLocation(function(lat, lng){
-            $scope.notifyMap = map.createMap('notifymap', lat, lng, {zoom: 16});
-            $scope.currentMarker = map.createMarker($scope.notifyMap, lat, lng, 'Hello');
-            $rootScope.currentLatLng = {lat: lat, lng: lng};
-        }, function(data){
-            console.debug('Error');
+    $scope.$on('modal.shown', function(event, modal) {
+        Friends.all().then(function(data){
+            $scope.friends = data;
         });
+
+        if ($scope.notifyModal === modal){
+            map.currentLocation(function(lat, lng){
+                $scope.notifyMap = map.createMap('notifymap', lat, lng, {zoom: 16});
+                $scope.currentMarker = map.createMarker($scope.notifyMap, lat, lng, 'Hello');
+                $rootScope.currentLatLng = {lat: lat, lng: lng};
+            }, function(data){
+                console.debug('Error');
+            });
+        }
     });
 
 
@@ -100,45 +133,27 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 .controller('MessageCtrl', ['$scope', '$rootScope', '$http', 'Friends', 'Request', 'Notification',
                 function($scope, $rootScope, $http, Friends, Request, Notification) {
 
+    console.debug('MessageCtrl');
     $scope.form = {};
-    Friends.all().then(function(data){
-        $scope.friends = data;
-    });
 
     // Send request action
     $scope.sendRequest = function(){
         Request.post($scope.form).then(function(data){
             console.debug('Request submitted');
-            $scope['requestModal'].hide();
+            $scope.requestModal.hide();
         });
     };
     $scope.sendLocation = function(){
         console.debug($rootScope.currentLatLng);
         Notification.post($scope.form, $rootScope.currentLatLng.lat, $rootScope.currentLatLng.lng).then(function(data){
             console.debug('Location submitted');
-            $scope['notifyModal'].hide();
+            $scope.notifyModal.hide();
         });
     };
 }])
 
-.controller('LoginCtrl', ['$scope', '$http', '$location', '$state', 'EucabyApi',
-                function($scope, $http, $location, $state, EucabyApi
-                    ) {
-    $scope.facebookLogin = function(){
-        EucabyApi.login().then(
-            function () {
-                $location.path('/app/tab/map');
-                //$state.go('app.tabs.map')
-                // Authenticate with Eucaby service using FB token
-
-            },
-            function () {
-                alert('EucabyApi login failed');
-            });
-    };
-}])
-
 .controller('LogoutCtrl', function($scope) {
+
 })
 
 .controller('ProfileCtrl', function($scope) {
@@ -256,30 +271,4 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
             }
         });
     }
-])
-
-.controller('MainCtrl', function($scope, $state, $ionicSideMenuDelegate){//, EucabyApi) {
-
-    $scope.showSideMenu = function(){
-        return $scope.showHeader();
-    };
-
-    $scope.toggleRight = function(){
-        $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
-    };
-
-    $scope.showHeader = function(){
-        return $state.is('app.tab.map');  //!$state.is('app.login') || !
-    };
-
-    $scope.logout = function () {
-        $state.go('app.login');
-    };
-
-//  $scope.rightButtons = [{
-//    type: 'button-icon button-clear ion-navicon',
-//    tap: function(e) {
-//      $ionicSideMenuDelegate.toggleRight($scope.$$childHead);
-//    }
-//  }];
-});
+]);

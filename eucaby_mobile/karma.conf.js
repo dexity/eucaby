@@ -6,6 +6,7 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
     files: [
       'www/lib/ionic/js/angular/angular.js',
+      'www/lib/openfb-angular.js',
       'www/js/*.js',
       '../tests/eucaby_mobile/lib/*.js',
       '../tests/eucaby_mobile/**/*Spec.js'

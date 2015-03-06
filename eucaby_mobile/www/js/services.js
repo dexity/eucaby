@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('eucaby.services', ['ngResource', 'eucaby.api', 'eucaby.utils'])
+angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
 
 .factory('Friends', ['EucabyApi', function(EucabyApi) {
 

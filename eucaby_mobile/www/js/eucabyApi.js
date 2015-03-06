@@ -1,43 +1,67 @@
 'use strict';
 
+/*
+Module to perform the following operations:
+    - Requests to Eucaby API and Facebook API services
+	- Manage access token and related parameters
+ */
+
 angular.module('eucaby.api', ['openfb'])
 
 .constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 
-.factory('EucabyApi', ['$rootScope', '$http', '$q', '$window', 'OpenFB', 'ENDPOINT',
-         function ($rootScope, $http, $q, $window, OpenFB, ENDPOINT) {
+.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'ENDPOINT',
+         function ($http, $q, OpenFB, ENDPOINT) {
 
     var runningInCordova = false;
-    var storage = window.localStorage;
-    var deferredLogin = $q.defer();
+    var storage;
     $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
 
     document.addEventListener("deviceready", function () {
         runningInCordova = true;
     }, false);
 
-    var provideAccessToken = function(){
-        var accessToken = storage.getItem('ec_access_token');
-
-        // FB access token is invalid
-
-        // No Eucaby access token and refresh token
-        if (accessToken) {
-            deferredLogin.resolve();
-            return accessToken;
+    var storageManager = {
+        saveAuth: function(data){
+            storage.setItem('ec_access_token', data.access_token);
+            storage.setItem('ec_refresh_token', data.refresh_token);
+            delete storage.fbtoken;
+        },
+        clearAuth: function(){
+            storage.removeItem('ec_access_token');
+            storage.removeItem('ec_refresh_token');
+            delete storage.fbtoken;
         }
+    };
 
-        /*
-        Steps:
-            - Get short-lived Facebook access token
-            - Get Facebook user id with '/me' request
-            - Get Eucaby access token
-         */
-        OpenFB.login('email,user_friends').then(
-            function(data) {
-                // Success
-                var fb_access_token = storage.getItem('fbtoken');
-                OpenFB.get('/me').success(function(data){
+    return {
+        init: function(storage_){
+            storage = storage_;
+            OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html', storage_);
+        },
+        login: function(){
+            var deferred = $q.defer();
+            var accessToken = storage.getItem('ec_access_token');
+            if (accessToken) {
+                deferred.resolve(accessToken);
+            } else {
+                // Storage in openfb-angular module has different interface
+                // from localStorage so we look up by key
+                var fb_access_token = storage.fbtoken;
+                /*
+                Steps:
+                    - Get short-lived Facebook access token
+                    - Get Facebook user id with '/me' request to get user id
+                    - Get Eucaby access token
+                 */
+                var ecLoginSuccess = function(data) {
+                    // Success callback for Eucaby authentication
+                    storageManager.saveAuth(data);
+                    deferred.resolve(data);
+                };
+
+                var fbProfileSuccess = function(data){
+                    // Success callback for Facebook user profile
                     var fb_user_id = data.id;
                     var params = {
                         service: 'facebook', grant_type: 'password',
@@ -46,41 +70,32 @@ angular.module('eucaby.api', ['openfb'])
                       return [prop, params[prop]].map(encodeURIComponent).join("=");
                     }).join("&");
                     $http.post(ENDPOINT + '/oauth/token', url_params)
-                        .success(function(data, status, headers, config) {
-                            accessToken = data.access_token;
-                            storage.setItem('ec_access_token', accessToken);
-                            storage.setItem('ec_refresh_token', data.refresh_token);
-                            storage.removeItem('fbtoken');
-
-                            deferredLogin.resolve();
-                            console.debug(data);
-                            return accessToken;
-                        })
+                        .success(ecLoginSuccess)
                         .error(function(data, status, headers, config) {
-                            console.log('OpenFB failed: ' + data);
+                            deferred.reject(data);
                         });
-                })
-                .error(function(){
-                    // Handle error
-                });
+                };
 
+                var fbLoginSuccess = function() {
+                    // Success callback for Facebook authentication
+                    OpenFB.get('/me').then(fbProfileSuccess,
+                        function(data){
+                            deferred.reject(data);
+                        });
+                };
 
-            },
-            function() {
-                // XXX: Handle FB error
-            });
-        };
-
-
-    return {
-        init: function(){
-            OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html', storage);
+                OpenFB.login('email,user_friends').then(fbLoginSuccess,
+                    function(data) {
+                        deferred.reject(data);
+                    });
+            }
+            return deferred.promise;
         },
         api: function(obj){
             var method = obj.method || 'GET';
             var params = obj.params || {};
             var deferred = $q.defer();
-            var accessToken = provideAccessToken();
+            var accessToken = storage.getItem('ec_access_token'); // XXX: Finish
 
             $http({method: method, url: ENDPOINT + obj.path,
                           params: params, headers: {'Authorization': 'Bearer ' + accessToken}})
@@ -96,12 +111,8 @@ angular.module('eucaby.api', ['openfb'])
                 });
             return deferred.promise;
         },
-        login: function(){
-            provideAccessToken();
-            return deferredLogin.promise;
-        },
         logout: function(){
-
+            storageManager.clearAuth();
             OpenFB.logout();
         }
     };

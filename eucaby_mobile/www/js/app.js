@@ -1,20 +1,13 @@
 'use strict';
 
 angular.module('eucaby',
-    ['ionic', 'eucaby.controllers', //'btford.socket-io',
+    ['ionic', 'eucaby.controllers',
      'eucaby.filters', 'eucaby.api'])
-
-/*
-.factory('socket', function (socketFactory) {
-    return socketFactory({
-        ioSocket: io('http://localhost:4000') // rt.eucaby-dev.appspot.com, 146.148.67.189
-    });
-})
-*/
 
 .run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
 
-    EucabyApi.init();
+    var storage = $window.localStorage;
+    EucabyApi.init(storage);
 
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
@@ -25,7 +18,7 @@ angular.module('eucaby',
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
         if (toState.name !== 'app.login' && toState.name !== 'app.logout' &&
-            !$window.localStorage.getItem('ec_access_token')) {
+            !storage.getItem('ec_access_token')) {
             $state.go('app.login');
             event.preventDefault();
         }
@@ -102,24 +95,6 @@ angular.module('eucaby',
             'tab-map': {
                 templateUrl: 'templates/tab-map.html',
                 controller: 'MapCtrl'
-            }
-        }
-    })
-    .state('app.tab.map.notify', {
-        url: '/notify',
-        views: {
-            'tab-map': {
-                template: 'templates/notify.html',
-                controller: 'MessageCtrl'
-            }
-        }
-    })
-    .state('app.tab.map.request', {
-        url: '/request',
-        views: {
-            'tab-map': {
-                template: 'templates/request.html',
-                controller: 'MessageCtrl'
             }
         }
     })
