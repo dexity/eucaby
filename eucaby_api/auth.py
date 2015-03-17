@@ -187,7 +187,6 @@ class EucabyValidator(provider.OAuth2RequestValidator):
         request.facebook_token = fb_token  # Set facebook_token attribute
         return user
 
-
     def validate_refresh_token(self, refresh_token, client, request):
         """Validates Eucaby refresh token."""
         token = self._tokengetter(refresh_token=refresh_token)
@@ -236,4 +235,18 @@ eucaby_oauth._validator = EucabyValidator(  # pylint: disable=attribute-defined-
 @eucaby_oauth.invalid_response
 def eucaby_invalid_response(req):  # pylint: disable=unused-argument
     """Handles Eucaby invalid access token."""
-    return dict(code='invalid_token', message='Invalid access token'), 401
+    # Hack: Detect code based on the message string because
+    #   OAuth2RequestValidator.validate_bearer_token is not flexible enough to
+    #   customize the error code.
+    code, message = 'invalid_token', req.error_message or 'Invalid bearer token'
+    ss2code = [('scope', oauth_oauth2.InvalidScopeError.error),
+               ('expired', oauth_oauth2.TokenExpiredError.error)]
+    if req.error_message:
+        for substr, _code in ss2code:
+            if substr in req.error_message:
+                code = _code
+                break
+    # Special case: not found bearer token means invalid
+    if 'not found' in message:
+        message = 'Invalid bearer token'
+    return dict(code=code, message=message), 401

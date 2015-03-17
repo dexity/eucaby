@@ -13,7 +13,9 @@ FB_PROFILE = dict(
     link='https://www.facebook.com/app_scoped_user_id/12345/',
     timezone=-8, updated_time='2014-12-06T21:31:50+0000')
 INVALID_TOKEN = dict(
-    code='invalid_token', message='Invalid access token')
+    code='invalid_token', message='Invalid bearer token')
+EXPIRED_TOKEN = dict(
+    code='token_expired', message='Bearer token is expired.')
 
 def create_user_from_facebook(client):
     """Creates user account with Eucaby and Facebook tokens."""

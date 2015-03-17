@@ -354,7 +354,7 @@ class TestFriends(test_base.TestCase):
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(fixtures.EXPIRED_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
         # Test F: User is not active
