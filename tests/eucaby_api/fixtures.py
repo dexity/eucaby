@@ -15,7 +15,7 @@ FB_PROFILE = dict(
 INVALID_TOKEN = dict(
     code='invalid_token', message='Invalid bearer token')
 EXPIRED_TOKEN = dict(
-    code='token_expired', message='Bearer token is expired.')
+    code='token_expired', message='Bearer token is expired')
 
 def create_user_from_facebook(client):
     """Creates user account with Eucaby and Facebook tokens."""

@@ -249,4 +249,4 @@ def eucaby_invalid_response(req):  # pylint: disable=unused-argument
     # Special case: not found bearer token means invalid
     if 'not found' in message:
         message = 'Invalid bearer token'
-    return dict(code=code, message=message), 401
+    return dict(code=code, message=message.rstrip('.')), 401
