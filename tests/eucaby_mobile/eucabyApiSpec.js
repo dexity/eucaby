@@ -3,6 +3,7 @@
 describe('eucaby api tests', function(){
     var $scope, $window, $httpBackend, OpenFB, $q, EucabyApi;
     var storage = {};
+    var authHandler, friendsHandler;
     var FB_PROFILE = {
         data: {
             first_name: 'Test', last_name: 'User', verified: true,
@@ -17,11 +18,17 @@ describe('eucaby api tests', function(){
         refresh_token: 'ABCABC',
         scope: 'profile history location',
         token_type: 'Bearer'
-    }
+    };
+    var FRIENDS_LIST = {
+        data: [
+            {name: 'UserA', username: '123'},
+            {name: 'UserB', username: '456'}
+        ]}
     var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 
     beforeEach(module('eucaby.api'));
-    beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_, _OpenFB_, _EucabyApi_){
+    beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_,
+                               _OpenFB_, _EucabyApi_){
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
@@ -40,6 +47,8 @@ describe('eucaby api tests', function(){
         });
     });
     beforeEach(function(){
+        authHandler = $httpBackend.whenPOST(ENDPOINT + '/oauth/token');
+        friendsHandler = $httpBackend.whenGET(ENDPOINT + '/friends');
         EucabyApi.init($window.localStorage);
     });
 
@@ -47,12 +56,19 @@ describe('eucaby api tests', function(){
        storage = {};
     });
 
+    it('should init eucaby api', function(){
+        spyOn(OpenFB, 'init');
+        EucabyApi.init();
+        expect(OpenFB.init).toHaveBeenCalled();
+    });
+
+    // Login tests
     it('should return error when fb auth fails', function(){
         $window.open = function(){
             OpenFB.oauthCallback('oauthcallback.html?error=some_error#');
         };
         EucabyApi.login().then(null, function(data){
-            expect(angular.equals(data, {error: 'some_error'})).toBe(true);
+            expect(angular.equals(data, {error: 'some_error'})).toBeTruthy();
         });
         $scope.$digest();
     });
@@ -88,8 +104,9 @@ describe('eucaby api tests', function(){
         };
         // Facebook profile succeeded
         deferredGet.resolve(FB_PROFILE);
-        $httpBackend.whenPOST(ENDPOINT + '/oauth/token').respond(500, authError);
-        $httpBackend.expectPOST(ENDPOINT + '/oauth/token').respond(500, authError);
+        authHandler.respond(500, authError);
+        $httpBackend.expectPOST(ENDPOINT + '/oauth/token')
+            .respond(500, authError);
         EucabyApi.login().then(null, function(data){
             expect(angular.equals(data, authError)).toBe(true);
         });
@@ -110,7 +127,7 @@ describe('eucaby api tests', function(){
         };
         // Facebook profile succeeded
         deferredGet.resolve(FB_PROFILE);
-        $httpBackend.whenPOST(ENDPOINT + '/oauth/token').respond(EC_AUTH);
+        authHandler.respond(EC_AUTH);
         $httpBackend.expectPOST(ENDPOINT + '/oauth/token').respond(EC_AUTH);
         EucabyApi.login().then(function(data){
             expect(angular.equals(data, EC_AUTH)).toBe(true);
@@ -121,4 +138,66 @@ describe('eucaby api tests', function(){
         expect($window.localStorage.getItem('ec_refresh_token')).toBe('ABCABC');
         expect($window.localStorage.fbtoken).toBe(undefined);
     });
+
+    // API tests
+    it('should login when access token not stored during api request',
+        function(){
+//        EucabyApi.api()
+        // OpenFB.login is called
+
+    });
+
+    it('should return error when', function(){
+
+    });
+    it('should ', function(){
+
+    });
+    it('should ', function(){
+
+    });
+    it('should ', function(){
+
+    });
+
+    it('should make expected call during api request', function(){
+        storage = {
+            ec_access_token: 'some_access_token',
+            ec_refresh_token: 'some_refresh_token'
+        };
+//        spyOn($httpBackend)
+
+    });
+
+    it('should fail during api request', function(){
+        storage = {
+            ec_access_token: 'some_access_token',
+            ec_refresh_token: 'some_refresh_token'
+        };
+        friendsHandler.respond(500);
+        $httpBackend.expectGET(ENDPOINT + '/friends').respond(500);
+        EucabyApi.api({path: '/friends'});
+        $scope.$digest();
+        $httpBackend.flush();
+    });
+
+    it('should successfully make api request', function(){
+        storage = {
+            ec_access_token: 'some_access_token',
+            ec_refresh_token: 'some_refresh_token'
+        };
+        friendsHandler.respond(200, FRIENDS_LIST);
+        $httpBackend.expectGET(ENDPOINT + '/friends').respond(200, FRIENDS_LIST);
+        EucabyApi.api({path: '/friends'});
+        $scope.$digest();
+        $httpBackend.flush();
+    });
+
+    /*
+    Cases
+    - Access token not in storage:
+        - Login request returns error
+        - Login request returns success
+
+     */
 });

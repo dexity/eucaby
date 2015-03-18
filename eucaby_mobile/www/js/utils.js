@@ -70,6 +70,14 @@ angular.module('eucaby.utils', [])
                 params.token = token;
             }
             return params;
+        },
+        toPostData: function(params){
+            if (!params){
+                return '';
+            }
+            return Object.keys(params).map(function(prop) {
+                return [prop, params[prop]].map(encodeURIComponent).join("=");
+            }).join("&");
         }
     };
 });

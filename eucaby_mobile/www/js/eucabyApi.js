@@ -6,12 +6,12 @@ Module to perform the following operations:
 	- Manage access token and related parameters
  */
 
-angular.module('eucaby.api', ['openfb'])
+angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
 
 .constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 
-.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'ENDPOINT',
-         function ($http, $q, OpenFB, ENDPOINT) {
+.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'utils', 'ENDPOINT',
+         function ($http, $q, OpenFB, utils, ENDPOINT) {
 
     var runningInCordova = false;
     var storage;
@@ -27,6 +27,17 @@ angular.module('eucaby.api', ['openfb'])
             storage.setItem('ec_refresh_token', data.refresh_token);
             delete storage.fbtoken;
         },
+        getRefreshToken: function(){
+            return storage.getItem('ec_refresh_token');
+        },
+        getFbToken: function(){
+            // Storage in openfb-angular module has different interface
+            // from localStorage so we look up by key
+            return storage.fbtoken;
+        },
+        getAccessToken: function(){
+            return storage.getItem('ec_access_token');
+        },
         clearAuth: function(){
             storage.removeItem('ec_access_token');
             storage.removeItem('ec_refresh_token');
@@ -37,17 +48,16 @@ angular.module('eucaby.api', ['openfb'])
     return {
         init: function(storage_){
             storage = storage_;
-            OpenFB.init('809426419123624', 'http://localhost:8100/oauthcallback.html', storage_);
+            OpenFB.init('809426419123624',
+                        'http://localhost:8100/oauthcallback.html', storage_);
         },
-        login: function(){
+        login: function(force){
             var deferred = $q.defer();
-            var accessToken = storage.getItem('ec_access_token');
-            if (accessToken) {
+            var accessToken = storageManager.getAccessToken();
+            if (accessToken && !force) {
                 deferred.resolve(accessToken);
             } else {
-                // Storage in openfb-angular module has different interface
-                // from localStorage so we look up by key
-                var fb_access_token = storage.fbtoken;
+                var fb_access_token = storageManager.getFbToken();
                 /*
                 Steps:
                     - Get short-lived Facebook access token
@@ -62,14 +72,12 @@ angular.module('eucaby.api', ['openfb'])
 
                 var fbProfileSuccess = function(data){
                     // Success callback for Facebook user profile
-                    var fb_user_id = data.id;
+                    var fb_user_id = data.data.id;
                     var params = {
                         service: 'facebook', grant_type: 'password',
                         username: fb_user_id, password: fb_access_token};
-                    var url_params = Object.keys(params).map(function(prop) {
-                      return [prop, params[prop]].map(encodeURIComponent).join("=");
-                    }).join("&");
-                    $http.post(ENDPOINT + '/oauth/token', url_params)
+                    // Authenticate with Eucaby service
+                    $http.post(ENDPOINT + '/oauth/token', utils.toPostData(params))
                         .success(ecLoginSuccess)
                         .error(function(data, status, headers, config) {
                             deferred.reject(data);
@@ -95,20 +103,56 @@ angular.module('eucaby.api', ['openfb'])
             var method = obj.method || 'GET';
             var params = obj.params || {};
             var deferred = $q.defer();
-            var accessToken = storage.getItem('ec_access_token'); // XXX: Finish
+            var recoverCount = 0;
 
-            $http({method: method, url: ENDPOINT + obj.path,
-                          params: params, headers: {'Authorization': 'Bearer ' + accessToken}})
-                .success(function(data){
-                    deferred.resolve(data);
-                })
-                .error(function(data, status, headers, config) {
-                      // Eucaby access token is invalid
-                      // Eucaby access token is expired
-//                    if (data.error && data.error.type === 'OAuthException') {
-//                        $rootScope.$emit('OAuthException');
-//                    }
-                });
+            var errorHandler = function(data, status, headers, config){
+                deferred.reject(data);
+            };
+            var apiRequest = function(method, path, token, params){
+                return $http({method: method, url: ENDPOINT + path,
+                    params: params,
+                    headers: {'Authorization': 'Bearer ' + token}});
+            };
+            var refreshTokenRequest = function(){
+                var refreshToken = storageManager.getRefreshToken();
+                if (!refreshToken){
+                    deferred.reject('Internal error');
+                }
+                var params = {
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken
+                };
+                return $http.post(ENDPOINT + '/oauth/token', utils.toPostData(params))
+                    .success(makeApiRequest).error(errorHandler);
+            };
+            var makeApiRequest = function(data){
+                var token = data;
+                // Parameter data can be either string or an object
+                if (angular.isObject(data)){
+                    token = data.access_token;
+                }
+                apiRequest(method, obj.path, token, params)
+                    .success(function(data){
+                        deferred.resolve(data);
+                    })
+                    .error(function(data, status, headers, config) {
+                        recoverCount++;
+                        if (recoverCount > 1) {  // Limit recursion
+                          errorHandler(data);
+                        }
+                        // Eucaby access token is invalid - try to login again
+                        if (data && data.code === 'invalid_token') {
+                            this.login(true).then(makeApiRequest, errorHandler);
+                        // Eucaby access token is expired - refresh token
+                        } else if (data && data.code === 'token_expired'){
+                            refreshTokenRequest();
+                        } else {
+                            deferred.reject(data);
+                        }
+                    });
+            };
+
+            this.login().then(makeApiRequest, errorHandler);
             return deferred.promise;
         },
         logout: function(){

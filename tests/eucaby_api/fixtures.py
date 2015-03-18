@@ -17,6 +17,7 @@ INVALID_TOKEN = dict(
 EXPIRED_TOKEN = dict(
     code='token_expired', message='Bearer token is expired')
 
+
 def create_user_from_facebook(client):
     """Creates user account with Eucaby and Facebook tokens."""
     fb_valid_token = dict(access_token='someaccesstoken', expires=123)
