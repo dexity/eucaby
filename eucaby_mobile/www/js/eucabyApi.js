@@ -100,6 +100,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
             return deferred.promise;
         },
         api: function(obj){
+            var self = this;
             var method = obj.method || 'GET';
             var params = obj.params || {};
             var deferred = $q.defer();
@@ -117,6 +118,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                 var refreshToken = storageManager.getRefreshToken();
                 if (!refreshToken){
                     deferred.reject('Internal error');
+                    return;
                 }
                 var params = {
                     grant_type: 'refresh_token',
@@ -138,11 +140,12 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                     .error(function(data, status, headers, config) {
                         recoverCount++;
                         if (recoverCount > 1) {  // Limit recursion
-                          errorHandler(data);
+                            errorHandler(data);
+                            return;
                         }
                         // Eucaby access token is invalid - try to login again
                         if (data && data.code === 'invalid_token') {
-                            this.login(true).then(makeApiRequest, errorHandler);
+                            self.login(true).then(makeApiRequest, errorHandler);
                         // Eucaby access token is expired - refresh token
                         } else if (data && data.code === 'token_expired'){
                             refreshTokenRequest();
@@ -152,7 +155,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                     });
             };
 
-            this.login().then(makeApiRequest, errorHandler);
+            self.login().then(makeApiRequest, errorHandler);
             return deferred.promise;
         },
         logout: function(){

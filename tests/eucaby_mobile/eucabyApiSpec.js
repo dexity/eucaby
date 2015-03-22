@@ -3,7 +3,12 @@
 describe('eucaby api tests', function(){
     var $scope, $window, $httpBackend, OpenFB, $q, EucabyApi;
     var storage = {};
+    var defaultStorage = {
+        ec_access_token: 'some_access_token',
+        ec_refresh_token: 'some_refresh_token'
+    };
     var authHandler, friendsHandler;
+    // Constants
     var FB_PROFILE = {
         data: {
             first_name: 'Test', last_name: 'User', verified: true,
@@ -23,10 +28,19 @@ describe('eucaby api tests', function(){
         data: [
             {name: 'UserA', username: '123'},
             {name: 'UserB', username: '456'}
-        ]}
+        ]};
+    var INVALID_TOKEN = {
+        code: 'invalid_token',
+        message: 'Invalid bearer token'
+    };
+    var EXPIRED_TOKEN = {
+        code: 'token_expired',
+        message: 'Bearer token is expired'
+    };
     var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 
     beforeEach(module('eucaby.api'));
+    beforeEach(module('eucaby.utils'));
     beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_,
                                _OpenFB_, _EucabyApi_){
         $scope = $rootScope.$new();
@@ -58,7 +72,10 @@ describe('eucaby api tests', function(){
         storage = {};
     });
 
+    // Init test
     it('should init eucaby api', function(){
+        // EucabyApi.init() ->
+        // OpenFB.init()
         spyOn(OpenFB, 'init');
         EucabyApi.init();
         expect(OpenFB.init).toHaveBeenCalled();
@@ -66,6 +83,9 @@ describe('eucaby api tests', function(){
 
     // Login tests
     it('should return error when fb auth fails', function(){
+        // EucabyApi.login() ->
+        // OpenFB.oauthCallback() (Facebook access token request failed)
+
         $window.open = function(){
             OpenFB.oauthCallback('oauthcallback.html?error=some_error#');
         };
@@ -76,17 +96,21 @@ describe('eucaby api tests', function(){
     });
 
     it('should return error when fb profile request fails', function(){
-        var deferredGet = $q.defer();
+        // EucabyApi.login() ->
+        // OpenFB.oauthCallback() (Facebook access token request success) ->
+        // OpenFB.get('/me') (Facebook profile request failed)
+
+        var deferred = $q.defer();
         var errorHandler = jasmine.createSpy('error');
         // Facebook authenticated succeeded
         $window.open = function(){
             OpenFB.oauthCallback('oauthcallback.html?#access_token=some_token');
         };
         OpenFB.get = function(){
-            return deferredGet.promise;
+            return deferred.promise;
         };
         // Failed to get Facebook profile
-        deferredGet.reject('FB profile error');
+        deferred.reject('FB profile error');
         EucabyApi.login().then(null, errorHandler);
         $scope.$digest();
         expect(errorHandler).toHaveBeenCalledWith('FB profile error');
@@ -95,7 +119,12 @@ describe('eucaby api tests', function(){
     });
 
     it('should return error when eucaby auth fails', function(){
-        var deferredGet = $q.defer();
+        // EucabyApi.login() ->
+        // OpenFB.oauthCallback() (Facebook access token request success) ->
+        // OpenFB.get('/me') (Facebook profile request success) ->
+        // 'POST /oauth/token' (error)
+
+        var deferred = $q.defer();
         var authError = {error: 'Server error'};
         var errorHandler = jasmine.createSpy('error');
         // Facebook authenticated succeeded
@@ -103,10 +132,10 @@ describe('eucaby api tests', function(){
             OpenFB.oauthCallback('oauthcallback.html?#access_token=some_token');
         };
         OpenFB.get = function(){
-            return deferredGet.promise;
+            return deferred.promise;
         };
         // Facebook profile succeeded
-        deferredGet.resolve(FB_PROFILE);
+        deferred.resolve(FB_PROFILE);
         authHandler.respond(500, authError);
         $httpBackend.expectPOST(ENDPOINT + '/oauth/token')
             .respond(500, authError);
@@ -119,17 +148,22 @@ describe('eucaby api tests', function(){
     });
 
     it('should successfully login', function(){
-        var deferredGet = $q.defer();
+        // EucabyApi.login() ->
+        // OpenFB.oauthCallback() (Facebook access token request success) ->
+        // OpenFB.get('/me') (Facebook profile request success) ->
+        // 'POST /oauth/token' (success)
+
+        var deferred = $q.defer();
         var successHandler = jasmine.createSpy('success');
         // Facebook authenticated succeeded
         $window.open = function(){
             OpenFB.oauthCallback('oauthcallback.html?#access_token=some_token');
         };
         OpenFB.get = function(){
-            return deferredGet.promise;
+            return deferred.promise;
         };
         // Facebook profile succeeded
-        deferredGet.resolve(FB_PROFILE);
+        deferred.resolve(FB_PROFILE);
         authHandler.respond(EC_AUTH);
         $httpBackend.expectPOST(ENDPOINT + '/oauth/token').respond(EC_AUTH);
         EucabyApi.login().then(successHandler);
@@ -141,70 +175,210 @@ describe('eucaby api tests', function(){
         expect($window.localStorage.fbtoken).toBe(undefined);
     });
 
+    it('should use stored access token when login', function(){
+        // No external requests are made
+        // EucabyApi.login() ->
+        // (use stored access token)
+
+        storage = defaultStorage;
+        var successHandler = jasmine.createSpy('success');
+        EucabyApi.login().then(successHandler);
+        $scope.$digest();
+        expect(successHandler).toHaveBeenCalledWith('some_access_token');
+    });
+
     // API tests
     it('should call OpenFB.login if access token is not stored', function(){
+        // EucabyApi.api() ->
+        // EucabyApi.login() ->
+        // OpenFB.login()
+
         var deferred = $q.defer();
         spyOn(OpenFB, 'login').and.returnValue(deferred.promise);
+        spyOn(EucabyApi, 'login').and.callThrough();
         EucabyApi.api({path: '/friends'});
         expect(OpenFB.login).toHaveBeenCalledWith('email,user_friends');
+        expect(EucabyApi.login).toHaveBeenCalled();
     });
 
     it('should login when access token not stored during api request',
         function(){
+        // EucabyApi.api() ->
+        // EucabyApi.login() (error)
+
         var deferred = $q.defer();
         var errorHandler = jasmine.createSpy('error');
-        spyOn(OpenFB, 'login').and.returnValue(deferred.promise);
+        spyOn(EucabyApi, 'login').and.returnValue(deferred.promise);
         EucabyApi.api({path: '/friends'}).then(null, errorHandler);
         deferred.reject('Some error');
         $scope.$digest();  // Call this after reject() but before expect()
         expect(errorHandler).toHaveBeenCalledWith('Some error');
     });
 
-    it('should return error when', function(){
+    it('should successfully make api request when access token is invalid',
+       function(){
+        // EucabyApi.api() ->
+        // 'GET /friends' (invalid_token error) ->
+        // EucabyApi.login() (get new access_token) ->
+        // 'GET /friends' (friends list)
 
+        storage = defaultStorage;
+        friendsHandler.respond(401, INVALID_TOKEN);
+        var deferred = $q.defer();
+        var successHandler = jasmine.createSpy('success');
+        spyOn(EucabyApi, 'login').and.callFake(function(){
+            friendsHandler.respond(200, FRIENDS_LIST);
+            $httpBackend.expectGET(
+                ENDPOINT + '/friends',
+                    {Authorization: 'Bearer AABBCC',
+                     Accept: 'application/json, text/plain, */*'});
+            return deferred.promise;
+        });
+        EucabyApi.api({path: '/friends'}).then(successHandler, null);
+        deferred.resolve(EC_AUTH);
+        $scope.$digest();
+        $httpBackend.flush();
+        expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
+        expect(EucabyApi.login).toHaveBeenCalled();
     });
-    it('should ', function(){
 
+    it('should make refresh token request if access token expired',
+       inject(function(utils){
+        // Eucaby.api() ->
+        // 'GET /friends' (token_expired error) ->
+        // 'POST /oauth/token grant_type=refresh_token' (access_token) ->
+        // 'GET /friends' (friends list)
+
+        storage = defaultStorage;
+        // Using refresh token doesn't do authentication so we can call through.
+        spyOn(EucabyApi, 'login').and.callThrough();
+        // First friends request fails
+        friendsHandler.respond(
+            401, {code: 'token_expired', message: 'Bearer token is expired'});
+        var successHandler = jasmine.createSpy('success');
+        var refreshHandler = authHandler;
+        refreshHandler.respond(function(){
+            // Change friends response to success friends list
+            friendsHandler.respond(200, FRIENDS_LIST);
+            return [200, EC_AUTH];
+        });
+        // API request succeeds due to refresh request
+        EucabyApi.api({path: '/friends'}).then(successHandler, null);
+        $scope.$digest();
+        $httpBackend.flush();
+        expect(EucabyApi.login).toHaveBeenCalled();
+        expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
+    }));
+
+    it('should return error if access token stored without refresh token',
+       function(){
+        // Eucaby.api() ->
+        // 'GET /friends' (token_expired error) ->
+        // 'POST /oauth/token grant_type=refresh_token' (no refresh_token)
+
+        // Missing refresh_token in storage causes internal error
+        storage = {
+            ec_access_token: 'some_access_token'
+        };
+        spyOn(EucabyApi, 'login').and.callThrough();
+        friendsHandler.respond(401, EXPIRED_TOKEN);
+        var errorHandler = jasmine.createSpy('error');
+        EucabyApi.api({path: '/friends'}).then(null, errorHandler);
+        $scope.$digest();
+        $httpBackend.flush();
+        expect(EucabyApi.login).toHaveBeenCalled();
+        expect(errorHandler).toHaveBeenCalledWith('Internal error');
     });
-    it('should ', function(){
 
+    it('should give up when access token request fails during api request',
+       function(){
+        // Eucaby.api() ->
+        // 'GET /friends' (invalid_token error)
+        // Eucaby.login() (access_token) ->
+        // 'GET /friends' (still invalid_token or any other error)
+        // Return the error
+
+        storage = defaultStorage;
+        var deferred = $q.defer();
+        friendsHandler.respond(401, INVALID_TOKEN);
+        var errorHandler = jasmine.createSpy('error');
+        // Invalid token causes the actual authentication so can't just
+        // call through without patching other requests (Facebook auth,
+        // Facebook me, Eucaby auth) so we just fake it. It is a more
+        // complicated request than refresh token
+        spyOn(EucabyApi, 'login').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.resolve(EC_AUTH);
+        // Friends list request keeps responding with error so after 2 trials
+        // it returns the error.
+        EucabyApi.api({path: '/friends'}).then(null, errorHandler);
+        $scope.$digest();
+        $httpBackend.flush();
+        expect(errorHandler).toHaveBeenCalledWith(INVALID_TOKEN);
+        expect(EucabyApi.login).toHaveBeenCalled();
     });
-    it('should ', function(){
 
+    it('should give up when refresh token request fails during api request',
+       function(){
+        // Eucaby.api() ->
+        // 'GET /friends' (expired_token error)
+        // 'POST /oauth/token grant_type=refresh_token' (access_token) ->
+        // 'GET /friends' (still expired_token or any other error)
+        // Return the error
+
+        storage = defaultStorage;
+        friendsHandler.respond(401, EXPIRED_TOKEN);
+        var errorHandler = jasmine.createSpy('error');
+        spyOn(EucabyApi, 'login').and.callThrough();
+        var refreshHandler = authHandler;
+        refreshHandler.respond(200, EC_AUTH);
+        // Friends list request keeps responding with error so after 2 trials
+        // it returns the error.
+        EucabyApi.api({path: '/friends'}).then(null, errorHandler);
+        $scope.$digest();
+        $httpBackend.flush();
+        expect(errorHandler).toHaveBeenCalledWith(EXPIRED_TOKEN);
+        expect(EucabyApi.login).toHaveBeenCalled();
     });
 
     it('should fail during api request', function(){
-        storage = {
-            ec_access_token: 'some_access_token',
-            ec_refresh_token: 'some_refresh_token'
-        };
-        friendsHandler.respond(500);
-        $httpBackend.expectGET(ENDPOINT + '/friends').respond(500);
-        EucabyApi.api({path: '/friends'});
+        // Eucaby.api() ->
+        // 'GET /friends' (non-token related error)
+
+        storage = defaultStorage;
+        spyOn(EucabyApi, 'login').and.callThrough();
+        friendsHandler.respond(500, 'Some internal error');
+        var errorHandler = jasmine.createSpy('error');
+        // Only two types of error responses can be recovered:
+        //  - invalid_token
+        //  - token_expired
+        // All other errors explicitly fail
+        $httpBackend.expectGET(ENDPOINT + '/friends').respond(
+            500, 'Some internal error');
+        EucabyApi.api({path: '/friends'}).then(null, errorHandler);
         $scope.$digest();
         $httpBackend.flush();
+        expect(EucabyApi.login).toHaveBeenCalled();
+        expect(errorHandler).toHaveBeenCalledWith('Some internal error');
     });
 
-    it('should successfully make api request', function(){
-        storage = {
-            ec_access_token: 'some_access_token',
-            ec_refresh_token: 'some_refresh_token'
-        };
+    it('should successfully make api request, typical scenario', function(){
+        // Eucaby.api() ->
+        // 'GET /friends' (friends list)
+
+        storage = defaultStorage;
+        spyOn(EucabyApi, 'login').and.callThrough();
         friendsHandler.respond(200, FRIENDS_LIST);
+        var successHandler = jasmine.createSpy('success');
         $httpBackend.expectGET(
             ENDPOINT + '/friends', {Authorization: 'Bearer some_access_token',
                                     Accept: 'application/json, text/plain, */*'})
             .respond(200, FRIENDS_LIST);
-        EucabyApi.api({path: '/friends'});
+        EucabyApi.api({path: '/friends'}).then(successHandler, null);
         $scope.$digest();
         $httpBackend.flush();
+        expect(EucabyApi.login).toHaveBeenCalled();
+        expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
     });
-
-    /*
-    Cases
-    - Access token not in storage:
-        - Login request returns error
-        - Login request returns success
-
-     */
 });
