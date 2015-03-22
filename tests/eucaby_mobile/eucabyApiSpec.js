@@ -59,6 +59,9 @@ describe('eucaby api tests', function(){
         spyOn($window.localStorage, 'setItem').and.callFake(function(key, value) {
             storage[key] = value;
         });
+        spyOn($window.localStorage, 'removeItem').and.callFake(function(key, value) {
+            delete storage[key];
+        });
     });
     beforeEach(function(){
         authHandler = $httpBackend.whenPOST(ENDPOINT + '/oauth/token');
@@ -380,5 +383,16 @@ describe('eucaby api tests', function(){
         $httpBackend.flush();
         expect(EucabyApi.login).toHaveBeenCalled();
         expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
+    });
+
+    // Logout tests
+    it('should call OpenFB.logout', function(){
+        // Eucaby.logout() ->
+        // OpenFB.logout()
+        storage = defaultStorage;
+        spyOn(OpenFB, 'logout').and.callThrough();
+        EucabyApi.logout();
+        expect(OpenFB.logout).toHaveBeenCalled();
+        expect(angular.equals(storage, {})).toBeTruthy();
     });
 });
