@@ -32,13 +32,18 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 //  }];
 })
 
-.controller('LoginCtrl', ['$scope', '$location', 'EucabyApi',
-                function($scope, $location, EucabyApi) {
+.controller('LoginCtrl', ['$scope', '$location', '$ionicPopup', 'EucabyApi',
+                function($scope, $location, $ionicPopup, EucabyApi) {
     $scope.facebookLogin = function(){
         EucabyApi.login().then(function () {
                 $location.path('/app/tab/map');
             }, function(data) {
-                alert('EucabyApi login failed');
+                $ionicPopup.alert({
+                    title: 'Error',
+                    template: 'Error during log in.' +
+                              ' Please try again in a moment.'
+                });
+                console.debug(data);
             });
     };
 }])

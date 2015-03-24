@@ -11,4 +11,5 @@ describe('utils tests', function(){
         expect(utils.toPostData(undefined)).toBe('');
     }));
 
+    // XXX: Add test for activityParams
 });

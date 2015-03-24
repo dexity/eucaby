@@ -28,9 +28,10 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
             return EucabyApi.api({path: '/location/notification/' + id});
         },
         post: function(form, lat, lng){
-            var params = utils.activityParams(form);
-            params.latlng = lat + ',' + lng;
-            return EucabyApi.api({method: 'POST', path: '/location/notification', params: params});
+            var data = utils.activityParams(form);
+            data.latlng = lat + ',' + lng;
+            return EucabyApi.api(
+                {method: 'POST', path: '/location/notification', data: data});
         }
     };
 }])
@@ -41,8 +42,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
             return EucabyApi.api({path: '/location/request/' + id});
         },
         post: function(form){
-            var params = utils.activityParams(form);
-            return EucabyApi.api({method: 'POST', path: '/location/request', params: params});
+            var data = utils.activityParams(form);
+            return EucabyApi.api({method: 'POST', path: '/location/request',
+                                  data: data});
         }
     };
 }]);

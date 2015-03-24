@@ -15,9 +15,9 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
 
     var runningInCordova = false;
     var storage;
-    $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+    $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
-    document.addEventListener("deviceready", function () {
+    document.addEventListener('deviceready', function () {
         runningInCordova = true;
     }, false);
 
@@ -103,6 +103,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
             var self = this;
             var method = obj.method || 'GET';
             var params = obj.params || {};
+            var data = obj.data && utils.toPostData(obj.data) || '';
             var deferred = $q.defer();
             var recoverCount = 0;
 
@@ -111,7 +112,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
             };
             var apiRequest = function(method, path, token, params){
                 return $http({method: method, url: ENDPOINT + path,
-                    params: params,
+                    params: params, data: data,
                     headers: {'Authorization': 'Bearer ' + token}});
             };
             var refreshTokenRequest = function(){
@@ -138,6 +139,8 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                         deferred.resolve(data);
                     })
                     .error(function(data, status, headers, config) {
+                        // Note: As an alternative for failed request recovery
+                        // you can use httpInterceptors
                         recoverCount++;
                         if (recoverCount > 1) {  // Limit recursion
                             errorHandler(data);

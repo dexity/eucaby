@@ -40,7 +40,6 @@ describe('eucaby api tests', function(){
     var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 
     beforeEach(module('eucaby.api'));
-    beforeEach(module('eucaby.utils'));
     beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_,
                                _OpenFB_, _EucabyApi_){
         $scope = $rootScope.$new();
@@ -230,14 +229,14 @@ describe('eucaby api tests', function(){
         var deferred = $q.defer();
         var successHandler = jasmine.createSpy('success');
         spyOn(EucabyApi, 'login').and.callFake(function(){
-            friendsHandler.respond(200, FRIENDS_LIST);
+            friendsHandler.respond(FRIENDS_LIST);
             $httpBackend.expectGET(
                 ENDPOINT + '/friends',
                     {Authorization: 'Bearer AABBCC',
                      Accept: 'application/json, text/plain, */*'});
             return deferred.promise;
         });
-        EucabyApi.api({path: '/friends'}).then(successHandler, null);
+        EucabyApi.api({path: '/friends'}).then(successHandler);
         deferred.resolve(EC_AUTH);
         $scope.$digest();
         $httpBackend.flush();
@@ -246,7 +245,7 @@ describe('eucaby api tests', function(){
     });
 
     it('should make refresh token request if access token expired',
-       inject(function(utils){
+       function(){
         // Eucaby.api() ->
         // 'GET /friends' (token_expired error) ->
         // 'POST /oauth/token grant_type=refresh_token' (access_token) ->
@@ -262,16 +261,16 @@ describe('eucaby api tests', function(){
         var refreshHandler = authHandler;
         refreshHandler.respond(function(){
             // Change friends response to success friends list
-            friendsHandler.respond(200, FRIENDS_LIST);
+            friendsHandler.respond(FRIENDS_LIST);
             return [200, EC_AUTH];
         });
         // API request succeeds due to refresh request
-        EucabyApi.api({path: '/friends'}).then(successHandler, null);
+        EucabyApi.api({path: '/friends'}).then(successHandler);
         $scope.$digest();
         $httpBackend.flush();
         expect(EucabyApi.login).toHaveBeenCalled();
         expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
-    }));
+    });
 
     it('should return error if access token stored without refresh token',
        function(){
@@ -335,7 +334,7 @@ describe('eucaby api tests', function(){
         var errorHandler = jasmine.createSpy('error');
         spyOn(EucabyApi, 'login').and.callThrough();
         var refreshHandler = authHandler;
-        refreshHandler.respond(200, EC_AUTH);
+        refreshHandler.respond(EC_AUTH);
         // Friends list request keeps responding with error so after 2 trials
         // it returns the error.
         EucabyApi.api({path: '/friends'}).then(null, errorHandler);
@@ -372,13 +371,13 @@ describe('eucaby api tests', function(){
 
         storage = defaultStorage;
         spyOn(EucabyApi, 'login').and.callThrough();
-        friendsHandler.respond(200, FRIENDS_LIST);
+        friendsHandler.respond(FRIENDS_LIST);
         var successHandler = jasmine.createSpy('success');
         $httpBackend.expectGET(
             ENDPOINT + '/friends', {Authorization: 'Bearer some_access_token',
                                     Accept: 'application/json, text/plain, */*'})
-            .respond(200, FRIENDS_LIST);
-        EucabyApi.api({path: '/friends'}).then(successHandler, null);
+            .respond(FRIENDS_LIST);
+        EucabyApi.api({path: '/friends'}).then(successHandler);
         $scope.$digest();
         $httpBackend.flush();
         expect(EucabyApi.login).toHaveBeenCalled();
