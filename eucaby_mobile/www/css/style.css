@@ -48,3 +48,12 @@ input {
 .activity-detail {
     /*height: 30%;*/
 }
+
+.spinner svg {
+  stroke: #bbb;
+  fill: #999;
+}
+
+.loading-container .loading {
+    padding: 15px;
+}

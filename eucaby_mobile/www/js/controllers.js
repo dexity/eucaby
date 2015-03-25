@@ -32,9 +32,12 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 //  }];
 })
 
-.controller('LoginCtrl', ['$scope', '$location', '$ionicPopup', 'EucabyApi',
-                function($scope, $location, $ionicPopup, EucabyApi) {
+.controller('LoginCtrl',
+    ['$scope', '$location', '$ionicLoading', '$ionicPopup', 'EucabyApi',
+     function($scope, $location, $ionicLoading, $ionicPopup, EucabyApi) {
     $scope.facebookLogin = function(){
+
+        $ionicLoading.show();
         EucabyApi.login().then(function () {
                 $location.path('/app/tab/map');
             }, function(data) {
@@ -43,7 +46,10 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
                     template: 'Error during log in.' +
                               ' Please try again in a moment.'
                 });
-                console.debug(data);
+                console.error(data);
+            })
+            .then(function(){
+                $ionicLoading.hide();
             });
     };
 }])

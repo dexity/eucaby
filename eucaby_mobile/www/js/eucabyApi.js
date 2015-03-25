@@ -57,7 +57,6 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
             if (accessToken && !force) {
                 deferred.resolve(accessToken);
             } else {
-                var fb_access_token = storageManager.getFbToken();
                 /*
                 Steps:
                     - Get short-lived Facebook access token
@@ -73,6 +72,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                 var fbProfileSuccess = function(data){
                     // Success callback for Facebook user profile
                     var fb_user_id = data.data.id;
+                    var fb_access_token = storageManager.getFbToken();
                     var params = {
                         service: 'facebook', grant_type: 'password',
                         username: fb_user_id, password: fb_access_token};

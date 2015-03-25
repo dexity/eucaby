@@ -1,8 +1,7 @@
 'use strict';
 
 angular.module('eucaby',
-    ['ionic', 'eucaby.controllers',
-     'eucaby.filters', 'eucaby.api'])
+    ['ionic', 'eucaby.controllers', 'eucaby.filters', 'eucaby.api'])
 
 .run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
 
@@ -28,6 +27,11 @@ angular.module('eucaby',
         $state.go('app.login');
     });
 
+})
+
+.constant('$ionicLoadingConfig', {
+    template: '<ion-spinner icon="lines"/>',
+    noBackdrop: true
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
