@@ -85,6 +85,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
     $scope.centerOnMe();
     $scope.markers = [];
+    $rootScope.friends = [];
 
     var registerModal = function(template, modalName){
         $ionicModal.fromTemplateUrl(template, {
@@ -97,32 +98,36 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     registerModal('templates/request.html', 'requestModal');
     registerModal('templates/notify.html', 'notifyModal');
 
-    $scope.$on('modal.shown', function(event, modal) {
-        $ionicLoading.show();
-        Friends.all().then(function(data){
-            // XXX: Add cache for friends
-            $scope.friends = data;
+    $scope.loadFriends = function(){
+        return Friends.all().then(function(data){
+            console.debug('Friends.all');
+            $rootScope.friends = data;
         }, function(data){
-            utils.alert('Error', 'Error loading friends.');
+            utils.alert('Error', 'Error loading friends');
             console.error(data);
-        }).then(function(){
-            if ($scope.notifyModal === modal){
-                map.currentLocation(function(lat, lng){
-                    $scope.notifyMap = map.createMap(
-                        'notifymap', lat, lng, {zoom: 16});
-                    $scope.currentMarker = map.createMarker(
-                        $scope.notifyMap, lat, lng, 'Hello');
-                    $rootScope.currentLatLng = {lat: lat, lng: lng};
-                }, function(data){
-                    utils.alert('Error',
-                                'Failed to find the current location.');
-                    console.error(data);
-                });
-            }
-        }).finally(function(){
-            $ionicLoading.hide();
         });
+    };
 
+    // Modal shown event
+    $scope.$on('modal.shown', function(event, modal) {
+        // XXX: Update friends once a day
+        angular.equals($scope.friends, []) && $scope.loadFriends();
+
+        if ($scope.notifyModal === modal) {
+            $ionicLoading.show();
+            map.currentLocation(function (lat, lng) {
+                $scope.notifyMap = map.createMap(
+                    'notifymap', lat, lng, {zoom: 16});
+                $scope.currentMarker = map.createMarker(
+                    $scope.notifyMap, lat, lng, 'Current location');
+                $rootScope.currentLatLng = {lat: lat, lng: lng};
+                $ionicLoading.hide();
+            }, function (data) {
+                $ionicLoading.hide();
+                utils.alert('Error', 'Failed to find the current location.');
+                console.error(data);
+            });
+        }
 
     });
 
@@ -144,8 +149,8 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 }])
 
 .controller('NotificationCtrl',
-    ['$scope', '$rootScope', 'Notification',
-    function($scope, $rootScope, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', 'Notification',
+    function($scope, $rootScope, $ionicLoading, Notification) {
 
     $scope.form = {};
     $scope.sendLocation = function(){
@@ -160,10 +165,10 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 }])
 
 .controller('RequestCtrl',
-    ['$scope', '$rootScope', 'Request', function($scope, $rootScope, Request) {
+    ['$scope', '$rootScope', '$ionicLoading', 'Request',
+    function($scope, $rootScope, $ionicLoading, Request) {
 
     $scope.form = {};
-
     // Send request action
     $scope.sendRequest = function(){
         Request.post($scope.form).then(function(data){

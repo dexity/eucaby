@@ -57,3 +57,8 @@ input {
 .loading-container .loading {
     padding: 15px;
 }
+
+.refresh-friends {
+    float: right;
+    font-size: 23px;
+}
