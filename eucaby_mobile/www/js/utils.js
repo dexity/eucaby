@@ -43,14 +43,12 @@ angular.module('eucaby.utils', [])
         currentLocation: function(success, error){
             navigator.geolocation.getCurrentPosition(function(pos) {
                 success(pos.coords.latitude, pos.coords.longitude);
-            }, function(data) {
-                error && error(data);
-            });
+            }, error);
         }
     };
 })
 
-.factory('utils', function(){
+.factory('utils', ['$ionicPopup', function($ionicPopup){
     return {
         activityParams: function(form){
             var email = form.email;
@@ -78,6 +76,12 @@ angular.module('eucaby.utils', [])
             return Object.keys(params).map(function(prop) {
                 return [prop, params[prop]].map(encodeURIComponent).join("=");
             }).join("&");
+        },
+        alert: function(title, text){
+            $ionicPopup.alert({
+                title: title,
+                template: text
+            });
         }
     };
-});
+}]);

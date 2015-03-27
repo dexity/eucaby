@@ -107,7 +107,7 @@ angular.module('eucaby',
         views: {
             'tab-outgoing': {
                 templateUrl: 'templates/tab-outgoing.html',
-                controller: 'ActivityCtrl'
+                controller: 'OutgoingCtrl'
             }
         }
     })
@@ -134,7 +134,7 @@ angular.module('eucaby',
         views: {
             'tab-incoming': {
                 templateUrl: 'templates/tab-incoming.html',
-                controller: 'ActivityCtrl'
+                controller: 'IncomingCtrl'
             }
         }
     })
