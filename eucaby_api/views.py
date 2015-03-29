@@ -42,7 +42,11 @@ class FriendsView(flask_restful.Resource):
         user = flask.request.user
         resp = auth.facebook_request(
             'get', '/{}/friends'.format(user.username))
-        return api_utils.format_fb_response(resp, api_fields.FRIENDS_FIELDS)
+        fresp = api_utils.format_fb_response(resp, api_fields.FRIENDS_FIELDS)
+        if resp.status not in api_utils.SUCCESS_STATUSES:
+            return fresp
+        # Sort friends by name
+        return dict(data=sorted(fresp['data'], key=lambda x: x['name']))
 
 
 class RequestLocationView(flask_restful.Resource):

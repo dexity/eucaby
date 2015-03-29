@@ -374,11 +374,12 @@ class TestFriends(test_base.TestCase):
         """Tests successful response for access token."""
         # List of friends
         fb_friends = dict(
-            data=[dict(name='User1', id='123'), dict(name='User2', id='456')],
+            data=[dict(name='User2', id='456'), dict(name='User1', id='123')],
             paging=dict(
                 next=('https://graph.facebook.com/v2.1/10152815532718638/'
                       'friends?limit=5000&offset=5000&__after_id=enc_Aez53')),
             summary=dict(total_count=123))
+        # Friends are sorted by name
         ec_resp = dict(
             data=[dict(name='User1', username='123'),
                   dict(name='User2', username='456')])

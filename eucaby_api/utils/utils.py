@@ -7,7 +7,7 @@ import flask_restful
 
 
 PARAM_MISSING = 'Missing {param} parameter'
-
+SUCCESS_STATUSES = (200, 201)
 
 class Object(object):
     def __init__(self, **entries):
@@ -50,7 +50,7 @@ def format_oauthlib_response(resp):
     Args:
         resp:  Instance of Flask Response
     """
-    if resp.status_code in (200, 201):
+    if resp.status_code in SUCCESS_STATUSES:
         return resp
     data = json.loads(resp.data)
     message = ''
@@ -70,7 +70,7 @@ def format_fb_response(resp, fields):
     Args:
         resp: Instance of flask_oauthlib OAuthResponse
     """
-    if resp.status in (200, 201):
+    if resp.status in SUCCESS_STATUSES:
         return flask_restful.marshal(resp.data, fields)
     elif 'code' in resp.data:
         return resp
