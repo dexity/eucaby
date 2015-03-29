@@ -99,14 +99,22 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
     registerModal('templates/notify.html', 'notifyModal');
 
     $scope.loadFriends = function(){
+        // Loads friends
         return Friends.all().then(function(data){
             console.debug('Friends.all');
-            $rootScope.friends = data;
+            $rootScope.friends = data.data;
         }, function(data){
             utils.alert('Error', 'Error loading friends');
             console.error(data);
         });
     };
+
+    $scope.refreshFriends = function(){
+        $ionicLoading.show();
+        $scope.loadFriends().finally(function(){
+            $ionicLoading.hide();
+        });
+    }
 
     // Modal shown event
     $scope.$on('modal.shown', function(event, modal) {

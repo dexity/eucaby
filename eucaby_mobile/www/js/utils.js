@@ -70,6 +70,7 @@ angular.module('eucaby.utils', [])
             return params;
         },
         toPostData: function(params){
+            // Converts object to post data
             if (!params){
                 return '';
             }
@@ -78,9 +79,23 @@ angular.module('eucaby.utils', [])
             }).join("&");
         },
         alert: function(title, text){
+            // Convenience function for ionic alert popup
             $ionicPopup.alert({
                 title: title,
                 template: text
+            });
+        },
+        sortByKey: function(array, key) {
+            // Sort array of objects by key
+            return array.sort(function(a, b) {
+                var x = a[key];
+                var y = b[key];
+
+                if (angular.isString(x)){
+                    x = x.toLowerCase();
+                    y = y.toLowerCase();
+                }
+                return ((x < y) ? -1 : ((x > y) ? 1 : 0));
             });
         }
     };
