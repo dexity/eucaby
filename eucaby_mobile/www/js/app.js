@@ -31,7 +31,8 @@ angular.module('eucaby',
 
 .constant('$ionicLoadingConfig', {
     template: '<ion-spinner icon="lines"/>',
-    noBackdrop: true
+    noBackdrop: true,
+    duration: 30000    // 30 seconds
 })
 
 .config(function($stateProvider, $urlRouterProvider) {
