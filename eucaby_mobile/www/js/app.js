@@ -35,10 +35,11 @@ angular.module('eucaby',
     duration: 30000    // 30 seconds
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
+
+    $ionicConfigProvider.tabs.position('bottom');
 
     $stateProvider
-
     // Abstract states
     .state('app', {
         url: '/app',
