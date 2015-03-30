@@ -184,13 +184,17 @@ angular.module('eucaby.controllers',
             return;
         }
 
+        $ionicLoading.show();
         Notification.post($scope.form, $rootScope.currentLatLng.lat,
                           $rootScope.currentLatLng.lng)
-            .then(function(data){
-                $scope.notifyModal.hide();
-            }, function(data){
-                utils.alert('Error', data.message || 'Failed to send location');
-            });
+        .then(function(data){
+            $ionicLoading.hide();
+            $scope.notifyModal.hide();
+            utils.toast('Location is submitted');
+        }, function(data){
+            $ionicLoading.hide();
+            utils.alert('Error', data.message || 'Failed to send request');
+        });
     };
 }])
 
@@ -205,9 +209,13 @@ angular.module('eucaby.controllers',
             return;
         }
 
+        $ionicLoading.show();
         Request.post($scope.form).then(function(data){
+            $ionicLoading.hide();
             $scope.requestModal.hide();
+            utils.toast('Request is submitted');
         }, function(data){
+            $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
         });
     };

@@ -48,7 +48,9 @@ angular.module('eucaby.utils', [])
     };
 })
 
-.factory('utils', ['$ionicPopup', function($ionicPopup){
+.factory('utils',
+    ['$ionicPopup', '$ionicLoading',
+     function($ionicPopup, $ionicLoading){
     return {
         activityParams: function(form){
             // Creates parameters for activity request
@@ -79,10 +81,11 @@ angular.module('eucaby.utils', [])
         },
         alert: function(title, text){
             // Convenience function for ionic alert popup
-            $ionicPopup.alert({
-                title: title,
-                template: text
-            });
+            $ionicPopup.alert({title: title, template: text});
+        },
+        toast: function(text){
+            $ionicLoading.show({
+                template: text, noBackdrop: true, duration: 2000});
         },
         sortByKey: function(array, key) {
             // Sort array of objects by key
