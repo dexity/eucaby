@@ -51,14 +51,13 @@ angular.module('eucaby.utils', [])
 .factory('utils', ['$ionicPopup', function($ionicPopup){
     return {
         activityParams: function(form){
+            // Creates parameters for activity request
             var email = form.email;
             var username = form.username;
             var token = form.token;
 
-            if (email && username){
-                // XXX: Display error
-            }
-            // XXX: If not email or username set also display error
+            // Note: Form validation (e.g. passing both or none of the email
+            //       and username) is handled by the time
             var params = {};
             if (email){
                 params.email = email;

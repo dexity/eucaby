@@ -6,10 +6,10 @@
     </div>
   </ion-header-bar>
   <ion-content ng-controller="RequestCtrl">
-    <form ng-submit="sendRequest()">
+    <form ng-submit="sendRequest()" name="requestForm" novalidate>
         <div class="item item-divider">Enter email address</div>
         <label class="item item-input">
-          <input type="text" placeholder="Email"
+          <input type="email" placeholder="Email" name="email"
                  ng-model="form.email">
         </label>
         <div class="item item-divider">or select a friend
@@ -18,7 +18,7 @@
         </div>
         <div class="list">
             <ion-radio ng-repeat="friend in friends" ng-value="friend.username"
-                    ng-model="form.username">
+                    name="user" ng-model="form.username">
                 {{ friend.name }}
             </ion-radio>
         </div>

@@ -3,7 +3,8 @@
 var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
-angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
+angular.module('eucaby.controllers',
+               ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
 
 .controller('MainCtrl',
     ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate', 'EucabyApi',
@@ -114,7 +115,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         $scope.loadFriends().finally(function(){
             $ionicLoading.hide();
         });
-    }
+    };
 
     // Modal shown event
     $scope.$on('modal.shown', function(event, modal) {
@@ -139,6 +140,22 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 
     });
 
+    $scope.isFormValid = function(form){
+        // Main form validation
+        var emailValue = form.email.$viewValue;
+        var userValue = form.user.$viewValue;
+        if ((!emailValue && !userValue) || (emailValue && userValue)){
+            utils.alert(
+                'Error', 'Please either provide an email or select a friend');
+            return false;
+        }
+        if (form.email.$dirty && form.email.$invalid) {
+            utils.alert('Error', 'Please provide a valid email');
+            return false;
+        }
+        return true;
+    };
+
     /*
     // Socket.io
     socket.on('connect', function(){
@@ -157,31 +174,41 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
 }])
 
 .controller('NotificationCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'Notification',
-    function($scope, $rootScope, $ionicLoading, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'Notification',
+    function($scope, $rootScope, $ionicLoading, utils, Notification) {
 
     $scope.form = {};
     $scope.sendLocation = function(){
-        console.debug($rootScope.currentLatLng);
+        // Send location action
+        if (!$scope.isFormValid($scope.notificationForm)){
+            return;
+        }
+
         Notification.post($scope.form, $rootScope.currentLatLng.lat,
                           $rootScope.currentLatLng.lng)
             .then(function(data){
-            console.debug('Location submitted');
-            $scope.notifyModal.hide();
-        });
+                $scope.notifyModal.hide();
+            }, function(data){
+                utils.alert('Error', data.message || 'Failed to send location');
+            });
     };
 }])
 
 .controller('RequestCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'Request',
-    function($scope, $rootScope, $ionicLoading, Request) {
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'Request',
+    function($scope, $rootScope, $ionicLoading, utils, Request) {
 
     $scope.form = {};
-    // Send request action
     $scope.sendRequest = function(){
+        // Send request action
+        if (!$scope.isFormValid($scope.requestForm)){
+            return;
+        }
+
         Request.post($scope.form).then(function(data){
-            console.debug('Request submitted');
             $scope.requestModal.hide();
+        }, function(data){
+            utils.alert('Error', data.message || 'Failed to send request');
         });
     };
 }])
@@ -232,7 +259,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         }, function(data){
             utils.alert('Error', 'Error loading data');
             console.error(data);
-        })
+        });
     };
 
     loadItems().finally(function(){
@@ -243,7 +270,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         loadItems().finally(function(){
             $scope.$broadcast('scroll.refreshComplete');
         });
-    }
+    };
 }])
 
 .controller('IncomingCtrl',
@@ -295,7 +322,7 @@ angular.module('eucaby.controllers', ['eucaby.services', 'eucaby.utils', 'eucaby
         loadItems().finally(function(){
             $scope.$broadcast('scroll.refreshComplete');
         });
-    }
+    };
 }])
 
 .controller('NotificationDetailCtrl',
