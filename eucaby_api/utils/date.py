@@ -22,12 +22,11 @@ class FixedOffset(datetime.tzinfo):
         return datetime.timedelta(0)
 
 
-def timezone_date(date_time, offset):
+def timezone_date(date_time, offset=None):
     """Presents datetime in the timezone."""
-    if offset is None:
-        return date_time
     # If timezone information is missing set it to UTC
     if not date_time.tzinfo:
         date_time = date_time.replace(tzinfo=FixedOffset(0))
-
+    if offset is None:
+        return date_time
     return date_time.astimezone(FixedOffset(offset))

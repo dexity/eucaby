@@ -60,7 +60,6 @@ class RequestLocationView(flask_restful.Resource):
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         req = ndb_models.LocationRequest.create(
             user.username, user.name, recipient_username, recipient_name,
             recipient_email)
@@ -78,10 +77,9 @@ class RequestLocationView(flask_restful.Resource):
                 url='{}?q={}'.format(eucaby_url, req.session.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
-        resp_dict = req.to_dict(**tz_kwargs)
-        logging.info('Location Request: %s', str(resp_dict))
+        logging.info('Location Request: %s', str(req.to_dict()))
         return flask_restful.marshal(
-            resp_dict, api_fields.REQUEST_FIELDS, envelope='data')
+            req.to_dict(), api_fields.REQUEST_FIELDS, envelope='data')
 
     @classmethod
     def handle_email(cls, email):
@@ -132,7 +130,6 @@ class NotifyLocationView(flask_restful.Resource):
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         # Create location response
         # Note: There might be several location responses for a single session
         loc_notif = ndb_models.LocationNotification.create(
@@ -152,10 +149,10 @@ class NotifyLocationView(flask_restful.Resource):
                 location_url='{}?q={}'.format(MAP_BASE, latlng))
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
-        resp_dict = loc_notif.to_dict(**tz_kwargs)
-        logging.info('Location Notification: %s', str(resp_dict))
+        logging.info('Location Notification: %s', str(loc_notif.to_dict()))
         return flask_restful.marshal(
-            resp_dict, api_fields.NOTIFICATION_FIELDS, envelope='data')
+            loc_notif.to_dict(), api_fields.NOTIFICATION_FIELDS,
+            envelope='data')
 
     @classmethod
     def handle_token(cls, token, latlng):
@@ -224,9 +221,8 @@ class UserProfileView(flask_restful.Resource):
 
     def get(self):  # pylint: disable=no-self-use
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         return flask_restful.marshal(
-            user.to_dict(**tz_kwargs), api_fields.USER_FIELDS, envelope='data')
+            user.to_dict(), api_fields.USER_FIELDS, envelope='data')
 
 
 class UserActivityView(flask_restful.Resource):
@@ -237,7 +233,6 @@ class UserActivityView(flask_restful.Resource):
     @classmethod
     def _get_vector_data(cls, req_username, notif_username, offset, limit):
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         username = user.username
         # WARNING: This is not efficient as it loads all requests and
         #          notifications to memory and sorts them
@@ -256,10 +251,10 @@ class UserActivityView(flask_restful.Resource):
         for item in merged_items[offset:offset+limit]:
             if isinstance(item, ndb_models.LocationRequest):
                 data_item = flask_restful.marshal(
-                    item.to_dict(**tz_kwargs), api_fields.REQUEST_FIELDS)
+                    item.to_dict(), api_fields.REQUEST_FIELDS)
             else:
                 data_item = flask_restful.marshal(
-                    item.to_dict(**tz_kwargs), api_fields.NOTIFICATION_FIELDS)
+                    item.to_dict(), api_fields.NOTIFICATION_FIELDS)
             data.append(data_item)
         return dict(data=data)
 
@@ -281,7 +276,6 @@ class UserActivityView(flask_restful.Resource):
     def get_request_data(cls, offset, limit):
         """Returns data for request activities."""
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         username = user.username
         req_class = ndb_models.LocationRequest
         requests = req_class.query(
@@ -289,14 +283,13 @@ class UserActivityView(flask_restful.Resource):
                 -req_class.created_date).fetch(limit, offset=offset)
 
         return flask_restful.marshal(
-            dict(data=[req.to_dict(**tz_kwargs) for req in requests]),
+            dict(data=[req.to_dict() for req in requests]),
             api_fields.REQUEST_LIST_FIELDS)
 
     @classmethod
     def get_notification_data(cls, offset, limit):
         """Returns data for notification activities."""
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         username = user.username
         notif_class = ndb_models.LocationNotification
         notifications = notif_class.query(
@@ -304,7 +297,7 @@ class UserActivityView(flask_restful.Resource):
                 -notif_class.created_date).fetch(limit, offset=offset)
 
         return flask_restful.marshal(
-            dict(data=[notif.to_dict(**tz_kwargs) for notif in notifications]),
+            dict(data=[notif.to_dict() for notif in notifications]),
             api_fields.NOTIFICATION_LIST_FIELDS)
 
     @classmethod
@@ -350,7 +343,6 @@ class RequestDetailView(flask_restful.Resource):
 
         # If user is sender or recipient return authorization error
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         username = user.username
         if not (loc_req.sender_username == username or
                 loc_req.recipient_username == username):
@@ -362,9 +354,9 @@ class RequestDetailView(flask_restful.Resource):
         notifications = notif_class.query(
             notif_class.session.token == loc_req.session.token).order(
                 -notif_class.created_date).fetch()
-        resp_dict = loc_req.to_dict(**tz_kwargs)
+        resp_dict = loc_req.to_dict()
         resp_dict['notifications'] = [
-            notif.to_dict(**tz_kwargs) for notif in notifications]
+            notif.to_dict() for notif in notifications]
 
         return flask_restful.marshal(
             resp_dict, api_fields.DETAIL_REQUEST_FIELDS, envelope='data')
@@ -384,7 +376,6 @@ class NotificationDetailView(flask_restful.Resource):
 
         # If user is sender or recipient return authorization error
         user = flask.request.user
-        tz_kwargs = dict(timezone_offset=user.timezone_offset)
         username = user.username
         if not (loc_notif.sender_username == username or
                 loc_notif.recipient_username == username):
@@ -396,7 +387,7 @@ class NotificationDetailView(flask_restful.Resource):
         request = req_class.query(
             req_class.session.token == loc_notif.session.token).order(
                 -req_class.created_date).fetch()
-        resp_dict = loc_notif.to_dict(**tz_kwargs)
+        resp_dict = loc_notif.to_dict()
         resp_dict['request'] = (request and request[0]) or None
 
         return flask_restful.marshal(
