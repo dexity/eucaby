@@ -4,6 +4,7 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb import polymodel
 
 from eucaby_api.utils import utils as api_utils
+from eucaby_api.utils import date as utils_date
 
 
 class Session(ndb.Model):
@@ -44,10 +45,15 @@ class LocationMessage(polymodel.PolyModel):
         return dict(username=self.recipient_username, name=self.recipient_name,
                     email=self.recipient_email)
 
-    def to_dict(self):
-        d = self._to_dict()
-        d.update(dict(session=self.session.to_dict(),
-                      created_date=str(self.created_date)))
+    def to_dict(self, timezone_offset=None):
+        exclude = ['sender_username', 'sender_name', 'recipient_username',
+                   'recipient_name', 'recipient_email']
+        d = self._to_dict(exclude=exclude)
+        created_date = utils_date.timezone_date(
+            self.created_date, timezone_offset)
+        d.update(dict(
+            id=self.id, sender=self.sender, recipient=self.recipient,
+            session=self.session.to_dict(), created_date=created_date))
         return d
 
     @property
@@ -73,6 +79,7 @@ class LocationRequest(LocationMessage):
         obj.put()
         return obj
 
+
 class LocationNotification(LocationMessage):
     """Location notification."""
 
@@ -94,9 +101,3 @@ class LocationNotification(LocationMessage):
             location=ndb.GeoPt(latlng))
         obj.put()
         return obj
-
-    def to_dict(self):
-        res = super(LocationNotification, self).to_dict()
-        res['location'] = dict(
-            lat=self.location.lat, lng=self.location.lon)
-        return res

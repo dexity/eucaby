@@ -1,6 +1,7 @@
 """Fields for object serialization."""
 
 from flask_restful import fields as rest_fields
+from eucaby_api.utils import fields as utils_fields
 
 REQUEST = 'request'
 NOTIFICATION = 'notification'
@@ -30,7 +31,7 @@ MESSAGE_FIELDS = dict(
     type=rest_fields.String(default=REQUEST),
     sender=rest_fields.Nested(SENDER_FIELDS),
     recipient=rest_fields.Nested(RECIPIENT_FIELDS),
-    created_date=rest_fields.DateTime(dt_format='iso8601'),
+    created_date=utils_fields.IsoDateTime(),
     session=rest_fields.Nested(SESSION_FIELDS))
 
 REQUEST_FIELDS = MESSAGE_FIELDS.copy()
@@ -62,7 +63,7 @@ USER_FIELDS = dict(
     last_name=rest_fields.String,
     gender=rest_fields.String,
     email=rest_fields.String,
-    date_joined=rest_fields.DateTime(dt_format='iso8601'))
+    date_joined=utils_fields.IsoDateTime())
 
 REQUEST_LIST_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(

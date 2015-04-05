@@ -6,6 +6,8 @@ UUID2 = '123qweasd'
 USERNAME = '12345'
 LATLNG = '37.422,-122.084058'  # Google
 TOKEN_TYPE = 'Bearer'
+TIMEZONE = -8
+TIMEZONE_OFFSET = TIMEZONE*60
 FB_PROFILE = dict(
     first_name='Test', last_name='User', verified=True,
     name='Test User', locale='en_US', gender='male',
@@ -36,7 +38,8 @@ def create_user(user_kwargs=None, ec_token_kwargs=None,
                 fb_access_token='someaccesstoken'):
     """Creates user and related tokens."""
     _user_kwargs = dict(username=USERNAME, first_name='Test', last_name='User',
-                        email='test@example.com', gender='male')
+                        email='test@example.com', gender='male',
+                        timezone=-8)
     _ec_token_kwargs = dict(
         access_token=UUID, refresh_token=UUID2, expires_in=2592000,
         scope='profile history location')

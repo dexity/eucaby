@@ -84,3 +84,8 @@ def generate_uuid(is_hex=True):
     if is_hex:
         return s.hex
     return str(s)
+
+
+def zone2offset(zone):
+    """Converts timezone hour to offset minute."""
+    return zone*60

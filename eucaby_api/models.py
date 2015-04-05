@@ -4,6 +4,9 @@ import datetime
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
+from eucaby_api.utils import utils as api_utils
+from eucaby_api.utils import date as utils_date
+
 db = flask_sqlalchemy.SQLAlchemy(session_options=dict(expire_on_commit=False))
 
 FACEBOOK = 'facebook'
@@ -41,16 +44,21 @@ class User(db.Model):
         onupdate=datetime.datetime.now)
     date_joined = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
+    # Timezone offset in minutes.
+    #   Example: -420 timezone_offset is -7 timezone (US/Pacific)
+    timezone_offset = db.Column(db.Integer)
 
     @classmethod
     def create(cls, **kwargs):
         """Creates user."""
+        offset = api_utils.zone2offset(kwargs.get('timezone', 0))
         user = cls(
             username=kwargs['username'],
             first_name=kwargs.get('first_name', ''),
             last_name=kwargs.get('last_name', ''),
             email=kwargs.get('email', ''),
-            gender=kwargs.get('gender'))
+            gender=kwargs.get('gender'),
+            timezone_offset=offset)
         db.session.add(user)
         db.session.commit()
         return user
@@ -74,6 +82,14 @@ class User(db.Model):
     @property
     def name(self):
         return '{} {}'.format(self.first_name, self.last_name)
+
+    def to_dict(self, timezone_offset=None):
+        date_joined = utils_date.timezone_date(
+            self.date_joined, timezone_offset)
+        return dict(
+            username=self.username, first_name=self.first_name,
+            last_name=self.last_name, gender=self.gender, email=self.email,
+            date_joined=date_joined)
 
 
 class Token(db.Model):

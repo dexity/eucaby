@@ -15,6 +15,7 @@ from eucaby_api import args
 from eucaby_api import fields as api_fields
 from eucaby_api import models
 from eucaby_api import ndb_models
+from eucaby_api.utils import date as utils_date
 
 from tests.eucaby_api import base as test_base
 from tests.eucaby_api import fixtures
@@ -434,13 +435,15 @@ class TestRequestLocation(test_base.TestCase):
         session = req.session
 
         # Check response
+        created_date = utils_date.timezone_date(
+            req.created_date, self.user.timezone_offset)
         ec_valid_data = dict(data=dict(
             id=req.id, type='request',
             recipient=dict(
                 username=recipient_username, name=recipient_name,
                 email=recipient_email),
             sender=dict(username=self.user.username, name=self.user.name),
-            created_date=fr_inputs.iso8601(req.created_date),
+            created_date=created_date.isoformat(),
             session=dict(token=session.token, complete=False)))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
@@ -818,6 +821,8 @@ class TestNotifyLocation(test_base.TestCase):
             self.assertTrue(loc_req.session.complete)
 
         # Check response
+        created_date = utils_date.timezone_date(
+            loc_notif.created_date, self.user.timezone_offset)
         ec_valid_data = dict(data=dict(
             id=loc_notif.id, type='notification',
             location=dict(lat=location.lat, lng=location.lon),
@@ -825,8 +830,7 @@ class TestNotifyLocation(test_base.TestCase):
                 username=recipient_username, name=recipient_name,
                 email=recipient_email),
             sender=dict(username=self.user.username, name=self.user.name),
-            created_date=fr_inputs.iso8601(loc_notif.created_date),
-            session=session_out))
+            created_date=created_date.isoformat(), session=session_out))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
         messages = self.mail_stub.get_sent_messages()
@@ -1024,12 +1028,13 @@ class TestUserProfile(test_base.TestCase):
             '/me', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
+        date_joined = utils_date.timezone_date(
+            self.user.date_joined, self.user.timezone_offset)
         ec_valid_resp = dict(
             data=dict(
                 username=self.user.username, first_name=self.user.first_name,
                 last_name=self.user.last_name, gender=self.user.gender,
-                email=self.user.email,
-                date_joined=fr_inputs.iso8601(self.user.date_joined)))
+                email=self.user.email, date_joined=date_joined.isoformat()))
         self.assertEqual(ec_valid_resp, data)
 
 

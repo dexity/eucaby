@@ -55,7 +55,7 @@ class RequestLocationView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('location')]
 
     @classmethod
-    def handle_request(cls, recipient, recipient_email):
+    def _handle_request(cls, recipient, recipient_email):
         """Handles general operations of the request."""
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
@@ -77,15 +77,16 @@ class RequestLocationView(flask_restful.Resource):
                 url='{}?q={}'.format(eucaby_url, req.session.token))
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
-        logging.info('Location Request: %s', str(req.to_dict()))
+        resp_dict = req.to_dict(timezone_offset=user.timezone_offset)
+        logging.info('Location Request: %s', str(resp_dict))
         return flask_restful.marshal(
-            req, api_fields.REQUEST_FIELDS, envelope='data')
+            resp_dict, api_fields.REQUEST_FIELDS, envelope='data')
 
     @classmethod
     def handle_email(cls, email):
         """Handles email parameter."""
         recipient = models.User.get_by_email(email)
-        return cls.handle_request(recipient, email)
+        return cls._handle_request(recipient, email)
 
     @classmethod
     def handle_username(cls, username):
@@ -100,7 +101,7 @@ class RequestLocationView(flask_restful.Resource):
         #     https://developers.facebook.com/docs/graph-api/reference/v2.2/user
         #     "This field will not be returned if no valid email address is
         #     available."
-        return cls.handle_request(recipient, recipient.email)
+        return cls._handle_request(recipient, recipient.email)
 
     def post(self):
         args = reqparse.clean_args(api_args.REQUEST_LOCATION_ARGS)
@@ -125,7 +126,7 @@ class NotifyLocationView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('location')]
 
     @classmethod
-    def handle_request(cls, recipient, recipient_email, latlng, session=None):
+    def _handle_request(cls, recipient, recipient_email, latlng, session=None):
         """Handles general operations of the request."""
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
@@ -149,10 +150,10 @@ class NotifyLocationView(flask_restful.Resource):
                 location_url='{}?q={}'.format(MAP_BASE, latlng))
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
-        logging.info('Location Notification: %s', str(loc_notif.to_dict()))
-
+        resp_dict = loc_notif.to_dict(timezone_offset=user.timezone_offset)
+        logging.info('Location Notification: %s', str(resp_dict))
         return flask_restful.marshal(
-            loc_notif, api_fields.NOTIFICATION_FIELDS, envelope='data')
+            resp_dict, api_fields.NOTIFICATION_FIELDS, envelope='data')
 
     @classmethod
     def handle_token(cls, token, latlng):
@@ -176,13 +177,13 @@ class NotifyLocationView(flask_restful.Resource):
         session.complete = True
         loc_req.session = session
         loc_req.put()
-        return cls.handle_request(recipient, recipient.email, latlng, session)
+        return cls._handle_request(recipient, recipient.email, latlng, session)
 
     @classmethod
     def handle_email(cls, email, latlng):
         """Handles email parameter."""
         recipient = models.User.get_by_email(email)
-        return cls.handle_request(recipient, email, latlng)
+        return cls._handle_request(recipient, email, latlng)
 
     @classmethod
     def handle_username(cls, username, latlng):
@@ -191,7 +192,7 @@ class NotifyLocationView(flask_restful.Resource):
         if not recipient:
             error = dict(message=USER_NOT_FOUND, code='not_found')
             return api_utils.make_response(error, 404)
-        return cls.handle_request(recipient, recipient.email, latlng)
+        return cls._handle_request(recipient, recipient.email, latlng)
 
     def post(self):
         args = reqparse.clean_args(api_args.NOTIFY_LOCATION_ARGS)
@@ -220,8 +221,10 @@ class UserProfileView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
 
     def get(self):  # pylint: disable=no-self-use
+        user = flask.request.user
+        resp_dict = user.to_dict(timezone_offset=user.timezone_offset)
         return flask_restful.marshal(
-            flask.request.user, api_fields.USER_FIELDS, envelope='data')
+            resp_dict, api_fields.USER_FIELDS, envelope='data')
 
 
 class UserActivityView(flask_restful.Resource):
@@ -231,7 +234,8 @@ class UserActivityView(flask_restful.Resource):
 
     @classmethod
     def _get_vector_data(cls, req_username, notif_username, offset, limit):
-        username = flask.request.user.username
+        user = flask.request.user
+        username = user.username
         # WARNING: This is not efficient as it loads all requests and
         #          notifications to memory and sorts them
         # Get requests sent or received by user
@@ -249,10 +253,12 @@ class UserActivityView(flask_restful.Resource):
         for item in merged_items[offset:offset+limit]:
             if isinstance(item, ndb_models.LocationRequest):
                 data_item = flask_restful.marshal(
-                    item, api_fields.REQUEST_FIELDS)
+                    item.to_dict(timezone_offset=user.timezone_offset),
+                    api_fields.REQUEST_FIELDS)
             else:
                 data_item = flask_restful.marshal(
-                    item, api_fields.NOTIFICATION_FIELDS)
+                    item.to_dict(timezone_offset=user.timezone_offset),
+                    api_fields.NOTIFICATION_FIELDS)
             data.append(data_item)
         return dict(data=data)
 
@@ -279,6 +285,7 @@ class UserActivityView(flask_restful.Resource):
             req_class.sender_username == username).order(
                 -req_class.created_date).fetch(limit, offset=offset)
 
+        # XXX: Fix timezone_offset
         return flask_restful.marshal(
             dict(data=requests), api_fields.REQUEST_LIST_FIELDS)
 
@@ -290,11 +297,13 @@ class UserActivityView(flask_restful.Resource):
         notifications = notif_class.query(
             notif_class.sender_username == username).order(
                 -notif_class.created_date).fetch(limit, offset=offset)
+
+        # XXX: Fix timezone_offset
         return flask_restful.marshal(
             dict(data=notifications), api_fields.NOTIFICATION_LIST_FIELDS)
 
     @classmethod
-    def handle_request(cls, act_type, offset, limit):
+    def _handle_request(cls, act_type, offset, limit):
         """Handles request."""
         # Note: total number of requests and notifications is not very important
         if act_type == api_args.OUTGOING:
@@ -320,7 +329,7 @@ class UserActivityView(flask_restful.Resource):
         limit = args['limit']
         if limit > 100:  # Limit can't exceed 100
             limit = 100
-        return self.handle_request(args['type'], args['offset'], limit)
+        return self._handle_request(args['type'], args['offset'], limit)
 
 
 class RequestDetailView(flask_restful.Resource):
@@ -347,6 +356,8 @@ class RequestDetailView(flask_restful.Resource):
             notif_class.session.token == loc_req.session.token).order(
                 -notif_class.created_date).fetch()
         loc_req.notifications = notifications
+
+        # XXX: Fix timezone_offset
         return flask_restful.marshal(
             loc_req, api_fields.DETAIL_REQUEST_FIELDS, envelope='data')
 
@@ -376,6 +387,8 @@ class NotificationDetailView(flask_restful.Resource):
             req_class.session.token == loc_notif.session.token).order(
                 -req_class.created_date).fetch()
         loc_notif.request = (request and request[0]) or None
+
+        # XXX: Fix timezone_offset
         return flask_restful.marshal(
             loc_notif, api_fields.DETAIL_NOTIFICATION_FIELDS, envelope='data')
 
