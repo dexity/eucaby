@@ -660,6 +660,7 @@ class TestRequestById(test_base.TestCase):
             else:
                 self.assertEqual([], notifications)
 
+
 class TestNotificationById(test_base.TestCase):
 
     def setUp(self):

@@ -101,4 +101,73 @@ angular.module('eucaby.utils', [])
             });
         }
     };
-}]);
+}])
+
+.factory('dateUtils', function(){
+    return {
+        timeList: function(ts){
+            // Converts timestamp to list: [day, hour, minute]
+            ts = ts/1000;   // Timestamp in seconds
+            var d = Math.floor(ts/(60*60*24));
+            var h = Math.floor(ts/(60*60)) - d*24;
+            var m = Math.floor(ts/60) - h*60 - d*24*60;
+            return [d, h, m];
+        },
+        showYear: function(ts0, ts1){
+            // Returns true when years for ts0 and ts1 are different
+            var y0 = new Date(ts0).getFullYear();
+            var y1 = new Date(ts1).getFullYear();
+            return y0 != y1
+        },
+        ts2hd: function(ts, show_year){
+            // Converts timestamp to date string
+            if (show_year === undefined){
+                show_year = true;
+            }
+            var df = 'MMM D, ';
+            if (show_year) {
+                df += 'YYYY ';
+            }
+            df += 'h:mm a';
+            return moment(ts).format(df);
+        },
+
+        ts2h: function(ts0, ts1, full){
+            var self = this;
+            var ht = '';  // Human time
+            if (full === undefined){
+                full = true;
+            }
+            if (!ts1){
+                ts1 = new Date().getTime();
+            }
+            var dt = ts1 - ts0;
+            if (dt < 0){
+                return '';
+            }
+            var sy = self.showYear(ts0, ts1);
+            if (dt > 432000*1000) {    // More than 5 days
+                var ht = self.ts2hd(ts0, sy);
+                if (full){
+                    ht = 'on ' + ht;
+                }
+                return ht;
+            }
+            var tl = self.timeList(dt);
+            // Compose string
+            if (tl[0] !== 0) {
+                ht = tl[0] + ' d ' + tl[1] + ' hr';
+            } else if (tl[1] !== 0) {
+                ht  = tl[1] + ' hr ' + tl[2] + ' min';
+            } else if (tl[2] !== 0) {
+                ht = tl[2] + ' min';
+            } else {
+                ht  = '1 min';
+            }
+            if (full){
+                ht  += ' ago';
+            }
+            return ht
+        }
+    }
+ });

@@ -251,8 +251,8 @@ angular.module('eucaby.controllers',
 })
 
 .controller('OutgoingCtrl',
-    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'Activity',
-    function($scope, $stateParams, $ionicLoading, utils, Activity) {
+    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
+    function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
 
     $ionicLoading.show();
     var formatOutgoing = function(data){
@@ -261,7 +261,7 @@ angular.module('eucaby.controllers',
             var item = data[i];
             var description = item.type.charAt(0).toUpperCase()
                 + item.type.slice(1);
-            description += ' sent on ' + item.created_date;  // XXX: Format date
+            description += ' sent ' + dateUtils.ts2h(Date.parse(item.created_date));
             var url = '';
             if (item.type === 'notification'){
                 url = '#/app/tab/outgoing_notification/' + item.id;
@@ -301,8 +301,8 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('IncomingCtrl',
-    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'Activity',
-    function($scope, $stateParams, $ionicLoading, utils, Activity) {
+    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
+    function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
 
     $ionicLoading.show();
     var formatIncoming = function(data){
@@ -311,7 +311,7 @@ angular.module('eucaby.controllers',
             var item = data[i];
             var description = item.type.charAt(0).toUpperCase()
                 + item.type.slice(1);
-            description += ' received on ' + item.created_date;  // XXX: Format date
+            description += ' received ' + dateUtils.ts2h(Date.parse(item.created_date));
             var url = '';
             if (item.type === 'notification'){
                 url = '#/app/tab/incoming_notification/' + item.id;
