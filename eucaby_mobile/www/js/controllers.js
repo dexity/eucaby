@@ -353,8 +353,7 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('NotificationDetailCtrl',
-            ['$scope', '$ionicHistory', '$stateParams', 'map',
-             'Notification',
+            ['$scope', '$ionicHistory', '$stateParams', 'map', 'Notification',
     function($scope, $ionicHistory, $stateParams, map, Notification) {
 
         var stateName = $ionicHistory.currentView().stateName;
@@ -367,7 +366,7 @@ angular.module('eucaby.controllers',
             $scope.item = item;
             var loc = $scope.item.data.location;
             $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, 'Hello');
+            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, '');
         });
     }
 ])

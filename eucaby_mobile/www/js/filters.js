@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('eucaby.filters', [])
+angular.module('eucaby.filters', ['eucaby.utils'])
 
 .filter('capitalize', function() {
     return function(input, all) {
@@ -12,4 +12,11 @@ angular.module('eucaby.filters', [])
     return function(input){
         return (!!input) ? (input.name || input.email) : '';
     };
-});
+})
+
+.filter('localize', ['dateUtils', function(dateUtils){
+    return function(date_time){
+        return dateUtils.ts2h(Date.parse(date_time))
+    }
+}])
+;

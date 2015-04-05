@@ -15,7 +15,7 @@
                     Request received from <b>{{ item.data.sender | userName }}</b><br>
                 </div>
             </div>
-            {{ item.data.created_date }}
+            {{ item.data.created_date | localize }}
         </div>
     </div>
     <form ng-submit="sendLocation()">
@@ -36,7 +36,7 @@
                         Notification sent to <b>{{ notif.recipient | userName }}</b><br>
                     </div>
                 </div>
-                {{ notif.created_date }}
+                {{ notif.created_date | localize }}
             </ion-item>
         </ion-list>
     </div>

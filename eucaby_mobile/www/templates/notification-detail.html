@@ -15,7 +15,7 @@
                     Notification received from <b>{{ item.data.sender | userName }}</b><br>
                 </div>
             </div>
-            {{ item.data.created_date }}
+            {{ item.data.created_date | localize }}
         </div>
     </div>
     <div ng-show="item.data.request">
@@ -29,7 +29,7 @@
                         Request sent to <b>{{ item.data.request.recipient | userName }}</b><br>
                     </div>
                 </div>
-                {{ item.data.request.created_date }}
+                {{ item.data.request.created_date | localize }}
             </div>
         </div>
     </div>
