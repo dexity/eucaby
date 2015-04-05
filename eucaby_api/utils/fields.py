@@ -10,5 +10,5 @@ class IsoDateTime(rest_fields.Raw):
     def format(self, value):
         try:
             return value.isoformat()
-        except AttributeError as ae:
-            raise rest_fields.MarshallingException(ae)
+        except AttributeError as e:
+            raise rest_fields.MarshallingException(e)

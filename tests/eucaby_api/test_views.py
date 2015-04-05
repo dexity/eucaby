@@ -7,7 +7,6 @@ import unittest
 import urllib
 from flask import json
 from flask_oauthlib import client as f_oauth_client
-from flask_restful import inputs as fr_inputs
 
 from google.appengine.ext import testbed
 
@@ -608,9 +607,8 @@ class TestRequestById(test_base.TestCase):
         req = ndb_models.LocationRequest.create(
             self.user.username, self.user.name, self.user2.username,
             self.user2.name, self.user2.email)
-        req_id = req.key.id()
 
-        self.validate_request(req_id, False)
+        self._validate_request(req, False)
 
     def test_complete_request(self):
         """Tests successful response."""
@@ -618,7 +616,6 @@ class TestRequestById(test_base.TestCase):
         req = ndb_models.LocationRequest.create(
             self.user.username, self.user.name, self.user2.username,
             self.user2.name, self.user2.email)
-        req_id = req.key.id()
         for latlng in ['11,-11', '22,-22']:
             self.client.post(
                 '/location/notification', data=dict(
@@ -627,10 +624,11 @@ class TestRequestById(test_base.TestCase):
                     Authorization='Bearer {}'.format(fixtures.UUID2)))
 
         # User is request sender or request recipient
-        self.validate_request(req_id, True)
+        self._validate_request(req, True)
 
-    def validate_request(self, req_id, has_notification):
+    def _validate_request(self, req, has_notification):
         """Validate request."""
+        req_id = req.key.id()
         for access_token in [fixtures.UUID, fixtures.UUID2]:
             resp = self.client.get(
                 '/location/request/{}'.format(req_id),
@@ -643,11 +641,14 @@ class TestRequestById(test_base.TestCase):
             user_bb = user_b.copy()
             user_bb['email'] = self.user2.email
             notifications = data['notifications']
+            self.assertEqual(user_a, data['sender'])
+            self.assertEqual(user_bb, data['recipient'])
+            self.assertEqual(req_id, data['id'])
+            created_date = utils_date.timezone_date(
+                req.created_date, self.user.timezone_offset)
+            self.assertEqual(created_date.isoformat(), data['created_date'])
             if has_notification:
                 # Request has two notifications
-                self.assertEqual(user_a, data['sender'])
-                self.assertEqual(user_bb, data['recipient'])
-                self.assertEqual(req_id, data['id'])
                 self.assertEqual(2, len(notifications))
                 self.assertFalse('session' in notifications[0])
                 locations = [dict(lat=22, lng=-22), dict(lat=11, lng=-11)]
@@ -721,16 +722,15 @@ class TestNotificationById(test_base.TestCase):
     def test_no_request(self):
         """Tests notification with no requests."""
         # Notification: user2 -> user
-        resp = self.client.post(
+        self.client.post(
             '/location/notification', data=dict(
                 latlng='11,-11', username=self.user.username),
             headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID2)))
-        data = json.loads(resp.data)
-        notif_id = data['data']['id']
+        notif = ndb_models.LocationNotification.query().fetch(1)[0]
 
         # User is notification sender or notification recipient
-        self.validate_notification(notif_id, False)
+        self._validate_notification(notif, False)
 
     def test_complete_notification(self):
         """Tests notification with request."""
@@ -740,19 +740,19 @@ class TestNotificationById(test_base.TestCase):
             self.user.username, self.user.name, self.user2.username,
             self.user2.name, self.user2.email)
         # Notification: user2 -> user
-        resp = self.client.post(
+        self.client.post(
             '/location/notification', data=dict(
                 latlng='11,-11', token=req.session.token),
             headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID2)))
-        data = json.loads(resp.data)
-        notif_id = data['data']['id']
+        notif = ndb_models.LocationNotification.query().fetch(1)[0]
 
         # User is notification sender or notification recipient
-        self.validate_notification(notif_id, True)
+        self._validate_notification(notif, True)
 
-    def validate_notification(self, notif_id, has_request):
+    def _validate_notification(self, notif, has_request):
         """Validates notification."""
+        notif_id = notif.key.id()
         for access_token in [fixtures.UUID, fixtures.UUID2]:
             resp = self.client.get(
                 '/location/notification/{}'.format(notif_id),
@@ -768,6 +768,9 @@ class TestNotificationById(test_base.TestCase):
             self.assertEqual(user_aa, data['recipient'])
             self.assertEqual(notif_id, data['id'])
             self.assertEqual(dict(lat=11, lng=-11), data['location'])
+            created_date = utils_date.timezone_date(
+                notif.created_date, self.user.timezone_offset)
+            self.assertEqual(created_date.isoformat(), data['created_date'])
             request = data['request']
             if has_request:
                 self.assertFalse('session' in request)
@@ -1201,8 +1204,10 @@ class TestUserActivity(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(5, len(data['data']))
         for i in range(5):
+            tz_kwargs = dict(timezone_offset=self.user.timezone_offset)
             req = json.dumps(flask_restful.marshal(
-                self.requests[i], api_fields.REQUEST_FIELDS))
+                self.requests[i].to_dict(**tz_kwargs),
+                api_fields.REQUEST_FIELDS))
             self.assertEqual(req, json.dumps(data['data'][4-i]))
         # Complete requests
         self.assertTrue(data['data'][2]['session']['complete'])
@@ -1224,8 +1229,10 @@ class TestUserActivity(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(2, len(data['data']))
         for i in range(2):
+            tz_kwargs = dict(timezone_offset=self.user.timezone_offset)
             notif = json.dumps(flask_restful.marshal(
-                self.notifications[5+i], api_fields.NOTIFICATION_FIELDS))
+                self.notifications[5+i].to_dict(**tz_kwargs),
+                api_fields.NOTIFICATION_FIELDS))
             self.assertEqual(notif, json.dumps(data['data'][i]))
         # Complete notifications
         self.assertTrue(data['data'][0]['session']['complete'])
@@ -1244,6 +1251,7 @@ class TestUserActivity(test_base.TestCase):
                         n> r> r> r] r* r* n]
         """
         params = urllib.urlencode(dict(type='outgoing'))
+        tz_kwargs = dict(timezone_offset=self.user.timezone_offset)
         resp = self.client.get(
             '/history?{}'.format(params),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -1255,7 +1263,8 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual(expected_types, [x['type'] for x in data['data']])
         # Check first element from data
         notif = json.dumps(flask_restful.marshal(
-            self.notifications[6], api_fields.NOTIFICATION_FIELDS))
+            self.notifications[6].to_dict(**tz_kwargs),
+            api_fields.NOTIFICATION_FIELDS))
         self.assertEqual(notif, json.dumps(data['data'][6]))
         # Check completeness
         self.assertFalse(data['data'][6]['session']['complete'])
@@ -1274,6 +1283,7 @@ class TestUserActivity(test_base.TestCase):
                         r[ n< n< n[ r<
         """
         params = urllib.urlencode(dict(type='incoming'))
+        tz_kwargs = dict(timezone_offset=self.user.timezone_offset)
         resp = self.client.get(
             '/history?{}'.format(params),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -1285,7 +1295,7 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual(expected_types, [x['type'] for x in data['data']])
         # Check first element from data
         req = json.dumps(flask_restful.marshal(
-            self.requests[6], api_fields.REQUEST_FIELDS))
+            self.requests[6].to_dict(**tz_kwargs), api_fields.REQUEST_FIELDS))
         self.assertEqual(req, json.dumps(data['data'][0]))
         # Check completeness
         self.assertTrue(data['data'][1]['session']['complete'])
@@ -1296,6 +1306,7 @@ class TestUserActivity(test_base.TestCase):
         """Tests offset and limit."""
         # Offset larger the number of request
         params = urllib.urlencode(dict(type='request', offset=10))
+        tz_kwargs = dict(timezone_offset=self.user.timezone_offset)
         resp = self.client.get(
             '/history?{}'.format(params),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -1319,9 +1330,9 @@ class TestUserActivity(test_base.TestCase):
             next_offset = data['paging']['next_offset']  # update next_offset
             requests.append(data['data'][0])
         req2 = json.dumps(flask_restful.marshal(
-            self.requests[2], api_fields.REQUEST_FIELDS))
+            self.requests[2].to_dict(**tz_kwargs), api_fields.REQUEST_FIELDS))
         req3 = json.dumps(flask_restful.marshal(
-            self.requests[3], api_fields.REQUEST_FIELDS))
+            self.requests[3].to_dict(**tz_kwargs), api_fields.REQUEST_FIELDS))
         self.assertEqual(req3, json.dumps(requests[0]))  # user -> new email
         self.assertEqual(req2, json.dumps(requests[1]))  # user -> user2
 
