@@ -102,7 +102,6 @@ angular.module('eucaby.controllers',
     $scope.loadFriends = function(){
         // Loads friends
         return Friends.all().then(function(data){
-            console.debug('Friends.all');
             $rootScope.friends = data.data;
         }, function(data){
             utils.alert('Error', 'Error loading friends');
@@ -120,7 +119,9 @@ angular.module('eucaby.controllers',
     // Modal shown event
     $scope.$on('modal.shown', function(event, modal) {
         // XXX: Update friends once a day
-        angular.equals($scope.friends, []) && $scope.loadFriends();
+        if (angular.equals($scope.friends, [])){
+            $scope.loadFriends();
+        }
 
         if ($scope.notifyModal === modal) {
             $ionicLoading.show();
@@ -259,21 +260,30 @@ angular.module('eucaby.controllers',
         var items = [];
         for (var i=0; i < data.length; i++){
             var item = data[i];
-            var description = item.type.charAt(0).toUpperCase()
-                + item.type.slice(1);
-            description += ' sent ' + dateUtils.ts2h(Date.parse(item.created_date));
+            var description = 'sent ' + dateUtils.ts2h(
+                Date.parse(item.created_date));
             var url = '';
+            var icon = '';
             if (item.type === 'notification'){
+                icon = 'ion-ios-location-outline';
                 url = '#/app/tab/outgoing_notification/' + item.id;
-            } else if (item.type === 'request' && item.session.complete) {
-                url = '#/app/tab/outgoing_request/' + item.id;
+                if (item.session.complete) {
+                    icon = 'ion-ios-location';
+                }
+            } else if (item.type === 'request') {
+                icon = 'ion-ios-bolt-outline';
+                if (item.session.complete) {
+                    url = '#/app/tab/outgoing_request/' + item.id;
+                    icon = 'ion-ios-bolt';
+                }
             }
             items.push({
                 item: item,
                 complete: item.session.complete,
                 name: item.recipient.name || item.recipient.email,
                 description: description,
-                url: url
+                url: url,
+                icon: icon
             });
         }
         return items;
@@ -309,21 +319,30 @@ angular.module('eucaby.controllers',
         var items = [];
         for (var i=0; i < data.length; i++){
             var item = data[i];
-            var description = item.type.charAt(0).toUpperCase()
-                + item.type.slice(1);
-            description += ' received ' + dateUtils.ts2h(Date.parse(item.created_date));
+            var description = 'received ' + dateUtils.ts2h(
+                Date.parse(item.created_date));
             var url = '';
+            var icon = '';
             if (item.type === 'notification'){
+                icon = 'ion-ios-location-outline';
                 url = '#/app/tab/incoming_notification/' + item.id;
+                if (item.session.complete) {
+                    icon = 'ion-ios-location';
+                }
             } else if (item.type === 'request') {
-                url = '#/app/tab/incoming_request/' + item.id;
+                icon = 'ion-ios-bolt-outline';
+                if (item.session.complete) {
+                    url = '#/app/tab/incoming_request/' + item.id;
+                    icon = 'ion-ios-bolt';
+                }
             }
             items.push({
                 item: item,
                 complete: item.session.complete,
                 name: item.sender.name,
                 description: description,
-                url: url
+                url: url,
+                icon: icon
             });
         }
         return items;
@@ -372,11 +391,11 @@ angular.module('eucaby.controllers',
 ])
 
 .controller('RequestDetailCtrl',
-            ['$scope', '$http', '$stateParams', 'map',
+            ['$scope', '$ionicHistory', '$http', '$stateParams', 'map',
              'Request', 'Notification',
-    function($scope, $http, $stateParams, map, Request, Notification) {
+    function($scope, $ionicHistory, $http, $stateParams, map, Request, Notification) {
 
-        var stateName = $scope.$viewHistory.currentView.stateName;
+        var stateName = $ionicHistory.currentView().stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
         $scope.form = {};
         $scope.sendLocation = function(){
@@ -399,7 +418,7 @@ angular.module('eucaby.controllers',
                 if (!$scope.map) {
                     $scope.map = map.createMap('locmap', loc.lat, loc.lng);
                 }
-                $scope.markers.push(map.createMarker($scope.map, loc.lat, loc.lng, 'Hello'));
+                $scope.markers.push(map.createMarker($scope.map, loc.lat, loc.lng, ''));
             }
         });
     }

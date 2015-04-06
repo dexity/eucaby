@@ -1,6 +1,6 @@
 <ion-view title="Incoming">
   <ion-nav-bar class="bar-stable">
-    <ion-nav-back-button class="button-icon ion-chevron-left">
+    <ion-nav-back-button class="button-icon ion-ios-arrow-left">
     </ion-nav-back-button>
   </ion-nav-bar>
   <ion-content>
@@ -12,10 +12,10 @@
       <ion-item class="item-icon-left item-icon-right item-container"
                 ng-repeat="item in incoming"
                 type="item-text-wrap" href="{{ item.url }}">
-          <i ng-show="item.complete" class="icon ion-checkmark-circled"></i>
+          <i class="icon {{ item.icon }}"></i>
           <h2>{{ item.name }}</h2>
           <span>{{ item.description }}</span>
-          <i ng-show="item.url" class="icon ion-chevron-right"></i>
+          <i ng-show="item.url" class="icon ion-ios-arrow-right"></i>
       </ion-item>
     </ion-list>
   </ion-content>

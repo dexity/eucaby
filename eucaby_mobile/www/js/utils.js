@@ -147,11 +147,7 @@ angular.module('eucaby.utils', [])
             }
             var sy = self.showYear(ts0, ts1);
             if (dt > 432000*1000) {    // More than 5 days
-                var ht = self.ts2hd(ts0, sy);
-                if (full){
-                    ht = 'on ' + ht;
-                }
-                return ht;
+                return self.ts2hd(ts0, sy);
             }
             var tl = self.timeList(dt);
             // Compose string
