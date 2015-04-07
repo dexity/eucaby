@@ -2,7 +2,8 @@
 
 angular.module('eucaby.utils', [])
 
-.factory('map', function(){
+.factory('map', ['$q', '$ionicLoading', 'utils',
+    function($q, $ionicLoading, utils){
     return {
         createMap: function(id, lat, lng, config){
             // Creates map
@@ -44,9 +45,28 @@ angular.module('eucaby.utils', [])
             navigator.geolocation.getCurrentPosition(function(pos) {
                 success(pos.coords.latitude, pos.coords.longitude);
             }, error);
+        },
+        getCurrentLocation: function(mapId) {
+            var self = this;
+            var deferred = $q.defer();
+            $ionicLoading.show();
+            self.currentLocation(function (lat, lng) {
+                var map = self.createMap(mapId, lat, lng, {zoom: 16});
+                var marker = self.createMarker(
+                    map, lat, lng, 'Current location');
+                $ionicLoading.hide();
+                deferred.resolve(
+                    {map: map, marker: marker, lat: lat, lng: lng});
+            }, function(data) {
+                $ionicLoading.hide();
+                utils.alert('Error', 'Failed to find the current location.');
+                console.error(data);
+                deferred.reject(data);
+            });
+            return deferred.promise;
         }
     };
-})
+}])
 
 .factory('utils',
     ['$ionicPopup', '$ionicLoading',

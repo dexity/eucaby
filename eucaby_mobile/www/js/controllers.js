@@ -124,21 +124,12 @@ angular.module('eucaby.controllers',
         }
 
         if ($scope.notifyModal === modal) {
-            $ionicLoading.show();
-            map.currentLocation(function (lat, lng) {
-                $scope.notifyMap = map.createMap(
-                    'notifymap', lat, lng, {zoom: 16});
-                $scope.currentMarker = map.createMarker(
-                    $scope.notifyMap, lat, lng, 'Current location');
-                $rootScope.currentLatLng = {lat: lat, lng: lng};
-                $ionicLoading.hide();
-            }, function (data) {
-                $ionicLoading.hide();
-                utils.alert('Error', 'Failed to find the current location.');
-                console.error(data);
+            map.getCurrentLocation('notifymap').then(function(data) {
+                $scope.map = data.map;
+                $scope.marker = data.marker;
+                $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
             });
         }
-
     });
 
     $scope.isFormValid = function(form){
@@ -331,8 +322,8 @@ angular.module('eucaby.controllers',
                 }
             } else if (item.type === 'request') {
                 icon = 'ion-ios-bolt-outline';
+                url = '#/app/tab/incoming_request/' + item.id;
                 if (item.session.complete) {
-                    url = '#/app/tab/incoming_request/' + item.id;
                     icon = 'ion-ios-bolt';
                 }
             }
@@ -372,12 +363,13 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('NotificationDetailCtrl',
-            ['$scope', '$ionicHistory', '$stateParams', 'map', 'Notification',
-    function($scope, $ionicHistory, $stateParams, map, Notification) {
+            ['$scope', '$ionicHistory', '$ionicLoading', '$stateParams', 'map', 'Notification',
+    function($scope, $ionicHistory, $ionicLoading, $stateParams, map, Notification) {
 
         var stateName = $ionicHistory.currentView().stateName;
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
 
+        // XXX: Add $ionicLoading feature
         Notification.get($stateParams.id).then(function(data){
             var item = {
                 data: data.data
@@ -391,35 +383,53 @@ angular.module('eucaby.controllers',
 ])
 
 .controller('RequestDetailCtrl',
-            ['$scope', '$ionicHistory', '$http', '$stateParams', 'map',
-             'Request', 'Notification',
-    function($scope, $ionicHistory, $http, $stateParams, map, Request, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', '$http', '$stateParams', 'map',
+     'utils', 'Request', 'Notification',
+    function($scope, $rootScope, $ionicLoading, $ionicHistory, $http, $stateParams, map, utils,
+             Request, Notification) {
 
         var stateName = $ionicHistory.currentView().stateName;
-        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
-        $scope.form = {};
-        $scope.sendLocation = function(){
-            Notification.post($scope.form, SF_LAT, SF_LNG).then(function(data){
-                console.debug('Location submitted');
-                // XXX: Reload the request view
-            });
+        var populateMarkers = function(notifs){
+            for (var i = 0; i < notifs.length; i++){
+                var loc = notifs[i].location;
+                if ($scope.map){
+                    $scope.markers.push(
+                        map.createMarker($scope.map, loc.lat, loc.lng, ''));
+                }
+            }
         };
-        Request.get($stateParams.id).then(function(data){
+        var requestCallback = function(data){
             var item = {
                 data: data.data
             };
             $scope.markers = [];
-            $scope.map;
             $scope.item = item;
             $scope.form.token = item.data.session.token;
-            for (var i = 0; i < item.data.notifications.length; i++){
-                var notif = item.data.notifications[i];
-                var loc = notif.location;
-                if (!$scope.map) {
-                    $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-                }
-                $scope.markers.push(map.createMarker($scope.map, loc.lat, loc.lng, ''));
-            }
-        });
+            // Load map
+            map.getCurrentLocation('locmap').then(function(data) {
+                $scope.map = data.map;
+                $scope.marker = data.marker;
+                $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
+                populateMarkers(item.data.notifications);
+            });
+        };
+        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
+        $scope.form = {};
+        $scope.sendLocation = function(){
+            $ionicLoading.show();
+            Notification.post($scope.form, $rootScope.currentLatLng.lat,
+                              $rootScope.currentLatLng.lng)
+            .then(function(data){
+                $ionicLoading.hide();
+                // Reload request
+                Request.get($stateParams.id).then(requestCallback);
+                utils.toast('Location is submitted');
+            }, function(data){
+                $ionicLoading.hide();
+                utils.alert('Error', data.message || 'Failed to send request');
+            });
+        };
+
+        Request.get($stateParams.id).then(requestCallback);
     }
 ]);
