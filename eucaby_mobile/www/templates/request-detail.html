@@ -4,18 +4,19 @@
     </ion-nav-back-button>
   </ion-nav-bar>
   <ion-content ng-controller="RequestDetailCtrl">
-    <div id="locmap" ng-if="item.data.notifications"></div>
+    <div id="locmap" ng-if="item.notifications"></div>
     <div class="card">
         <div class="item item-text-wrap">
+            <i class="ion {{ icon }} icon-detail"></i>
             <div ng-switch on="isOutgoing">
                 <div ng-switch-when="true">
-                    Request sent to <b>{{ item.data.recipient | userName }}</b><br>
+                    Request sent to <b>{{ item.recipient | userName }}</b><br>
                 </div>
                 <div ng-switch-when="false">
-                    Request received from <b>{{ item.data.sender | userName }}</b><br>
+                    Request received from <b>{{ item.sender | userName }}</b><br>
                 </div>
             </div>
-            {{ item.data.created_date | localize }}
+            {{ item.created_date | localize }}
         </div>
     </div>
     <form ng-submit="sendLocation()">
@@ -24,10 +25,10 @@
             <button class="button button-block button-positive" type="submit">Send Location</button>
         </div>
     </form>
-    <div ng-show="item.data.notifications">
+    <div ng-show="item.notifications">
         <ion-list>
             <div class="item item-divider">Notifications</div>
-            <ion-item ng-repeat="notif in item.data.notifications">
+            <ion-item ng-repeat="notif in item.notifications">
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
                         Notification received from <b>{{ notif.sender | userName }}</b><br>

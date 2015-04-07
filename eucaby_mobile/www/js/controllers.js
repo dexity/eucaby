@@ -371,11 +371,9 @@ angular.module('eucaby.controllers',
 
         // XXX: Add $ionicLoading feature
         Notification.get($stateParams.id).then(function(data){
-            var item = {
-                data: data.data
-            };
-            $scope.item = item;
-            var loc = $scope.item.data.location;
+            $scope.item = data.data;
+            $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
+            var loc = $scope.item.location;
             $scope.map = map.createMap('locmap', loc.lat, loc.lng);
             $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, '');
         });
@@ -399,18 +397,16 @@ angular.module('eucaby.controllers',
             }
         };
         var requestCallback = function(data){
-            var item = {
-                data: data.data
-            };
+            $scope.item = data.data;
+            $scope.icon = $scope.item.session.complete ? 'ion-ios-bolt': 'ion-ios-bolt-outline';
             $scope.markers = [];
-            $scope.item = item;
-            $scope.form.token = item.data.session.token;
+            $scope.form.token = $scope.item.session.token;
             // Load map
             map.getCurrentLocation('locmap').then(function(data) {
                 $scope.map = data.map;
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
-                populateMarkers(item.data.notifications);
+                populateMarkers($scope.item.notifications);
             });
         };
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;

@@ -66,3 +66,9 @@ input {
 [ng-click] {
     cursor: pointer;
 }
+
+.icon-detail {
+    float: left;
+    font-size: 32px;
+    width: 32px;
+}
