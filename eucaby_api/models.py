@@ -81,7 +81,7 @@ class User(db.Model):
 
     @property
     def name(self):
-        return '{} {}'.format(self.first_name, self.last_name)
+        return u'{} {}'.format(self.first_name, self.last_name)
 
     def to_dict(self, timezone_offset=None):
         date_joined = utils_date.timezone_date(

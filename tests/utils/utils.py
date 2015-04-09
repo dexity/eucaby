@@ -23,10 +23,11 @@ def verify_email(messages, num, mail_to, in_list):
         mail_to, in_list = [mail_to], [in_list]
     for i in range(num):
         message = messages[i]
-        mail_body = str(message.body)
+        # message.body is instance of mail.EncodedPayload
+        mail_content = message.body.decode()
         assert mail_to[i] == message.to
         for in_str in in_list[i]:
-            assert in_str in mail_body
+            assert in_str in mail_content
 
 
 def verify_invalid_methods(client, invalid_methods, endpoint):

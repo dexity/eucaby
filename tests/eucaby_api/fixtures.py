@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import mock
 from eucaby_api import models
 
@@ -9,8 +11,8 @@ TOKEN_TYPE = 'Bearer'
 TIMEZONE = -8
 TIMEZONE_OFFSET = TIMEZONE*60
 FB_PROFILE = dict(
-    first_name='Test', last_name='User', verified=True,
-    name='Test User', locale='en_US', gender='male',
+    first_name='Test', last_name=u'Юзер', verified=True,
+    name=u'Test Юзер', locale='en_US', gender='male',
     email='test@example.com', id=USERNAME,
     link='https://www.facebook.com/app_scoped_user_id/12345/',
     timezone=-8, updated_time='2014-12-06T21:31:50+0000')
@@ -37,7 +39,7 @@ def create_user_from_facebook(client):
 def create_user(user_kwargs=None, ec_token_kwargs=None,
                 fb_access_token='someaccesstoken'):
     """Creates user and related tokens."""
-    _user_kwargs = dict(username=USERNAME, first_name='Test', last_name='User',
+    _user_kwargs = dict(username=USERNAME, first_name='Test', last_name=u'Юзер',
                         email='test@example.com', gender='male',
                         timezone=-8)
     _ec_token_kwargs = dict(

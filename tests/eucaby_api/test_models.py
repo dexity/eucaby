@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import unittest
 from eucaby_api import models
@@ -11,7 +12,7 @@ class TestModels(test_base.TestCase):
     def setUp(self):
         super(TestModels, self).setUp()
         self.user = models.User(
-            username='2345', first_name='Test', last_name='User',
+            username='2345', first_name='Test', last_name=u'Юзер',
             email='test@example.com')
         models.db.session.add(self.user)
         models.db.session.commit()

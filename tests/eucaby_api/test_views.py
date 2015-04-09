@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import flask_restful
 import datetime
@@ -138,7 +139,7 @@ class TestOAuthToken(test_base.TestCase):
         self.assertEqual(2, len(tokens))
         user = users[0]
         test_utils.assert_object(
-            user, first_name='Test', last_name='User', gender='male',
+            user, first_name='Test', last_name=u'Юзер', gender='male',
             email='test@example.com', username='12345')
         fb_token = tokens[0]
         ec_token = tokens[1]
@@ -169,7 +170,7 @@ class TestOAuthToken(test_base.TestCase):
         self.assertEqual(2, len(tokens))
         user = users[0]
         test_utils.assert_object(  # Same user
-            user, first_name='Test', last_name='User', gender='male',
+            user, first_name='Test', last_name=u'Юзер', gender='male',
             email='test@example.com', username='12345')
         fb_token = tokens[0]
         ec_token = tokens[1]
@@ -374,15 +375,15 @@ class TestFriends(test_base.TestCase):
         """Tests successful response for access token."""
         # List of friends
         fb_friends = dict(
-            data=[dict(name='User2', id='456'), dict(name='User1', id='123')],
+            data=[dict(name='User2', id='456'), dict(name=u'Юзер', id='123')],
             paging=dict(
                 next=('https://graph.facebook.com/v2.1/10152815532718638/'
                       'friends?limit=5000&offset=5000&__after_id=enc_Aez53')),
             summary=dict(total_count=123))
         # Friends are sorted by name
         ec_resp = dict(
-            data=[dict(name='User1', username='123'),
-                  dict(name='User2', username='456')])
+            data=[dict(name='User2', username='456'),
+                  dict(name=u'Юзер', username='123')])
         fb_request.return_value = mock.Mock(data=fb_friends, status=200)
         resp = self.client.get(
             '/friends', headers=dict(
@@ -500,7 +501,7 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(resp, None, None, recipient_email,
-                                ['from Test User', 'Join Eucaby'])
+                                [u'from Test Юзер', 'Join Eucaby'])
 
     def test_existing_email(self):
         """Tests valid existing email address."""
@@ -510,7 +511,7 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email,
-            ['Hi, Test2 User2', 'from Test User'])
+            ['Hi, Test2 User2', u'from Test Юзер'])
 
     def test_self_email(self):
         """Test that user can send email to himself."""
@@ -520,7 +521,7 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email,
-            ['Hi, Test User', 'from Test User'])
+            [u'Hi, Test Юзер', u'from Test Юзер'])
 
     def test_user(self):
         """Tests valid recipient user."""
@@ -529,7 +530,7 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', 'from Test User'])
+            ['Hi, Test2 User2', u'from Test Юзер'])
 
     def test_email_user(self):
         """Tests email and username parameters."""
@@ -539,7 +540,7 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(resp, None, None, recipient_email,
-                                ['from Test User', 'Join Eucaby'])
+                                [u'from Test Юзер', 'Join Eucaby'])
 
 
 class TestRequestById(test_base.TestCase):
@@ -928,7 +929,7 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', 'Test User shared'], session_dict)
+            ['Hi, Test2 User2', u'Test Юзер shared'], session_dict)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -958,7 +959,7 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email,
-            ['Hi, Test User', 'Test User shared'], session_dict)
+            [u'Hi, Test Юзер', u'Test Юзер shared'], session_dict)
 
     def test_new_email(self):
         """Tests notification new email."""
@@ -969,7 +970,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, None, None, 'test3@example.com',
-            ['Test User shared', 'Join Eucaby'])
+            [u'Test Юзер shared', 'Join Eucaby'])
 
     def test_existing_email(self):
         """Tests notification to existing email."""
@@ -980,7 +981,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', 'Test User shared'])
+            ['Hi, Test2 User2', u'Test Юзер shared'])
 
     def test_self_email(self):
         """Tests notification his own email."""
@@ -991,7 +992,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email,
-            ['Hi, Test User', 'Test User shared'])
+            [u'Hi, Test Юзер', u'Test Юзер shared'])
 
     def test_username(self):
         """Tests notification by username."""
@@ -1002,7 +1003,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', 'Test User shared'])
+            ['Hi, Test2 User2', u'Test Юзер shared'])
 
 
 class TestUserProfile(test_base.TestCase):
