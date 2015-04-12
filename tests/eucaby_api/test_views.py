@@ -1034,7 +1034,8 @@ class TestUserProfile(test_base.TestCase):
             data=dict(
                 username=self.user.username, first_name=self.user.first_name,
                 last_name=self.user.last_name, gender=self.user.gender,
-                email=self.user.email, date_joined=date_joined.isoformat()))
+                email=self.user.email, name=self.user.name,
+                date_joined=date_joined.isoformat()))
         self.assertEqual(ec_valid_resp, data)
 
 

@@ -59,6 +59,7 @@ DETAIL_NOTIFICATION_FIELDS['request'] = rest_fields.Nested(
 
 USER_FIELDS = dict(
     username=rest_fields.String,
+    name=rest_fields.String,
     first_name=rest_fields.String,
     last_name=rest_fields.String,
     gender=rest_fields.String,

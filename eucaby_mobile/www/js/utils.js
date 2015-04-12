@@ -151,7 +151,6 @@ angular.module('eucaby.utils', [])
             df += 'h:mm a';
             return moment(ts).format(df);
         },
-
         ts2h: function(ts0, ts1, full){
             var self = this;
             var ht = '';  // Human time

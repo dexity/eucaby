@@ -4,7 +4,24 @@
             ion-ios-arrow-left header-item" ui-sref="app.tab.map"> Back
         </button>
     </ion-nav-buttons>
-    <ion-content>
-      Profile
+    <ion-content class="profile">
+        <div class="row">
+            <div class="col"><b>Name</b></div>
+            <div class="col col-75">
+                {{profile.name}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Email</b></div>
+            <div class="col col-75">{{profile.email}}</div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Gender</b></div>
+            <div class="col col-75">{{profile.gender}}</div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Joined</b></div>
+            <div class="col col-75">{{profile.date_joined}}</div>
+        </div>
     </ion-content>
 </ion-view>

@@ -231,8 +231,20 @@ angular.module('eucaby.controllers',
 })
 
 .controller('ProfileCtrl',
-    ['$scope', function($scope) {
+    ['$scope', '$ionicLoading', 'utils', 'dateUtils', 'User',
+    function($scope, $ionicLoading, utils, dateUtils, User) {
 
+    $ionicLoading.show();
+    User.profile().then(function(data){
+        $scope.profile = data.data;
+        $scope.profile.date_joined = dateUtils.ts2hd(
+            Date.parse(data.data.date_joined), true)
+    }, function(data){
+        utils.alert('Failed to load user profile');
+        console.error(data);
+    }).finally(function(){
+        $ionicLoading.hide();
+    });
 }])
 
 .controller('SettingsCtrl', ['$scope', function($scope) {
@@ -248,7 +260,7 @@ angular.module('eucaby.controllers',
         var items = [];
         for (var i=0; i < data.length; i++){
             var item = data[i];
-            var description = 'sent ' + dateUtils.ts2h(
+            var description = 'received ' + dateUtils.ts2h(
                 Date.parse(item.created_date));
             var url = '';
             var icon = '';
@@ -307,7 +319,7 @@ angular.module('eucaby.controllers',
         var items = [];
         for (var i=0; i < data.length; i++){
             var item = data[i];
-            var description = 'received ' + dateUtils.ts2h(
+            var description = 'sent ' + dateUtils.ts2h(
                 Date.parse(item.created_date));
             var url = '';
             var icon = '';

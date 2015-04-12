@@ -72,3 +72,8 @@ input {
     font-size: 32px;
     width: 32px;
 }
+
+.profile,
+.settings {
+    padding-top: 20px;
+}

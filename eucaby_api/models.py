@@ -87,7 +87,7 @@ class User(db.Model):
         date_joined = utils_date.timezone_date(
             self.date_joined, timezone_offset)
         return dict(
-            username=self.username, first_name=self.first_name,
+            username=self.username, name=self.name, first_name=self.first_name,
             last_name=self.last_name, gender=self.gender, email=self.email,
             date_joined=date_joined)
 

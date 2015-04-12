@@ -2,6 +2,14 @@
 
 angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
 
+.factory('User', ['EucabyApi', function(EucabyApi) {
+
+    return {
+        profile: function(){
+            return EucabyApi.api({path: '/me'});
+        }
+    };
+}])
 .factory('Friends', ['EucabyApi', function(EucabyApi) {
 
     return {
@@ -10,7 +18,6 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-
 .factory('Activity', ['EucabyApi', function(EucabyApi) {
     return {
         outgoing: function(){
