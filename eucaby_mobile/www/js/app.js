@@ -67,16 +67,6 @@ angular.module('eucaby',
             }
         }
     })
-
-    .state('app.logout', {
-        url: '/logout',
-        views: {
-            'menu-content': {
-                templateUrl: 'templates/logout.html',
-                controller: 'LogoutCtrl'
-            }
-        }
-    })
     .state('app.profile', {
         url: '/profile',
         views: {
