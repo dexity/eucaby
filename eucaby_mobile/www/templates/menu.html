@@ -11,11 +11,9 @@
 
     <ion-side-menu side="right" width="200" is-enabled="showSideMenu()">
         <ion-content>
-            <ul class="list">
-                <a class="item" href="#/app/profile" menu-toggle="right">Profile</a>
-                <a class="item" href="#/app/settings" menu-toggle="right" >Settings</a>
-                <a class="item" menu-close ng-click="logout()">Logout</a>
-            </ul>
+            <ion-item menu-toggle="right" href="#/app/profile">Profile</ion-item>
+            <ion-item menu-toggle="right" href="#/app/settings">Settings</ion-item>
+            <ion-item menu-close ng-click="logout()">Logout</ion-item>
         </ion-content>
     </ion-side-menu>
 

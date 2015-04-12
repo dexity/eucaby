@@ -1,5 +1,6 @@
 'use strict';
 
+// Default location
 var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
@@ -21,20 +22,13 @@ angular.module('eucaby.controllers',
     };
 
     $scope.showHeader = function(){
-        return $state.is('app.tab.map');  //!$state.is('app.login') || !
+        return $state.is('app.tab.map');
     };
 
     $scope.logout = function () {
         EucabyApi.logout();
         $state.go('app.login');
     };
-
-//  $scope.rightButtons = [{
-//    type: 'button-icon button-clear ion-navicon',
-//    tap: function(e) {
-//      $ionicSideMenuDelegate.toggleRight($scope.$$childHead);
-//    }
-//  }];
 }])
 
 .controller('LoginCtrl',
@@ -236,11 +230,14 @@ angular.module('eucaby.controllers',
 
 })
 
-.controller('ProfileCtrl', function($scope) {
-})
+.controller('ProfileCtrl',
+    ['$scope', function($scope) {
 
-.controller('SettingsCtrl', function($scope) {
-})
+}])
+
+.controller('SettingsCtrl', ['$scope', function($scope) {
+
+}])
 
 .controller('OutgoingCtrl',
     ['$scope', '$stateParams', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
