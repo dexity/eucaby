@@ -199,8 +199,7 @@ class NotifyLocationView(flask_restful.Resource):
             return args
 
         username, email, token, latlng = (
-            args['username'], args['email'], args['token'],
-            args['latlng'])
+            args['username'], args['email'], args['token'], args['latlng'])
         # Preference chain: token, email, username
         if token:
             return self.handle_token(token, latlng)
@@ -223,6 +222,23 @@ class UserProfileView(flask_restful.Resource):
         user = flask.request.user
         return flask_restful.marshal(
             user.to_dict(), api_fields.USER_FIELDS, envelope='data')
+
+
+class UserSettingsView(flask_restful.Resource):
+
+    """Returns or updates user settings."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
+
+    def get(self):  # pylint: disable=no-self-use
+        user = flask.request.user
+        settings = models.UserSettings.get_or_create(user.id)
+        return flask_restful.marshal(
+            settings.to_dict(), api_fields.SETTINGS_FIELDS, envelope='data')
+
+    def post(self):  # pylint: disable=no-self-use
+
+        # emailSubscription
+        pass
 
 
 class UserActivityView(flask_restful.Resource):

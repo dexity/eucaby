@@ -73,7 +73,6 @@ input {
     width: 32px;
 }
 
-.profile,
-.settings {
+.profile {
     padding-top: 20px;
 }

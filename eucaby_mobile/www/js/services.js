@@ -10,6 +10,18 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
+.factory('Settings', ['EucabyApi', function(EucabyApi) {
+
+    return {
+        get: function(){
+            return EucabyApi.api({path: '/settings'});
+        },
+        post: function(data){
+            return EucabyApi.api(
+                {method: 'POST', path: '/settings', data: data});
+        }
+    };
+}])
 .factory('Friends', ['EucabyApi', function(EucabyApi) {
 
     return {

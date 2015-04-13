@@ -1,6 +1,7 @@
 """SQL models for API service."""
 
 import datetime
+import flask
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
@@ -47,6 +48,7 @@ class User(db.Model):
     # Timezone offset in minutes.
     #   Example: -420 timezone_offset is -7 timezone (US/Pacific)
     timezone_offset = db.Column(db.Integer)
+    settings = db.relationship('UserSettings', uselist=False, backref='user')
 
     @classmethod
     def create(cls, **kwargs):
@@ -90,6 +92,59 @@ class User(db.Model):
             username=self.username, name=self.name, first_name=self.first_name,
             last_name=self.last_name, gender=self.gender, email=self.email,
             date_joined=date_joined)
+
+
+class UserSettings(db.Model):
+
+    """User settings model."""
+    __tablename__ = 'user_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    # One to one relationship with User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    settings = db.Column(db.Text)  # Settings in json format
+
+    @classmethod
+    def get_or_create(cls, user_id, commit=False):
+        """Returns user settings object or creates a new one."""
+        obj = cls.query.filter_by(user_id=user_id).first()
+        if not obj:
+            obj = cls(user_id=user_id)
+            # By default, the new object doesn't persist data
+            if commit:
+                db.session.add(obj)
+                db.session.commit()
+        return obj
+
+    def update(self, params, commit=True):
+        """Updates user settings."""
+        if params is None:  # Only way to reset settings
+            self.settings = None
+        else:
+            settings = self.to_dict()
+            for k, v in params.items():
+                settings[k] = v
+            self.settings = flask.json.dumps(settings)
+        if commit:
+            db.session.add(self)
+            db.session.commit()
+
+    def to_dict(self):
+        """Returns settings dictionary."""
+        return self._json_loads(self.settings) or {}
+
+    def __setattr__(self, key, value):
+        """Override settings set attribute."""
+        if key == 'settings' and value is not None:  # Can throw exception
+            value = flask.json.loads(value) and value
+        self.__dict__[key] = value
+
+    @classmethod
+    def _json_loads(cls, json_str):
+        """Converts json string to dictionary."""
+        try:
+            return flask.json.loads(json_str)
+        except (TypeError, ValueError) as e:
+            return None
 
 
 class Token(db.Model):

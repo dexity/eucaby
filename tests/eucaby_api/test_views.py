@@ -1039,6 +1039,32 @@ class TestUserProfile(test_base.TestCase):
         self.assertEqual(ec_valid_resp, data)
 
 
+class TestUserSettings(test_base.TestCase):
+
+    """Tests user settings view."""
+    def setUp(self):
+        super(TestUserSettings, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+
+    def test_general_errors(self):
+        """Tests general errors for user settings."""
+        # No token is passed, get settings
+        resp = self.client.get('/settings')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # No token is passed, post settings
+        resp = self.client.post('/settings')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+    def test_get(self):
+        pass
+
+
 class TestUserActivity(test_base.TestCase):
 
     def setUp(self):

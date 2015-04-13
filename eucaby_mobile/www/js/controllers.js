@@ -218,17 +218,13 @@ angular.module('eucaby.controllers',
         Request.post($scope.form).then(function(data){
             $ionicLoading.hide();
             $scope.requestModal.hide();
-            utils.toast('Request is submitted');
+            utils.toast('Request submitted');
         }, function(data){
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
         });
     };
 }])
-
-.controller('LogoutCtrl', function($scope) {
-
-})
 
 .controller('ProfileCtrl',
     ['$scope', '$ionicLoading', 'utils', 'dateUtils', 'User',
@@ -247,7 +243,35 @@ angular.module('eucaby.controllers',
     });
 }])
 
-.controller('SettingsCtrl', ['$scope', function($scope) {
+.controller('SettingsCtrl',
+    ['$scope', '$ionicLoading', 'utils', 'Settings',
+     function($scope, $ionicLoading, utils, Settings) {
+
+    $scope.emailSubscription = { checked: false };
+
+    $ionicLoading.show();
+    Settings.get().then(function(data){
+        // XXX: Set checkbox
+        // $scope.emailSubscription = { checked: true };
+    }, function(data){
+        utils.alert('Failed to load settings');
+    }).finally(function(){
+        $ionicLoading.hide();
+    });
+
+    $scope.emailSubscriptionChange = function() {
+        $ionicLoading.show();
+        var data = {}; // XXX: Set params
+        Settings.post().then(function(data){
+            // XXX: Set checkbox
+            // $scope.emailSubscription.checked
+        }, function(data){
+            utils.alert('Failed to update settings');
+        }).finally(function(){
+            $ionicLoading.hide();
+        });
+        console.log('Push Notification Change', $scope.emailSubscription.checked);
+    };
 
 }])
 
@@ -428,7 +452,7 @@ angular.module('eucaby.controllers',
                 $ionicLoading.hide();
                 // Reload request
                 Request.get($stateParams.id).then(requestCallback);
-                utils.toast('Location is submitted');
+                utils.toast('Location submitted');
             }, function(data){
                 $ionicLoading.hide();
                 utils.alert('Error', data.message || 'Failed to send request');

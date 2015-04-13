@@ -66,6 +66,10 @@ USER_FIELDS = dict(
     email=rest_fields.String,
     date_joined=utils_fields.IsoDateTime())
 
+SETTINGS_FIELDS = dict(
+    email_subscription=rest_fields.Boolean
+)
+
 REQUEST_LIST_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
         REQUEST_FIELDS)))
