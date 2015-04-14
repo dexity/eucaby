@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import flask
 import unittest
 import sqlalchemy
 from eucaby_api import models
@@ -13,11 +14,9 @@ class TestModels(test_base.TestCase):
     """Tests User and Token models."""
     def setUp(self):
         super(TestModels, self).setUp()
-        self.user = models.User(
+        self.user = models.User.create(
             username='2345', first_name='Test', last_name=u'Юзер',
             email='test@example.com')
-        models.db.session.add(self.user)
-        models.db.session.commit()
 
     def test_create_facebook_token(self):
         """Tests create facebook token."""
@@ -55,14 +54,22 @@ class TestUserSettings(test_base.TestCase):
     """Tests UserSettings model."""
     def setUp(self):
         super(TestUserSettings, self).setUp()
-        self.user = models.User(
+        self.user = models.User.create(
             username='2345', first_name='Test', last_name=u'Юзер',
             email='test@example.com')
-        models.db.session.add(self.user)
-        models.db.session.commit()
+
+    def test_user_settings(self):
+        """Tests that user settings are created when user is created."""
+        objs = models.UserSettings.query.all()
+        self.assertEqual(1, len(objs))
+        # Initial settings
+        self.assertEqual(flask.json.dumps(models.UserSettings.DEFAULT_SETTINGS),
+                         objs[0].settings)
 
     def test_get_or_create(self):
         """Tests get or create method."""
+        models.UserSettings.query.delete()  # Clear user settings first
+
         # User exists
         models.UserSettings.get_or_create(self.user.id)
         objs = models.UserSettings.query.all()
@@ -72,18 +79,20 @@ class TestUserSettings(test_base.TestCase):
                           models.UserSettings.get_or_create, (123), commit=True)
         models.db.session.rollback()    # Rollback session
         # Successful user settings creation (operation is idempotent)
-        for i in range(2):
+        for i in range(2):  # pylint: disable=unused-variable
             obj = models.UserSettings.get_or_create(self.user.id, commit=True)
             objs = models.UserSettings.query.all()
+            default_settings = flask.json.dumps(
+                models.UserSettings.DEFAULT_SETTINGS)
             self.assertEqual([obj], objs)
-            self.assertEqual(None, obj.settings)
-            self.assertEqual({}, obj.to_dict())
+            self.assertEqual(default_settings, obj.settings)
+            self.assertEqual(
+                models.UserSettings.DEFAULT_SETTINGS, obj.to_dict())
 
     def test_update(self):
         """Tests settings update."""
         obj = models.UserSettings.get_or_create(self.user.id)
-        # Initial settings
-        self.assertEqual(None, obj.settings)
+        obj.update({}, commit=True)  # Empty settings first
         # Test A: Set settings
         obj.update(dict(hello='world'))
         self.assertEqual('{"hello": "world"}', obj.settings)
@@ -101,11 +110,12 @@ class TestUserSettings(test_base.TestCase):
         obj.update(dict(test='me'))
         self.assertEqual('{"hello": "you", "test": "me"}', obj.settings)
 
-        # Test D: Update settings to None
+        # Test D: Update settings to default values
         obj = models.UserSettings.get_or_create(self.user.id)
         obj.update(None)
         obj2 = models.UserSettings.query.first()
-        self.assertEqual(None, obj2.settings)
+        self.assertEqual(flask.json.dumps(models.UserSettings.DEFAULT_SETTINGS),
+                         obj2.settings)
 
     def test_set_settings(self):
         """Tests set settings."""
@@ -118,6 +128,22 @@ class TestUserSettings(test_base.TestCase):
         obj.settings = None
         # Empty list if also allowed
         obj.setting = '[]'
+
+    def test_param(self):
+        """Tests param method."""
+        obj = models.UserSettings.get_or_create(self.user.id, commit=True)
+        # No parameter set
+        self.assertEqual(None, obj.param('hello'))
+        # Set parameter
+        obj.update({'hello': 'world'}, commit=True)
+        obj2 = models.UserSettings.query.first()
+        self.assertEqual('world', obj2.param('hello'))
+
+        # Clear parameters
+        obj = models.UserSettings.get_or_create(self.user.id)
+        obj.update(None)
+        obj2 = models.UserSettings.query.first()
+        self.assertEqual(None, obj2.param('hello'))
 
 
 if __name__ == '__main__':

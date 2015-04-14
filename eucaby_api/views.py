@@ -231,14 +231,14 @@ class UserSettingsView(flask_restful.Resource):
 
     def get(self):  # pylint: disable=no-self-use
         user = flask.request.user
-        settings = models.UserSettings.get_or_create(user.id)
+        obj = models.UserSettings.get_or_create(user.id)
         return flask_restful.marshal(
-            settings.to_dict(), api_fields.SETTINGS_FIELDS, envelope='data')
+            obj.to_dict(), api_fields.SETTINGS_FIELDS, envelope='data')
 
-    def post(self):  # pylint: disable=no-self-use
-
-        # emailSubscription
-        pass
+    # def post(self):  # pylint: disable=no-self-use
+    #
+    #     # emailSubscription
+    #     pass
 
 
 class UserActivityView(flask_restful.Resource):
@@ -418,4 +418,5 @@ api.add_resource(NotifyLocationView, '/location/notification')
 api.add_resource(NotificationDetailView,
                  '/location/notification/<int:notif_id>')
 api.add_resource(UserProfileView, '/me')
+api.add_resource(UserSettingsView, '/settings')
 api.add_resource(UserActivityView, '/history')

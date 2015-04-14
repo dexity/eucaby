@@ -1055,13 +1055,24 @@ class TestUserSettings(test_base.TestCase):
         self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
-        # No token is passed, post settings
-        resp = self.client.post('/settings')
-        data = json.loads(resp.data)
-        self.assertEqual(fixtures.INVALID_TOKEN, data)
-        self.assertEqual(401, resp.status_code)
+        # # No token is passed, post settings
+        # resp = self.client.post('/settings')
+        # data = json.loads(resp.data)
+        # self.assertEqual(fixtures.INVALID_TOKEN, data)
+        # self.assertEqual(401, resp.status_code)
 
     def test_get(self):
+        """Tests get settings."""
+        # No settings is initially created
+        resp = self.client.get(
+            '/settings', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        print data
+        objs = models.UserSettings.query.all()
+        self.assertEqual(1, len(objs))
+
+    def test_post(self):
         pass
 
 

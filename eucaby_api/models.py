@@ -52,7 +52,7 @@ class User(db.Model):
 
     @classmethod
     def create(cls, **kwargs):
-        """Creates user."""
+        """Creates user and related objects."""
         offset = api_utils.zone2offset(kwargs.get('timezone', 0))
         user = cls(
             username=kwargs['username'],
@@ -63,6 +63,9 @@ class User(db.Model):
             timezone_offset=offset)
         db.session.add(user)
         db.session.commit()
+        # Create user settings and set default values
+        obj = UserSettings.get_or_create(user.id)
+        obj.update(None, commit=True)
         return user
 
     @classmethod
@@ -97,6 +100,10 @@ class User(db.Model):
 class UserSettings(db.Model):
 
     """User settings model."""
+    DEFAULT_SETTINGS = dict(
+        email_subscription=True
+    )
+
     __tablename__ = 'user_settings'
     id = db.Column(db.Integer, primary_key=True)
     # One to one relationship with User
@@ -117,8 +124,10 @@ class UserSettings(db.Model):
 
     def update(self, params, commit=True):
         """Updates user settings."""
-        if params is None:  # Only way to reset settings
-            self.settings = None
+        if params is None:  # Resets settings to default values
+            self.settings = flask.json.dumps(self.DEFAULT_SETTINGS)
+        elif params == {}:  # Special case for empty settings
+            self.settings = '{}'
         else:
             settings = self.to_dict()
             for k, v in params.items():
@@ -127,6 +136,11 @@ class UserSettings(db.Model):
         if commit:
             db.session.add(self)
             db.session.commit()
+
+    def param(self, key):
+        """Returns settings param specified by key."""
+        settings = self.to_dict()
+        return settings.get(key)
 
     def to_dict(self):
         """Returns settings dictionary."""
@@ -143,7 +157,7 @@ class UserSettings(db.Model):
         """Converts json string to dictionary."""
         try:
             return flask.json.loads(json_str)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError):
             return None
 
 
