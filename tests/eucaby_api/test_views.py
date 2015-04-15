@@ -1055,25 +1055,64 @@ class TestUserSettings(test_base.TestCase):
         self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
-        # # No token is passed, post settings
-        # resp = self.client.post('/settings')
-        # data = json.loads(resp.data)
-        # self.assertEqual(fixtures.INVALID_TOKEN, data)
-        # self.assertEqual(401, resp.status_code)
+        # No token is passed, post settings
+        resp = self.client.post('/settings')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Invalid parameters
+        data_list = [dict(param='wrong'),
+                     dict(param='extra', email_subscription='false')]
+        for data in data_list:
+            resp = self.client.post(
+                '/settings', data=data, headers=dict(
+                    Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            ec_invalid_resp = dict(
+                fields=dict(param='Unrecognized parameter'),
+                message='Invalid request parameters', code='invalid_request')
+            self.assertEqual(400, resp.status_code)
+            self.assertEqual(ec_invalid_resp, data)
 
     def test_get(self):
         """Tests get settings."""
+        objs = models.UserSettings.query.all()  # Created when user is created
+        self.assertEqual(1, len(objs))
         # No settings is initially created
         resp = self.client.get(
             '/settings', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        print data
-        objs = models.UserSettings.query.all()
-        self.assertEqual(1, len(objs))
+        ec_valid_resp = dict(data=dict(email_subscription=True))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(ec_valid_resp, data)
+
+        # Change setting
+        objs[0].update(dict(hello='world', email_subscription='false'))
+        resp = self.client.get(
+            '/settings', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        ec_valid_resp = dict(data=dict(email_subscription=False))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(ec_valid_resp, data)
 
     def test_post(self):
-        pass
+        """Tests updating settings."""
+        obj = models.UserSettings.query.first()  # Created when user is created
+        self.assertEqual(True, obj.param('email_subscription'))
+        # Change the setting param
+        values = [('false', False), ('true', True)]
+        for value in values:
+            resp = self.client.post(
+                '/settings', data=dict(email_subscription=value[0]),
+                headers=dict(
+                    Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            ec_valid_resp = dict(data=dict(email_subscription=value[1]))
+            self.assertEqual(200, resp.status_code)
+            self.assertEqual(ec_valid_resp, data)
 
 
 class TestUserActivity(test_base.TestCase):

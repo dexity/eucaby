@@ -230,15 +230,22 @@ class UserSettingsView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
 
     def get(self):  # pylint: disable=no-self-use
+        """Get user settings."""
         user = flask.request.user
         obj = models.UserSettings.get_or_create(user.id)
         return flask_restful.marshal(
             obj.to_dict(), api_fields.SETTINGS_FIELDS, envelope='data')
 
-    # def post(self):  # pylint: disable=no-self-use
-    #
-    #     # emailSubscription
-    #     pass
+    def post(self):  # pylint: disable=no-self-use
+        """Update user settings."""
+        args = reqparse.clean_args(api_args.SETTINGS_ARGS, strict=True)
+        if isinstance(args, flask.Response):
+            return args
+        user = flask.request.user
+        obj = models.UserSettings.get_or_create(user.id)
+        obj.update(dict(email_subscription=args['email_subscription']))
+        return flask_restful.marshal(
+            obj.to_dict(), api_fields.SETTINGS_FIELDS, envelope='data')
 
 
 class UserActivityView(flask_restful.Resource):

@@ -1,6 +1,7 @@
 """Request arguments for API."""
 
 import re
+from flask_restful import inputs
 from eucaby_api.utils import reqparse
 
 
@@ -55,6 +56,7 @@ def positive_int(v):
     return v
 
 
+
 REQUEST_LOCATION_ARGS = [
     reqparse.Argument(name='email', type=email, help=INVALID_EMAIL),
     reqparse.Argument(name='username', type=str, help=MISSING_EMAIL_USERNAME)
@@ -75,4 +77,8 @@ ACTIVITY_ARGS = [
                       help=INVALID_INT),
     reqparse.Argument(name='limit', type=positive_int, default=50,
                       help=INVALID_INT)
+]
+
+SETTINGS_ARGS = [
+    reqparse.Argument(name='email_subscription', type=inputs.boolean)
 ]
