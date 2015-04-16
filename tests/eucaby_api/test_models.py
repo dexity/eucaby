@@ -44,8 +44,9 @@ class TestModels(test_base.TestCase):
         token_dict['access_token'] = fixtures.UUID2
         # Refresh token exists
         token.update_token(token_dict)
+        token_obj = models.Token.query.first()  # Query form database
         test_utils.assert_object(
-            token, user_id=self.user.id, service=models.EUCABY,
+            token_obj, user_id=self.user.id, service=models.EUCABY,
             access_token=fixtures.UUID2, refresh_token=fixtures.UUID)
 
 
@@ -117,6 +118,7 @@ class TestUserSettings(test_base.TestCase):
         self.assertEqual(flask.json.dumps(models.UserSettings.DEFAULT_SETTINGS),
                          obj2.settings)
 
+    @unittest.skip('Skip restricting setting the settings field')
     def test_set_settings(self):
         """Tests set settings."""
         obj = models.UserSettings.get_or_create(self.user.id)

@@ -146,12 +146,6 @@ class UserSettings(db.Model):
         """Returns settings dictionary."""
         return self._json_loads(self.settings) or {}
 
-    def __setattr__(self, key, value):
-        """Override settings set attribute."""
-        if key == 'settings' and value is not None:  # Can throw exception
-            value = flask.json.loads(value) and value
-        self.__dict__[key] = value
-
     @classmethod
     def _json_loads(cls, json_str):
         """Converts json string to dictionary."""

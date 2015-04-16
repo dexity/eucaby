@@ -1089,7 +1089,7 @@ class TestUserSettings(test_base.TestCase):
         self.assertEqual(ec_valid_resp, data)
 
         # Change setting
-        objs[0].update(dict(hello='world', email_subscription='false'))
+        objs[0].update(dict(hello='world', email_subscription=False))
         resp = self.client.get(
             '/settings', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -1113,6 +1113,9 @@ class TestUserSettings(test_base.TestCase):
             ec_valid_resp = dict(data=dict(email_subscription=value[1]))
             self.assertEqual(200, resp.status_code)
             self.assertEqual(ec_valid_resp, data)
+            # Make sure that database has proper values
+            obj = models.UserSettings.query.first()
+            self.assertEqual(value[1], obj.param('email_subscription'))
 
 
 class TestUserActivity(test_base.TestCase):

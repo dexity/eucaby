@@ -47,6 +47,7 @@ def latlng(s):
 
 def positive_int(v):
     """Validates positive."""
+    # Note: There is a similar function in flask_rest/inputs.py:natural
     try:
         v = int(v)
     except ValueError:
@@ -54,7 +55,6 @@ def positive_int(v):
     if v < 0:
         raise ValidationError(INVALID_INT)
     return v
-
 
 
 REQUEST_LOCATION_ARGS = [
