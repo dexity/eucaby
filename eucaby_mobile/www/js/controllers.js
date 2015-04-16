@@ -249,10 +249,18 @@ angular.module('eucaby.controllers',
 
     $scope.emailSubscription = { checked: false };
 
+    var setEmailSubscription = function(data){
+        // Sets email subscription checkbox based from data
+        var emailSub = data.data.email_subscription;
+        if (emailSub === null){
+            emailSub = true; // Default is true
+        }
+        $scope.emailSubscription.checked = emailSub;
+    };
+
     $ionicLoading.show();
     Settings.get().then(function(data){
-        // XXX: Set checkbox
-        // $scope.emailSubscription = { checked: true };
+        setEmailSubscription(data);
     }, function(data){
         utils.alert('Failed to load settings');
     }).finally(function(){
@@ -261,10 +269,9 @@ angular.module('eucaby.controllers',
 
     $scope.emailSubscriptionChange = function() {
         $ionicLoading.show();
-        var data = {}; // XXX: Set params
-        Settings.post().then(function(data){
-            // XXX: Set checkbox
-            // $scope.emailSubscription.checked
+        var postData = {email_subscription: $scope.emailSubscription.checked};
+        Settings.post(postData).then(function(data){
+            setEmailSubscription(data);
         }, function(data){
             utils.alert('Failed to update settings');
         }).finally(function(){
