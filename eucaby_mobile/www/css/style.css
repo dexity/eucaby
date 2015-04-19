@@ -76,3 +76,11 @@ input {
 .profile {
     padding-top: 20px;
 }
+
+/* Ionic adjustments */
+
+.tab-title {
+	font-size: 13px;
+	margin-left: 5px;
+    text-transform: uppercase;
+}
