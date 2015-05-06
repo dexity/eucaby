@@ -8,8 +8,8 @@ angular.module('eucaby.controllers',
                ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
 
 .controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate', 'EucabyApi',
-    function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi) {
+    ['$scope', '$rootScope', '$state', '$interval', '$ionicSideMenuDelegate', 'EucabyApi', 'Background',
+    function($scope, $rootScope, $state, $interval, $ionicSideMenuDelegate, EucabyApi, Background) {
 
     $rootScope.currentZoom = 13;
 

@@ -1,9 +1,10 @@
 'use strict';
 
 angular.module('eucaby',
-    ['ionic', 'eucaby.controllers', 'eucaby.filters', 'eucaby.api'])
+    ['ionic', 'ngCordova', 'eucaby.controllers', 'eucaby.filters',
+     'eucaby.push', 'eucaby.api'])
 
-.run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
+.run(function($rootScope, $state, $ionicPlatform, $window, push, EucabyApi) {
 
     var storage = $window.localStorage;
     EucabyApi.init(storage);
@@ -27,6 +28,7 @@ angular.module('eucaby',
         $state.go('app.login');
     });
 
+    push.initNotifications();
 })
 
 .constant('$ionicLoadingConfig', {
