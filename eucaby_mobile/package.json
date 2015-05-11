@@ -16,7 +16,8 @@
   },
   "cordovaPlugins": [
     "org.apache.cordova.inappbrowser",
-    "org.apache.cordova.splashscreen"
+    "org.apache.cordova.splashscreen",
+    "cordova-plugin-inappbrowser"
   ],
   "cordovaPlatforms": [
     "ios",

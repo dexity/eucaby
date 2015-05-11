@@ -14,6 +14,7 @@ angular.module('eucaby',
             // org.apache.cordova.statusbar required
             window.StatusBar.styleDefault();
         }
+        push.initNotifications();
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
@@ -28,7 +29,7 @@ angular.module('eucaby',
         $state.go('app.login');
     });
 
-    push.initNotifications();
+
 })
 
 .constant('$ionicLoadingConfig', {
