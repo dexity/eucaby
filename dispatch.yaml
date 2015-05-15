@@ -2,5 +2,11 @@ dispatch:
 - url: '*/api/*'
   module: api
 
+- url: '*/push/*'
+  module: push
+
+- url: '*/mail/*'
+  module: mail
+
 - url: '*/*'
-  module: default
+  module: website

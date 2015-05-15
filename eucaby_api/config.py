@@ -2,6 +2,10 @@
 
 from eucaby_api import secret_keys
 
+LOCAL_APP_ID = 'local-dev'
+PRD_APP_ID = 'eucaby-prd'
+DEV_APP_ID = 'eucaby-dev'
+
 
 class Config(object):
 
@@ -38,21 +42,18 @@ class Testing(Config):
 class LocalDevelopment(Config):
 
     """Development configuration."""
-    DEBUG = True
-    APP_ID = 'local-dev'
+    APP_ID = LOCAL_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://dev:devpass@localhost/eucaby?'
         'charset=utf8&use_unicode=0')
-    # Flask-DebugToolbar settings
-    DEBUG_TB_PROFILER_ENABLED = True
-    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    DEBUG = True
 
 
 class RemoteProduction(Config):
 
     """Remote production configuration."""
     # Use Cloud SQL from local command line
-    APP_ID = 'eucaby-prd'
+    APP_ID = PRD_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://root:eucaby2pass@173.194.232.127/eucaby?'
         'charset=utf8&use_unicode=0')
@@ -62,7 +63,7 @@ class RemoteDevelopment(Config):
 
     """Remote development configuration."""
     # Use Cloud SQL from local command line
-    APP_ID = 'eucaby-dev'
+    APP_ID = DEV_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://root:devpass@173.194.84.204/eucaby?'
         'charset=utf8&use_unicode=0')
@@ -71,21 +72,21 @@ class RemoteDevelopment(Config):
 class Development(Config):
 
     """Development configuration."""
-    DEBUG = False
-    APP_ID = 'eucaby-dev'
+    APP_ID = DEV_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+gaerdbms:///eucaby?instance=eucaby-dev:eucaby2&'
         'charset=utf8&use_unicode=0')
     EUCABY_URL = 'http://eucaby-dev.appspot.com'
+    DEBUG = False
 
 
 class Production(Config):
 
     """Production configuration."""
-    DEBUG = False
-    APP_ID = 'eucaby-prd'
+    APP_ID = PRD_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+gaerdbms:///eucaby?instance=eucaby-prd:eucaby&'
         'charset=utf8&use_unicode=0')
     EUCABY_URL = 'http://eucaby-prd.appspot.com'
+    DEBUG = False
     CORS_ENABLED = False
