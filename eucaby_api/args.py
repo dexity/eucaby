@@ -24,7 +24,10 @@ OUTGOING = 'outgoing'
 INCOMING = 'incoming'
 REQUEST = 'request'
 NOTIFICATION = 'notification'
+ANDROID = 'android'
+IOS = 'ios'
 ACTIVITY_CHOICES = [OUTGOING, INCOMING, REQUEST, NOTIFICATION]
+PLATFORM_CHOICES = [ANDROID, IOS]
 
 
 class ValidationError(Exception):
@@ -81,4 +84,10 @@ ACTIVITY_ARGS = [
 
 SETTINGS_ARGS = [
     reqparse.Argument(name='email_subscription', type=inputs.boolean)
+]
+
+REGISTER_DEVICE = [
+    reqparse.Argument(name='device_key', type=str, required=True),
+    reqparse.Argument(name='platform', type=str, choices=PLATFORM_CHOICES,
+                      required=True)
 ]

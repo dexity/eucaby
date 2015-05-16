@@ -417,6 +417,22 @@ class NotificationDetailView(flask_restful.Resource):
             resp_dict, api_fields.DETAIL_NOTIFICATION_FIELDS, envelope='data')
 
 
+class RegisterDeviceView(flask_restful.Resource):
+
+    """Registers user device."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
+
+    def post(self):
+        args = reqparse.clean_args(api_args.REGISTER_DEVICE)
+        if isinstance(args, flask.Response):
+            return args
+
+
+        # XXX: Finish
+        # - Create device record
+        # -
+
+
 api.add_resource(OAuthToken, '/oauth/token')
 api.add_resource(FriendsView, '/friends')
 api.add_resource(RequestLocationView, '/location/request')
@@ -427,3 +443,4 @@ api.add_resource(NotificationDetailView,
 api.add_resource(UserProfileView, '/me')
 api.add_resource(UserSettingsView, '/settings')
 api.add_resource(UserActivityView, '/history')
+api.add_resource(RegisterDeviceView, '/device/register')

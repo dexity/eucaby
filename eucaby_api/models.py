@@ -5,6 +5,7 @@ import flask
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
+from eucaby_api import args as api_args
 from eucaby_api.utils import utils as api_utils
 from eucaby_api.utils import date as utils_date
 
@@ -18,6 +19,10 @@ SERVICE_TYPES = [
     (EUCABY, 'Eucaby'),
     (FACEBOOK, 'Facebook')
 ]
+PLATFORMS = [
+    (api_args.ANDROID, 'Android'),
+    (api_args.IOS, 'iOS')
+]
 
 
 class User(db.Model):
@@ -30,7 +35,7 @@ class User(db.Model):
         address is available."
         See: https://developers.facebook.com/docs/graph-api/reference/v2.2/user
     """
-
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
@@ -114,12 +119,13 @@ class UserSettings(db.Model):
     def get_or_create(cls, user_id, commit=False):
         """Returns user settings object or creates a new one."""
         obj = cls.query.filter_by(user_id=user_id).first()
-        if not obj:
-            obj = cls(user_id=user_id)
-            # By default, the new object doesn't persist data
-            if commit:
-                db.session.add(obj)
-                db.session.commit()
+        if obj:
+            return obj
+        obj = cls(user_id=user_id)
+        # By default, the new object doesn't persist data
+        if commit:
+            db.session.add(obj)
+            db.session.commit()
         return obj
 
     def update(self, params, commit=True):
@@ -158,12 +164,11 @@ class UserSettings(db.Model):
 class Token(db.Model):
 
     """Bearer token for Facebook or Eucaby."""
-
+    __tablename__ = 'token'
     id = db.Column(db.Integer, primary_key=True)
     service = db.Column(choice.ChoiceType(SERVICE_TYPES), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User')
-
     access_token = db.Column(db.String(255), unique=True, nullable=False)
     refresh_token = db.Column(db.String(255), unique=True)
     created_date = db.Column(
@@ -215,3 +220,49 @@ class Token(db.Model):
         if self.scope:
             return self.scope.split()
         return []
+
+
+user_device = db.Table('user_device',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('device_id', db.Integer, db.ForeignKey('device.id'))
+)
+
+class Device(db.Model):
+
+    """Device model."""
+    __tablename__ = 'device'
+    __table_args__ = (db.UniqueConstraint(
+        'device_key', 'platform', name='_device_key__platform'),)
+    id = db.Column(db.Integer, primary_key=True)
+    device_key = db.Column(db.String(255), nullable=False)
+    platform = db.Column(choice.ChoiceType(PLATFORMS), nullable=False)
+    users = db.relationship('User', secondary=user_device,
+                            backref=db.backref('devices', lazy='dynamic'))
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    created_date = db.Column(
+        db.DateTime, nullable=False, default=datetime.datetime.now)
+    updated_date = db.Column(
+        db.DateTime, nullable=False, default=datetime.datetime.now,
+        onupdate=datetime.datetime.now)
+
+    @classmethod
+    def get_or_create(cls, user, device_key, platform):
+        """Returns device object for user or creates a new one."""
+        obj = cls.query.join(user_device).filter(User.id == user.id).first()
+        if obj:
+            return obj
+        obj = cls(device_key=device_key, platform=platform)
+        db.session.add(obj)
+        db.session.commit()
+        obj.users.append(user)
+        return obj
+
+    def get_by_user(self, user):
+        """Device objects by user."""
+        pass
+
+    def deactivate(self):
+        """Deactivates the device."""
+        self.active = False
+        db.session.add(self)
+        db.session.commit()

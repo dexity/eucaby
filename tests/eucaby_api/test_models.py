@@ -124,20 +124,15 @@ class TestUserSettings(test_base.TestCase):
         obj = models.UserSettings.get_or_create(self.user.id)
         # Empty string is not a valid json format: obj.settings = ''
         self.assertRaises(ValueError, setattr, obj, 'settings', '')
-        # Valid json format
-        obj.settings = '{"hello": "world"}'
-        # None is allowed
-        obj.settings = None
-        # Empty list if also allowed
-        obj.setting = '[]'
+        obj.settings = '{"hello": "world"}'  # Valid json format
+        obj.settings = None  # None is allowed
+        obj.setting = '[]'  # Empty list if also allowed
 
     def test_param(self):
         """Tests param method."""
         obj = models.UserSettings.get_or_create(self.user.id, commit=True)
-        # No parameter set
-        self.assertEqual(None, obj.param('hello'))
-        # Set parameter
-        obj.update({'hello': 'world'}, commit=True)
+        self.assertEqual(None, obj.param('hello'))  # No parameter set
+        obj.update({'hello': 'world'}, commit=True)  # Set parameter
         obj2 = models.UserSettings.query.first()
         self.assertEqual('world', obj2.param('hello'))
 
@@ -146,6 +141,41 @@ class TestUserSettings(test_base.TestCase):
         obj.update(None)
         obj2 = models.UserSettings.query.first()
         self.assertEqual(None, obj2.param('hello'))
+
+
+class TestDevice(test_base.TestCase):
+
+    def setUp(self):
+        super(TestDevice, self).setUp()
+        self.user = models.User.create(
+            username='2345', first_name='Test', last_name=u'Юзер',
+            email='test@example.com')
+        self.user2 = models.User.create(
+            username='1234', first_name='Test2', last_name=u'Юзер2',
+            email='test2@example.com')
+
+    def test_create(self):
+        """Create device is indempotent."""
+        for i in range(2):
+            obj = models.Device.get_or_create(self.user, 'somedevicekey', 'android')
+            objs = models.Device.query.all()
+            self.assertEqual(1, len(objs))
+            self.assertEqual(objs[0], obj)
+            test_utils.assert_object(
+                obj, device_key='somedevicekey', platform='android')
+            self.assertEqual(1, len(obj.users))
+
+    def test_many_users(self):
+        """Two and more users can be associated with the same device."""
+        obj = models.Device.get_or_create(self.user, 'somedevicekey', 'android')
+        obj2 = models.Device.get_or_create(
+            self.user2, 'somedevicekey', 'android')
+        objs = models.Device.query.all()
+        # self.assertEqual(1, len(objs))
+        # self.assertEqual(obj, obj2)
+        # Should create two device objects
+        print obj.users
+
 
 
 if __name__ == '__main__':
