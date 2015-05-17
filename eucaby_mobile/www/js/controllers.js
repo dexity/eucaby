@@ -234,7 +234,7 @@ angular.module('eucaby.controllers',
     User.profile().then(function(data){
         $scope.profile = data.data;
         $scope.profile.date_joined = dateUtils.ts2hd(
-            Date.parse(data.data.date_joined), true)
+            Date.parse(data.data.date_joined), true);
     }, function(data){
         utils.alert('Failed to load user profile');
         console.error(data);

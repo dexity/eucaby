@@ -12,7 +12,7 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
         };
 
         $cordovaPush.register(config).then(function(result) {
-            console.debug(result);
+            console.debug('$cordovaPush.register: ' + result);
             // Store registration id in localStorage
             // Send the registration id to the server
         }, function(err) {
@@ -68,7 +68,7 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
             alert(deviceToken);
             console.log("deviceToken: " + deviceToken);
         }, function(err) {
-            alert("Registration error: " + err)
+            alert("Registration error: " + err);
         });
 
         $rootScope.$on('$cordovaPush:notificationReceived', function(event, notification) {
@@ -77,8 +77,8 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
           }
 
           if (notification.sound) {
-            var snd = new Media(event.sound);
-            snd.play();
+//            var snd = new Media(event.sound);
+//            snd.play();
           }
 
           if (notification.badge) {
@@ -102,12 +102,11 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
 
     return {
         initNotifications: function(){
-            console.log(device);
             if (device.platform === 'iOS') {
                 initIOS();
             } else if (device.platform === 'Android') {
                 initAndroid();
             }
       }
-  }
+  };
 }]);

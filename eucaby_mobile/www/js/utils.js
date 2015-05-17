@@ -137,7 +137,7 @@ angular.module('eucaby.utils', [])
             // Returns true when years for ts0 and ts1 are different
             var y0 = new Date(ts0).getFullYear();
             var y1 = new Date(ts1).getFullYear();
-            return y0 != y1
+            return y0 != y1;
         },
         ts2hd: function(ts, show_year){
             // Converts timestamp to date string
@@ -182,7 +182,7 @@ angular.module('eucaby.utils', [])
             if (full){
                 ht  += ' ago';
             }
-            return ht
+            return ht;
         }
-    }
+    };
  });

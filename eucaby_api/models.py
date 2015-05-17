@@ -222,7 +222,8 @@ class Token(db.Model):
         return []
 
 
-user_device = db.Table('user_device',
+user_device = db.Table(
+    'user_device',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
     db.Column('device_id', db.Integer, db.ForeignKey('device.id'))
 )
@@ -248,8 +249,11 @@ class Device(db.Model):
     @classmethod
     def get_or_create(cls, user, device_key, platform):
         """Returns device object for user or creates a new one."""
-        obj = cls.query.join(user_device).filter(User.id == user.id).first()
+        obj = cls.query.filter_by(
+            device_key=device_key, platform=platform).first()
         if obj:
+            if user not in obj.users:
+                obj.users.append(user)
             return obj
         obj = cls(device_key=device_key, platform=platform)
         db.session.add(obj)
@@ -257,9 +261,12 @@ class Device(db.Model):
         obj.users.append(user)
         return obj
 
-    def get_by_user(self, user):
-        """Device objects by user."""
-        pass
+    @classmethod
+    def get_by_user(cls, user_id):
+        """List of active device objects by user."""
+        # return cls.query.join(user_device).filter(User.id == user_id).all()
+        return cls.query.filter(
+            cls.users.any(id=user_id)).filter_by(active=True).all()
 
     def deactivate(self):
         """Deactivates the device."""

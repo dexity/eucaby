@@ -156,8 +156,9 @@ class TestDevice(test_base.TestCase):
 
     def test_create(self):
         """Create device is indempotent."""
-        for i in range(2):
-            obj = models.Device.get_or_create(self.user, 'somedevicekey', 'android')
+        for i in range(2):  # pylint: disable=unused-variable
+            obj = models.Device.get_or_create(
+                self.user, 'somedevicekey', 'android')
             objs = models.Device.query.all()
             self.assertEqual(1, len(objs))
             self.assertEqual(objs[0], obj)
@@ -171,11 +172,25 @@ class TestDevice(test_base.TestCase):
         obj2 = models.Device.get_or_create(
             self.user2, 'somedevicekey', 'android')
         objs = models.Device.query.all()
-        # self.assertEqual(1, len(objs))
-        # self.assertEqual(obj, obj2)
-        # Should create two device objects
-        print obj.users
+        self.assertEqual(1, len(objs))
+        self.assertEqual(obj, obj2)
+        # Should have two users
+        self.assertEqual([self.user, self.user2], obj.users)
 
+    def test_get_by_user(self):
+        """List of devices by user."""
+        obj1 = models.Device.get_or_create(
+            self.user, 'somedevicekey', 'android')
+        obj2 = models.Device.get_or_create(
+            self.user, 'olddevicekey', 'ios')
+        models.Device.get_or_create(
+            self.user2, 'newdevicekey', 'android')
+        objs = models.Device.get_by_user(self.user.id)
+        self.assertEqual([obj1, obj2], objs)
+        # Deactivate one device
+        obj2.deactivate()
+        self.assertFalse(obj2.active)
+        self.assertEqual([obj1], models.Device.get_by_user(self.user.id))
 
 
 if __name__ == '__main__':
