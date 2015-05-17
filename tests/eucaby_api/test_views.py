@@ -1424,5 +1424,71 @@ class TestUserActivity(test_base.TestCase):
         self.assertEqual(expected_types, [x['type'] for x in data['data']])
 
 
+class TestRegisterDeviceView(test_base.TestCase):
+
+    """Tests device registration."""
+    def setUp(self):
+        super(TestRegisterDeviceView, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+
+    def tearDown(self):
+        self.testbed.deactivate()
+
+    def test_general_errors(self):
+        """Tests register device general errors."""
+        # No token is passed
+        resp = self.client.post('/device/register')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Invalid method
+        test_utils.verify_invalid_methods(
+            self.client, ['get'], '/device/register')
+
+        # No parameters
+        resp = self.client.post(
+            '/device/register',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(400, resp.status_code)
+        ec_missing_params = dict(
+            fields=dict(device_key=args.MISSING_PARAM.format('device_key'),
+                        platform=args.INVALID_PLATFORM),
+            message='Invalid request parameters', code='invalid_request')
+        self.assertEqual(ec_missing_params, data)
+
+        # Invalid platform type
+        resp = self.client.post(
+            '/device/register',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)),
+            data=dict(device_key='someregid', platform='windows'))
+        data = json.loads(resp.data)
+        self.assertEqual(400, resp.status_code)
+        ec_invalid_platform = dict(
+            fields=dict(platform=args.INVALID_PLATFORM),
+            message='Invalid request parameters', code='invalid_request')
+        self.assertEqual(ec_invalid_platform, data)
+
+    def test_register_device(self):
+        """Tests device registration."""
+        resp = self.client.post(
+            '/device/register',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)),
+            data=dict(device_key='someregid', platform='android'))
+        data = json.loads(resp.data)
+        self.assertEqual(200, resp.status_code)
+        ec_success_resp = dict(
+            active=True, device_key='someregid', platform='android',
+            created_date=data['created_date'])
+        self.assertEqual(ec_success_resp, data)
+
+
 if __name__ == '__main__':
     unittest.main()

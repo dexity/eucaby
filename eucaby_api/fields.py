@@ -77,3 +77,9 @@ REQUEST_LIST_FIELDS = dict(
 NOTIFICATION_LIST_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
         NOTIFICATION_FIELDS)))
+
+DEVICE_FIELDS = dict(
+    platform=rest_fields.String,
+    device_key=rest_fields.String,
+    created_date=utils_fields.IsoDateTime(),
+    active=rest_fields.Boolean)

@@ -11,14 +11,16 @@ LATLNG_REGEX_PATTERN = '^{p},{p}$'.format(p=POINT_REGEX_PATTERN)
 EMAIL_REGEX = re.compile(EMAIL_REGEX_PATTERN, flags=re.IGNORECASE)
 LATLNG_REGEX = re.compile(LATLNG_REGEX_PATTERN)
 
+MISSING_PARAM = 'Missing {} parameter'
 DEFAULT_ERROR = 'Something went wrong'
 INVALID_EMAIL = 'Invalid email'
 INVALID_LATLNG = 'Missing or invalid latlng parameter'
 MISSING_EMAIL_USERNAME = 'Missing email or username parameters'
 MISSING_EMAIL_USERNAME_REQ = (
     'Missing token, email or username parameters')
-INVALID_ACTIVITY_TYPE = ('Activity type should be either outgoing, incoming, '
+INVALID_ACTIVITY_TYPE = ('Activity type can be either outgoing, incoming, '
                          'request or notification')
+INVALID_PLATFORM = 'Platform can be either android or ios'
 INVALID_INT = 'Integer type is expected'
 OUTGOING = 'outgoing'
 INCOMING = 'incoming'
@@ -87,7 +89,8 @@ SETTINGS_ARGS = [
 ]
 
 REGISTER_DEVICE = [
-    reqparse.Argument(name='device_key', type=str, required=True),
+    reqparse.Argument(name='device_key', type=str, required=True,
+                      help=MISSING_PARAM.format('device_key')),
     reqparse.Argument(name='platform', type=str, choices=PLATFORM_CHOICES,
-                      required=True)
+                      required=True, help=INVALID_PLATFORM)
 ]

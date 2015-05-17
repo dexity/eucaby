@@ -1,6 +1,7 @@
 import json
 
 def assert_object(obj, **kwargs):
+    """Validates object."""
     for k, v in kwargs.items():
         value = getattr(obj, k)
         try:

@@ -248,7 +248,7 @@ class Device(db.Model):
 
     @classmethod
     def get_or_create(cls, user, device_key, platform):
-        """Returns device object for user or creates a new one."""
+        """Registers device for user and creates a new one if needed."""
         obj = cls.query.filter_by(
             device_key=device_key, platform=platform).first()
         if obj:

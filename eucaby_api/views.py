@@ -422,15 +422,15 @@ class RegisterDeviceView(flask_restful.Resource):
     """Registers user device."""
     method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
 
-    def post(self):
+    def post(self):  # pylint: disable=no-self-use
         args = reqparse.clean_args(api_args.REGISTER_DEVICE)
         if isinstance(args, flask.Response):
             return args
 
-
-        # XXX: Finish
-        # - Create device record
-        # -
+        user = flask.request.user
+        obj = models.Device.get_or_create(
+            user, args['device_key'], args['platform'])
+        return flask_restful.marshal(obj, api_fields.DEVICE_FIELDS)
 
 
 api.add_resource(OAuthToken, '/oauth/token')
