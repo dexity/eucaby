@@ -2,7 +2,10 @@ dispatch:
 - url: '*/api/*'
   module: api
 
-- url: '*/push/*'
+- url: '*/push/cleanup'
+  module: cleanup
+
+- url: '*/push'
   module: push
 
 - url: '*/mail/*'

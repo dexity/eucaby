@@ -1,11 +1,11 @@
-module: push
+module: cleanup
 version: 1
 runtime: python27
 api_version: 1
 threadsafe: true
 
 handlers:
-- url: /tasks/push
+- url: /tasks/push/cleanup
   script: eucaby_api.wsgi.app
   login: admin
 

@@ -1,4 +1,6 @@
 import json
+import urlparse
+
 
 def assert_object(obj, **kwargs):
     """Validates object."""
@@ -40,3 +42,12 @@ def verify_invalid_methods(client, invalid_methods, endpoint):
         data = json.loads(resp.data)
         assert ec_invalid_method == data
         assert 405 == resp.status_code
+
+
+def execute_queue_task(client, task):
+    """Executes push queue task."""
+    data = urlparse.parse_qs(task.payload)
+    return getattr(client, task.method.lower())(
+        task.url, data=data)
+
+

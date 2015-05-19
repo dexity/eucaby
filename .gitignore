@@ -23,6 +23,7 @@ nosetests.xml
 .project
 .idea
 static
+private
 eucaby/local*
 eucaby_rt/node_modules
 eucaby_mobile/platforms

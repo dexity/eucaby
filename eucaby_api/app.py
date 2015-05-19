@@ -9,11 +9,11 @@ from eucaby_api import tasks
 
 def create_app():
     """Creates Flask app."""
-    fapp = flask.Flask(__name__)
-    fapp.register_blueprint(views.api_app)
-    fapp.register_blueprint(tasks.tasks_app, url_prefix='/tasks')
-    auth.oauth.init_app(fapp)
-    auth.eucaby_oauth.init_app(fapp)
-    models.db.init_app(fapp)
-    fapp.db = models.db
-    return fapp
+    _app = flask.Flask(__name__)
+    _app.register_blueprint(views.api_app)
+    _app.register_blueprint(tasks.tasks_app, url_prefix='/tasks')
+    auth.oauth.init_app(_app)
+    auth.eucaby_oauth.init_app(_app)
+    models.db.init_app(_app)
+    _app.db = models.db
+    return _app

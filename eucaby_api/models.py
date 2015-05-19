@@ -262,11 +262,13 @@ class Device(db.Model):
         return obj
 
     @classmethod
-    def get_by_user(cls, user_id):
+    def get_by_user(cls, username, platform=None):
         """List of active device objects by user."""
-        # return cls.query.join(user_device).filter(User.id == user_id).all()
+        kwargs = dict(active=True)
+        if platform in api_args.PLATFORM_CHOICES:
+            kwargs['platform'] = platform
         return cls.query.filter(
-            cls.users.any(id=user_id)).filter_by(active=True).all()
+            cls.users.any(username=username)).filter_by(**kwargs).all()
 
     def deactivate(self):
         """Deactivates the device."""

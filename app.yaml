@@ -7,12 +7,15 @@ threadsafe: true
 handlers:
 - url: /media
   static_dir: eucaby/media
+
 - url: /static
   static_dir: eucaby/static
   expiration: 0
+
 - url: /tasks/.*
   script: eucaby.wsgi.application
   login: admin
+
 - url: /.*
   script: eucaby.wsgi.application
 

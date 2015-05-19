@@ -6,6 +6,8 @@ import flask_restful
 import itertools
 import logging
 
+from google.appengine.api import taskqueue
+
 from eucaby.utils import mail as utils_mail
 from eucaby_api import auth
 from eucaby_api import fields as api_fields
@@ -15,7 +17,6 @@ from eucaby_api import models
 from eucaby_api import ndb_models
 from eucaby_api.utils import reqparse
 from eucaby_api.utils import utils as api_utils
-
 
 api_app = flask.Blueprint('api', __name__)
 api = eucaby_api.Api(api_app, catch_all_404s=True)
@@ -66,9 +67,17 @@ class RequestLocationView(flask_restful.Resource):
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
+
+        # # Send push notification only for different user
+        # if recipient_username != flask.request.user.username:
+        #     taskqueue.add(
+        #         queue_name='push', url=flask.url_for('tasks.push'))
+
         if recipient_email:
             # Send email copy to sender?
             # Send email notification to recipient
+            # XXX: Create notification task
+            # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             body = flask.render_template(
@@ -141,6 +150,8 @@ class NotifyLocationView(flask_restful.Resource):
         if recipient_email:
             # Send email copy to sender?
             # Send email notification to recipient
+            # XXX: Create notification task
+            # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             body = flask.render_template(
@@ -433,14 +444,19 @@ class RegisterDeviceView(flask_restful.Resource):
         return flask_restful.marshal(obj, api_fields.DEVICE_FIELDS)
 
 
-api.add_resource(OAuthToken, '/oauth/token')
-api.add_resource(FriendsView, '/friends')
-api.add_resource(RequestLocationView, '/location/request')
-api.add_resource(RequestDetailView, '/location/request/<int:req_id>')
-api.add_resource(NotifyLocationView, '/location/notification')
+api.add_resource(OAuthToken, '/oauth/token', endpoint='oauth_token')
+api.add_resource(FriendsView, '/friends', endpoint='friends')
+api.add_resource(RequestLocationView, '/location/request',
+                 endpoint='request_location')
+api.add_resource(RequestDetailView, '/location/request/<int:req_id>',
+                 endpoint='request')
+api.add_resource(NotifyLocationView, '/location/notification',
+                 endpoint='notify_location')
 api.add_resource(NotificationDetailView,
-                 '/location/notification/<int:notif_id>')
-api.add_resource(UserProfileView, '/me')
-api.add_resource(UserSettingsView, '/settings')
-api.add_resource(UserActivityView, '/history')
-api.add_resource(RegisterDeviceView, '/device/register')
+                 '/location/notification/<int:notif_id>',
+                 endpoint='notification')
+api.add_resource(UserProfileView, '/me', endpoint='profile')
+api.add_resource(UserSettingsView, '/settings', endpoint='settings')
+api.add_resource(UserActivityView, '/history', endpoint='history')
+api.add_resource(RegisterDeviceView, '/device/register',
+                 endpoint='register_device')

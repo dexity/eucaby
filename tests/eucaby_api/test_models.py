@@ -185,12 +185,15 @@ class TestDevice(test_base.TestCase):
             self.user, 'olddevicekey', 'ios')
         models.Device.get_or_create(
             self.user2, 'newdevicekey', 'android')
-        objs = models.Device.get_by_user(self.user.id)
+        objs = models.Device.get_by_user(self.user.username)
         self.assertEqual([obj1, obj2], objs)
+        # Filter by platform
+        objs = models.Device.get_by_user(self.user.username, platform='android')
+        self.assertEqual([obj1], objs)
         # Deactivate one device
         obj2.deactivate()
         self.assertFalse(obj2.active)
-        self.assertEqual([obj1], models.Device.get_by_user(self.user.id))
+        self.assertEqual([obj1], models.Device.get_by_user(self.user.username))
 
 
 if __name__ == '__main__':
