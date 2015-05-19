@@ -36,6 +36,24 @@ class GeneralTest(test_base.TestCase):
         self.assertEqual(404, resp.status_code)
 
 
+class TestIndexView(test_base.TestCase):
+
+    def setUp(self):
+        super(TestIndexView, self).setUp()
+        self.client = self.app.test_client()
+
+    def test_index(self):
+        """Test index."""
+        # Invalid methods
+        test_utils.verify_invalid_methods(
+            self.client, ['post'], '/')
+
+        resp = self.client.get('/')
+        self.assertEqual(200, resp.status_code)
+        data = json.loads(resp.data)
+        self.assertIn('I am here', data['data']['message'])
+
+
 class TestOAuthToken(test_base.TestCase):
 
     def setUp(self):

@@ -26,6 +26,15 @@ USER_NOT_FOUND = 'User not found'
 MAP_BASE = 'https://maps.google.com/maps'
 
 
+class IndexView(flask_restful.Resource):
+
+    """Index view."""
+    def get(self):
+        data = dict(message='Yo, dude. I am here :).')
+        return flask_restful.marshal(
+            data, api_fields.INDEX_FIELDS, envelope='data')
+
+
 class OAuthToken(flask_restful.Resource):
 
     method_decorators = [auth.eucaby_oauth.token_handler]
@@ -444,6 +453,7 @@ class RegisterDeviceView(flask_restful.Resource):
         return flask_restful.marshal(obj, api_fields.DEVICE_FIELDS)
 
 
+api.add_resource(IndexView, '/', endpoint='index')
 api.add_resource(OAuthToken, '/oauth/token', endpoint='oauth_token')
 api.add_resource(FriendsView, '/friends', endpoint='friends')
 api.add_resource(RequestLocationView, '/location/request',

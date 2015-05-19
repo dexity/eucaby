@@ -6,6 +6,8 @@ from eucaby_api.utils import fields as utils_fields
 REQUEST = 'request'
 NOTIFICATION = 'notification'
 
+INDEX_FIELDS = dict(message=rest_fields.String)
+
 FRIENDS_FIELDS = dict(
     data=rest_fields.List(rest_fields.Nested(
         dict(username=rest_fields.String(attribute='id'),
