@@ -1,10 +1,10 @@
 'use strict';
 
-angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
+angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
 .factory('push',
-    ['$cordovaPush', '$rootScope',
-     function($cordovaPush, $rootScope) {
+    ['$cordovaPush', '$rootScope', '$state', '$ionicPopup',
+     function($cordovaPush, $rootScope, $state, $ionicPopup) {
 
     var initAndroid = function() {
         var config = {
@@ -22,8 +22,6 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
 
         $rootScope.$on('$cordovaPush:notificationReceived', function(event, notification) {
 
-          console.debug(arguments);
-
           switch(notification.event) {
 
             case 'registered':
@@ -33,9 +31,7 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
               break;
 
             case 'message':
-              // this is the actual push notification. its format depends on the data model from the push server
-              console.debug('message = ' + notification.message +
-                            ' msgCount = ' + notification.msgcnt);
+                $rootScope.checkMessages(true);
               break;
 
             case 'error':
@@ -65,29 +61,14 @@ angular.module('eucaby.push', ['eucaby.api', 'eucaby.utils'])
             alert: true
         };
         $cordovaPush.register(config).then(function(deviceToken) {
-            alert(deviceToken);
             console.log("deviceToken: " + deviceToken);
         }, function(err) {
             alert("Registration error: " + err);
         });
 
-        $rootScope.$on('$cordovaPush:notificationReceived', function(event, notification) {
-          if (notification.alert) {
-            navigator.notification.alert(notification.alert);
-          }
-
-          if (notification.sound) {
-//            var snd = new Media(event.sound);
-//            snd.play();
-          }
-
-          if (notification.badge) {
-            $cordovaPush.setBadgeNumber(notification.badge).then(function(result) {
-              // Success!
-            }, function(err) {
-              // An error occurred. Show a message to the user
-            });
-          }
+        $rootScope.$on('$cordovaPush:notificationReceived',
+                       function(event, notification) {
+            $rootScope.checkMessages(true);
         });
 
         /*

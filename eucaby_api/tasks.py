@@ -2,7 +2,9 @@
 import apns
 import flask
 from flask import views
+import json
 import os
+import urllib2
 
 from eucaby_api import args as api_args
 from eucaby_api import models
@@ -46,28 +48,26 @@ class PushNotificationsTask(views.MethodView):
                 ios_tokens.append(device.device_key)
 
         # GCM
-        # !!! Prototype
-
-        import urllib2
-        import json
-        API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
-        headers = {
-            'Authorization': 'key=' + API_KEY,
-            'Content-Type': 'application/json'
-        }
-        url = 'https://android.googleapis.com/gcm/send'
-        data = {
-            'registration_ids': android_reg_ids,
-            'data': {
-                'title': 'Eucaby',
-                'message': msg
+        if android_reg_ids:
+            # !!! Prototype
+            API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
+            headers = {
+                'Authorization': 'key=' + API_KEY,
+                'Content-Type': 'application/json'
             }
-        }
-        data = json.dumps(data)
+            url = 'https://android.googleapis.com/gcm/send'
+            data = {
+                'registration_ids': android_reg_ids,
+                'data': {
+                    'title': 'Eucaby',
+                    'message': msg
+                }
+            }
+            data = json.dumps(data)
 
-        req = urllib2.Request(url, data, headers)
-        resp = urllib2.urlopen(req)
-        print resp.read()
+            req = urllib2.Request(url, data, headers)
+            resp = urllib2.urlopen(req)
+            print resp.read()
 
         # APNs
         # XXX: Handle properly multiple messages

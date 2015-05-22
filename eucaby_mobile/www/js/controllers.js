@@ -11,7 +11,19 @@ angular.module('eucaby.controllers',
     ['$scope', '$rootScope', '$state', '$interval', '$ionicSideMenuDelegate', 'EucabyApi',
     function($scope, $rootScope, $state, $interval, $ionicSideMenuDelegate, EucabyApi) {
 
+    var storage = window.localStorage;
+
     $rootScope.currentZoom = 13;
+    $rootScope.checkMessages = function(status){
+        // Checks if new incoming messages have arrived
+        var param = 'incoming_messages';
+        if (status !== undefined){
+            $rootScope.hasMessages = status;
+            storage.setItem(param, status);
+        }
+        return storage.getItem(param) === 'true';
+    };
+    $rootScope.hasMessages = $rootScope.checkMessages();
 
     $scope.showSideMenu = function(){
         return $scope.showHeader();
@@ -25,8 +37,13 @@ angular.module('eucaby.controllers',
         return $state.is('app.tab.map');
     };
 
+    var cleanupStorage = function(storage_){
+        storage_.removeItem('incoming_messages');
+    };
+
     $scope.logout = function () {
         EucabyApi.logout();
+        cleanupStorage(storage);
         $state.go('app.login');
     };
 }])
