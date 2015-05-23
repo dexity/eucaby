@@ -7,6 +7,10 @@
   </ion-header-bar>
   <ion-content ng-controller="RequestCtrl">
     <form ng-submit="sendRequest()" name="requestForm" novalidate>
+        <label class="item item-input message">
+          <input type="text" placeholder="Optional message" name="message"
+                 ng-model="form.message">
+        </label>
         <div class="item item-divider">Enter email address</div>
         <label class="item item-input">
           <input type="email" placeholder="Email" name="email"

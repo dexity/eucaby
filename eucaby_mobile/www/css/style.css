@@ -84,10 +84,37 @@ input {
     opacity: 1;
 }
 
+.message {
+    background-color: #fcfad6;
+}
+
+.item-description {
+    opacity: 0.7;
+    /*font-size: 14px;*/
+}
+
+.detail-time {
+    float: right;
+    opacity: 0.7;
+}
+
+.detail-message {
+    font-size: 17px;
+}
+
+hr.separator {
+    border-top: 1px #ddd dashed;
+    border-bottom: 0px;
+}
+
 /* Ionic adjustments */
 
 .tab-title {
 	font-size: 13px;
 	margin-left: 5px;
     text-transform: uppercase;
+}
+
+.item-icon-right .icon {
+    right: 0px;
 }

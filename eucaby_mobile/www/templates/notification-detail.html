@@ -1,32 +1,42 @@
-<ion-view title="Notification">
+<ion-view title="Location">
   <ion-content>
     <div id="locmap"></div>
-    <div class="card">
+    <div class="card" ng-cloak>
         <div class="item item-text-wrap">
             <i class="ion {{ icon }} icon-detail"></i>
+            <div class="detail-time">{{ item.created_date | localize }}</div>
             <div ng-switch on="isOutgoing">
                 <div ng-switch-when="true">
-                    Notification sent to <b>{{ item.recipient | userName }}</b><br>
+                    Location sent to <br>
+                    <b>{{ item.recipient | userName }}</b><br>
                 </div>
                 <div ng-switch-when="false">
-                    Notification received from <b>{{ item.sender | userName }}</b><br>
+                    Location received from <br>
+                    <b>{{ item.sender | userName }}</b><br>
                 </div>
             </div>
-            {{ item.created_date | localize }}
+        </div>
+        <div class="item item-text-wrap" ng-show="item.message">
+            {{ item.message }}
         </div>
     </div>
     <div ng-show="item.request">
-        <div class="card">
+        <div class="card" ng-cloak>
             <div class="item item-text-wrap">
+                <div class="detail-time">{{ item.created_date | localize }}</div>
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
-                        Request received from <b>{{ item.request.sender | userName }}</b><br>
+                        Request received from <br>
+                        <b>{{ item.request.sender | userName }}</b><br>
                     </div>
                     <div ng-switch-when="false">
-                        Request sent to <b>{{ item.request.recipient | userName }}</b><br>
+                        Request sent to <br>
+                        <b>{{ item.request.recipient | userName }}</b><br>
                     </div>
                 </div>
-                {{ item.request.created_date | localize }}
+            </div>
+            <div class="item item-text-wrap" ng-show="item.request.message">
+                {{ item.request.message }}
             </div>
         </div>
     </div>

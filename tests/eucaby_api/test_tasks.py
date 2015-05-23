@@ -51,27 +51,27 @@ class TestPushNotifications(test_base.TestCase):
         self.assertEqual(404, resp.status_code)
         self.assertEqual('User device not found', resp.data)
 
-    def test_push_notifications(self):
-        """Tests push notifications to Android and iOS devices."""
-        # Create android
-        # Emulator
-        # device_key = 'APA91bG3cjvIJNeVVL6iBgdFoMh_oN7oM6UsSE8mMrGgKs_VtQA-Y033YN3I8UIjrgqnaetF7faQTkHeKAg11thX4fnz3ZTjQPBUjlD8SskmqltveElYUdOKhYXNe5NH5FIBRTtk49o2ftbhNxe93sQptAL1Wy85nA'
-        # Real device
-        device_key = 'APA91bF8dt3RbUriN4zZdI7qMHPCCndJH4_tyiYvsmIBR1FAP6Rp1Q5zEOtOAYvsq9e0epYgBwHsM8z3-LJLiETVKaSpclam6gu1TUFESxaUKI3qRnUCa1K_zLsV0E-vRNz9eaoWdvfSHNH-zcWOGmLs2VkdacoYWQ'
-        dev = models.Device.get_or_create(
-            self.user, device_key=device_key, platform='android')
-
-        # Create iOS
-        device_key = 'baa0b38b8324d14c38041eae955d0a3e258297df519fab9a22bb4d2655d12197'
-        dev2 = models.Device.get_or_create(
-            self.user, device_key=device_key, platform='ios')
-
-        taskqueue.add(
-            queue_name='push', url='/tasks/push',
-            params=dict(recipient_username=self.user.username))
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        self.assertEqual(1, len(tasks))
-        test_utils.execute_queue_task(self.client, tasks[0])
+    # def test_push_notifications(self):
+    #     """Tests push notifications to Android and iOS devices."""
+    #     # Create android
+    #     # Emulator
+    #     # device_key = 'APA91bG3cjvIJNeVVL6iBgdFoMh_oN7oM6UsSE8mMrGgKs_VtQA-Y033YN3I8UIjrgqnaetF7faQTkHeKAg11thX4fnz3ZTjQPBUjlD8SskmqltveElYUdOKhYXNe5NH5FIBRTtk49o2ftbhNxe93sQptAL1Wy85nA'
+    #     # Real device
+    #     device_key = 'APA91bF8dt3RbUriN4zZdI7qMHPCCndJH4_tyiYvsmIBR1FAP6Rp1Q5zEOtOAYvsq9e0epYgBwHsM8z3-LJLiETVKaSpclam6gu1TUFESxaUKI3qRnUCa1K_zLsV0E-vRNz9eaoWdvfSHNH-zcWOGmLs2VkdacoYWQ'
+    #     dev = models.Device.get_or_create(
+    #         self.user, device_key=device_key, platform='android')
+    #
+    #     # Create iOS
+    #     device_key = 'baa0b38b8324d14c38041eae955d0a3e258297df519fab9a22bb4d2655d12197'
+    #     dev2 = models.Device.get_or_create(
+    #         self.user, device_key=device_key, platform='ios')
+    #
+    #     taskqueue.add(
+    #         queue_name='push', url='/tasks/push',
+    #         params=dict(recipient_username=self.user.username))
+    #     tasks = self.taskq.get_filtered_tasks(queue_names='push')
+    #     self.assertEqual(1, len(tasks))
+    #     test_utils.execute_queue_task(self.client, tasks[0])
 
 
 if __name__ == '__main__':

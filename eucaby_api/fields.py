@@ -31,6 +31,7 @@ SESSION_FIELDS = dict(
 MESSAGE_FIELDS = dict(
     id=rest_fields.Integer,
     type=rest_fields.String(default=REQUEST),
+    message=rest_fields.String(),
     sender=rest_fields.Nested(SENDER_FIELDS),
     recipient=rest_fields.Nested(RECIPIENT_FIELDS),
     created_date=utils_fields.IsoDateTime(),

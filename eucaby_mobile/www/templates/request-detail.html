@@ -1,39 +1,54 @@
 <ion-view title="Request">
   <ion-content>
     <div id="locmap" ng-if="item.notifications"></div>
-    <div class="card">
+    <div class="card" ng-cloak>
         <div class="item item-text-wrap">
             <i class="ion {{ icon }} icon-detail"></i>
+            <div class="detail-time">{{ item.created_date | localize }}</div>
             <div ng-switch on="isOutgoing">
                 <div ng-switch-when="true">
-                    Request sent to <b>{{ item.recipient | userName }}</b><br>
+                    Request sent to <br>
+                    <b>{{ item.recipient | userName }}</b><br>
                 </div>
                 <div ng-switch-when="false">
-                    Request received from <b>{{ item.sender | userName }}</b><br>
+                    Request received from <br>
+                    <b>{{ item.sender | userName }}</b><br>
                 </div>
             </div>
-            {{ item.created_date | localize }}
+        </div>
+        <div class="item item-text-wrap" ng-show="item.message">
+            {{ item.message }}
         </div>
     </div>
     <form ng-submit="sendLocation()">
         <input type="hidden" ng-model="form.token">
         <div class="padding">
+            <label class="item item-input message">
+              <input type="text" placeholder="Optional message" name="message"
+                     ng-model="form.message">
+            </label>
             <button class="button button-block button-positive" type="submit">Send Location</button>
         </div>
     </form>
     <div ng-show="item.notifications">
         <ion-list>
-            <div class="item item-divider">Notifications</div>
-            <ion-item ng-repeat="notif in item.notifications">
+            <div class="item item-divider">Locations</div>
+            <ion-item ng-repeat="notif in item.notifications" ng-cloak>
+                <div class="detail-time">{{ notif.created_date | localize }}</div>
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
-                        Notification received from <b>{{ notif.sender | userName }}</b><br>
+                        Location received from <br>
+                        <b>{{ notif.sender | userName }}</b><br>
                     </div>
                     <div ng-switch-when="false">
-                        Notification sent to <b>{{ notif.recipient | userName }}</b><br>
+                        Location sent to <br>
+                        <b>{{ notif.recipient | userName }}</b><br>
                     </div>
                 </div>
-                {{ notif.created_date | localize }}
+                <div ng-show="notif.message">
+                    <hr class="separator">
+                    {{ notif.message }}
+                </div>
             </ion-item>
         </ion-list>
     </div>

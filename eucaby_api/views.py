@@ -71,8 +71,9 @@ class RequestLocationView(flask_restful.Resource):
         recipient_name = (recipient and recipient.name) or None
         user = flask.request.user  # Sender
         req = ndb_models.LocationRequest.create(
-            user.username, user.name, recipient_username, recipient_name,
-            recipient_email)
+            user.username, user.name, recipient_username=recipient_username,
+            recipient_name=recipient_name, recipient_email=recipient_email,
+            message=flask.request.message)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -126,6 +127,7 @@ class RequestLocationView(flask_restful.Resource):
             return args
 
         username, email = args['username'], args['email']
+        flask.request.message = args['message']
         # Email has priority over username
         if email:
             return self.handle_email(email)
@@ -151,8 +153,10 @@ class NotifyLocationView(flask_restful.Resource):
         # Create location response
         # Note: There might be several location responses for a single session
         loc_notif = ndb_models.LocationNotification.create(
-            latlng, user.username, user.name, recipient_username,
-            recipient_name, recipient_email, session)
+            latlng, user.username, user.name,
+            recipient_username=recipient_username,
+            recipient_name=recipient_name, recipient_email=recipient_email,
+            message=flask.request.message, session=session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -220,6 +224,7 @@ class NotifyLocationView(flask_restful.Resource):
 
         username, email, token, latlng = (
             args['username'], args['email'], args['token'], args['latlng'])
+        flask.request.message = args['message']
         # Preference chain: token, email, username
         if token:
             return self.handle_token(token, latlng)

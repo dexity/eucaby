@@ -80,7 +80,9 @@ angular.module('eucaby.utils', [])
 
             // Note: Form validation (e.g. passing both or none of the email
             //       and username) is handled by the time
-            var params = {};
+            var params = {
+                message: form.message
+            };
             if (email){
                 params.email = email;
             } else if (username){

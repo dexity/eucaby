@@ -13,14 +13,14 @@ indexes:
 - kind: LocationMessage
   properties:
   - name: class
-  - name: sender_username
+  - name: recipient_username
   - name: created_date
     direction: desc
 
 - kind: LocationMessage
   properties:
   - name: class
-  - name: recipient_username
+  - name: sender_username
   - name: created_date
     direction: desc
 

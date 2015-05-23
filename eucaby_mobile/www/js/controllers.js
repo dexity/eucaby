@@ -330,6 +330,7 @@ angular.module('eucaby.controllers',
                 complete: item.session.complete,
                 name: item.recipient.name || item.recipient.email,
                 description: description,
+                message: item.message,
                 url: url,
                 icon: icon
             });
@@ -389,6 +390,7 @@ angular.module('eucaby.controllers',
                 complete: item.session.complete,
                 name: item.sender.name,
                 description: description,
+                message: item.message,
                 url: url,
                 icon: icon
             });

@@ -441,7 +441,7 @@ class TestRequestLocation(test_base.TestCase):
 
     def _verify_data_email(
             self, resp, recipient_username, recipient_name, recipient_email,
-            in_list):
+            message, in_list):
         """Validates data and email sending."""
         # Assume that request is made by self.user
         data = json.loads(resp.data)
@@ -461,7 +461,7 @@ class TestRequestLocation(test_base.TestCase):
                 username=recipient_username, name=recipient_name,
                 email=recipient_email),
             sender=dict(username=self.user.username, name=self.user.name),
-            created_date=created_date.isoformat(),
+            message=message, created_date=created_date.isoformat(),
             session=dict(token=session.token, complete=False)))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
@@ -517,10 +517,11 @@ class TestRequestLocation(test_base.TestCase):
         """Tests valid new email address."""
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
-            '/location/request', data=dict(email=recipient_email),
+            '/location/request', data=dict(
+                email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(resp, None, None, recipient_email,
-                                [u'from Test Юзер', 'Join Eucaby'])
+                                'hello', [u'from Test Юзер', 'Join Eucaby'])
 
     def test_existing_email(self):
         """Tests valid existing email address."""
@@ -529,26 +530,28 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, self.user2.username, self.user2.name, recipient_email,
+            resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
 
     def test_self_email(self):
         """Test that user can send email to himself."""
         recipient_email = 'test@example.com'
         resp = self.client.post(
-            '/location/request', data=dict(email=recipient_email),
+            '/location/request', data=dict(
+                email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, self.user.username, self.user.name, recipient_email,
+            resp, self.user.username, self.user.name, recipient_email, 'hello',
             [u'Hi, Test Юзер', u'from Test Юзер'])
 
     def test_user(self):
         """Tests valid recipient user."""
         resp = self.client.post(
-            '/location/request', data=dict(username=self.user2.username),
+            '/location/request', data=dict(
+                username=self.user2.username, message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, self.user2.username, self.user2.name, self.user2.email,
+            resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
 
     def test_email_user(self):
@@ -556,9 +559,10 @@ class TestRequestLocation(test_base.TestCase):
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
             '/location/request', data=dict(
-                email=recipient_email, username=self.user2.username),
+                email=recipient_email, username=self.user2.username,
+                message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        self._verify_data_email(resp, None, None, recipient_email,
+        self._verify_data_email(resp, None, None, recipient_email, 'hello',
                                 [u'from Test Юзер', 'Join Eucaby'])
 
 
@@ -817,7 +821,7 @@ class TestNotifyLocation(test_base.TestCase):
 
     def _verify_data_email(
             self, resp, recipient_username, recipient_name, recipient_email,
-            in_list, session_dict=None):
+            message, in_list, session_dict=None):
         """Validates data and email sending."""
         data = json.loads(resp.data)
         # Check ndb objects
@@ -850,7 +854,8 @@ class TestNotifyLocation(test_base.TestCase):
                 username=recipient_username, name=recipient_name,
                 email=recipient_email),
             sender=dict(username=self.user.username, name=self.user.name),
-            created_date=created_date.isoformat(), session=session_out))
+            message=message, created_date=created_date.isoformat(),
+            session=session_out))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
         messages = self.mail_stub.get_sent_messages()
@@ -942,13 +947,14 @@ class TestNotifyLocation(test_base.TestCase):
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, token=token),
+                latlng=fixtures.LATLNG, token=token, message='hello world'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', u'Test Юзер shared'], session_dict)
+            'hello world', ['Hi, Test2 User2', u'Test Юзер shared'],
+            session_dict)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -977,7 +983,7 @@ class TestNotifyLocation(test_base.TestCase):
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
-            resp, self.user.username, self.user.name, self.user.email,
+            resp, self.user.username, self.user.name, self.user.email, None,
             [u'Hi, Test Юзер', u'Test Юзер shared'], session_dict)
 
     def test_new_email(self):
@@ -985,10 +991,10 @@ class TestNotifyLocation(test_base.TestCase):
         # user --> new email
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, email='test3@example.com'),
+                latlng=fixtures.LATLNG, email='test3@example.com', message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, None, None, 'test3@example.com',
+            resp, None, None, 'test3@example.com', '',
             [u'Test Юзер shared', 'Join Eucaby'])
 
     def test_existing_email(self):
@@ -996,21 +1002,21 @@ class TestNotifyLocation(test_base.TestCase):
         # user sends notification to user2: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, email=self.user2.email),
+                latlng=fixtures.LATLNG, email=self.user2.email, message='help'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            ['Hi, Test2 User2', u'Test Юзер shared'])
+            'help', ['Hi, Test2 User2', u'Test Юзер shared'])
 
     def test_self_email(self):
         """Tests notification his own email."""
         # user sends notification to self: user --> user
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, email=self.user.email),
+                latlng=fixtures.LATLNG, email=self.user.email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, self.user.username, self.user.name, self.user.email,
+            resp, self.user.username, self.user.name, self.user.email, 'hello',
             [u'Hi, Test Юзер', u'Test Юзер shared'])
 
     def test_username(self):
@@ -1021,7 +1027,7 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
-            resp, self.user2.username, self.user2.name, self.user2.email,
+            resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])
 
 
