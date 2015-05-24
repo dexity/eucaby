@@ -69,11 +69,12 @@ class RequestLocationView(flask_restful.Resource):
         """Handles general operations of the request."""
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
+        message = flask.request.message
         user = flask.request.user  # Sender
         req = ndb_models.LocationRequest.create(
             user.username, user.name, recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            message=flask.request.message)
+            message=message)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -93,7 +94,8 @@ class RequestLocationView(flask_restful.Resource):
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                url='{}?q={}'.format(eucaby_url, req.session.token))
+                url='{}?q={}'.format(eucaby_url, req.session.token),
+                message=message)
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
@@ -149,6 +151,7 @@ class NotifyLocationView(flask_restful.Resource):
         """Handles general operations of the request."""
         recipient_username = (recipient and recipient.username) or None
         recipient_name = (recipient and recipient.name) or None
+        message = flask.request.message
         user = flask.request.user  # Sender
         # Create location response
         # Note: There might be several location responses for a single session
@@ -156,7 +159,7 @@ class NotifyLocationView(flask_restful.Resource):
             latlng, user.username, user.name,
             recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            message=flask.request.message, session=session)
+            message=message, session=session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
@@ -170,7 +173,8 @@ class NotifyLocationView(flask_restful.Resource):
             body = flask.render_template(
                 'mail/location_response_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                location_url='{}?q={}'.format(MAP_BASE, latlng))
+                location_url='{}?q={}'.format(MAP_BASE, latlng),
+                message=message)
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
         logging.info('Location Notification: %s', str(loc_notif.to_dict()))

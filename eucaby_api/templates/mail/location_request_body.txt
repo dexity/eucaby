@@ -1,7 +1,10 @@
 Hi{% if recipient_name %}, {{recipient_name}}{% endif %}
 
-You received location request from {{ sender_name }}.
-Follow the link to notify your location: {{ url }}
-{% if not recipient_name %}Join Eucaby {{ eucaby_url }} to stay connected with your friends.{% endif %}
+You received location request from {{ sender_name }}{% if message %} and a message:
+
+"{{ message }}"
+{% else %}.{% endif %}
+Follow the link to send your location: {{ url }}{% if not recipient_name %}
+Join Eucaby {{ eucaby_url }} to stay connected with your friends.{% endif %}
 
 Eucaby Team

@@ -1,7 +1,11 @@
 Hi{% if recipient_name %}, {{recipient_name}}{% endif %}
 
-{{ sender_name }} shared the current location with you.
-Follow the link to see the location: {{ location_url }}
-{% if not recipient_name %}Join Eucaby {{ eucaby_url }} to stay connected with your friends.{% endif %}
+{{ sender_name }} {% if message %}sent a message:
+
+"{{ message }}"
+
+with the current location: {{ location_url }}
+{% else %}shared the current location with you: {{ location_url }}{% endif %}{% if not recipient_name %}
+Join Eucaby {{ eucaby_url }} to stay connected with your friends.{% endif %}
 
 Eucaby Team
