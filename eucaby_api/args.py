@@ -65,13 +65,13 @@ def positive_int(v):
 REQUEST_LOCATION_ARGS = [
     reqparse.Argument(name='email', type=email, help=INVALID_EMAIL),
     reqparse.Argument(name='username', type=str, help=MISSING_EMAIL_USERNAME),
-    reqparse.Argument(name='message', type=str)
+    reqparse.Argument(name='message', type=unicode)
 ]
 
 NOTIFY_LOCATION_ARGS = [
     reqparse.Argument(name='email', type=email, help=INVALID_EMAIL),
     reqparse.Argument(name='username', type=str),
-    reqparse.Argument(name='message', type=str),
+    reqparse.Argument(name='message', type=unicode),
     reqparse.Argument(name='token', type=str),
     reqparse.Argument(name='latlng', type=latlng, required=True,
                       help=INVALID_LATLNG),

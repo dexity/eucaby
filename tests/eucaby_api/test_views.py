@@ -561,10 +561,10 @@ class TestRequestLocation(test_base.TestCase):
         resp = self.client.post(
             '/location/request', data=dict(
                 email=recipient_email, username=self.user2.username,
-                message='hello'),
+                message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        self._verify_data_email(resp, None, None, recipient_email, 'hello',
-                                ['hello', u'from Test Юзер', 'Join Eucaby'])
+        self._verify_data_email(resp, None, None, recipient_email, u'Привет',
+                                [u'Привет', u'from Test Юзер', 'Join Eucaby'])
 
 
 class TestRequestById(test_base.TestCase):
@@ -1004,11 +1004,13 @@ class TestNotifyLocation(test_base.TestCase):
         # user sends notification to user2: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, email=self.user2.email, message='help'),
+                latlng=fixtures.LATLNG, email=self.user2.email,
+                message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
-            'help', ['help', 'Hi, Test2 User2', u'Test Юзер sent a message'])
+            u'Привет', [u'Привет', 'Hi, Test2 User2',
+                        u'Test Юзер sent a message'])
 
     def test_self_email(self):
         """Tests notification his own email."""
