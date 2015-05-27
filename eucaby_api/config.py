@@ -23,6 +23,7 @@ class Config(object):
     # XXX: Make host url configurable
     EUCABY_URL = 'http://localhost:8888'
     NOREPLY_EMAIL = 'alex@eucaby.com'
+    GCM_API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
 
 
 class Testing(Config):

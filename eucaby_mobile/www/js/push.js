@@ -83,11 +83,13 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
     return {
         initNotifications: function(){
-            if (device.platform === 'iOS') {
-                initIOS();
-            } else if (device.platform === 'Android') {
-                initAndroid();
-            }
+            try {
+                if (device.platform === 'iOS') {
+                    initIOS();
+                } else if (device.platform === 'Android') {
+                    initAndroid();
+                }
+            } catch (err){}
       }
   };
 }]);

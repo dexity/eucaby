@@ -2,12 +2,14 @@
 import apns
 import flask
 from flask import views
-import json
+from flask import current_app
+from gcm import gcm
+import logging
 import os
-import urllib2
 
 from eucaby_api import args as api_args
 from eucaby_api import models
+
 
 tasks_app = flask.Blueprint('tasks', __name__)
 
@@ -26,62 +28,70 @@ apns_socket = create_apns_socket()
 
 class PushNotificationsTask(views.MethodView):
 
-    """Push notifications for GCM and APNs."""
+    pass
+
+
+class GCMNotificationsTask(views.MethodView):
+
+    """Push notifications for GCM."""
     methods = ['POST']
 
     def post(self):
-        # 'recipient_username', 'sender_username', 'devices'
         username = flask.request.form.get('recipient_username')
         if not username:
             return 'Missing recipient_username parameter', 400
-        devices = models.Device.get_by_user(username)
+        devices = models.Device.get_by_username(username, platform=api_args.ANDROID)
         if not devices:
             return 'User device not found', 404
-        msg = 'New incoming messages'
 
-        ios_tokens = []
-        android_reg_ids = []
-        for device in devices:
-            if device.platform == api_args.ANDROID:
-                android_reg_ids.append(device.device_key)
-            elif device.platform == api_args.IOS:
-                ios_tokens.append(device.device_key)
+        regs = {}
+        for dev in devices:
+            regs[dev.device_key] = dev
 
-        # GCM
-        if android_reg_ids:
-            # !!! Prototype
-            API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
-            headers = {
-                'Authorization': 'key=' + API_KEY,
-                'Content-Type': 'application/json'
-            }
-            url = 'https://android.googleapis.com/gcm/send'
-            data = {
-                'registration_ids': android_reg_ids,
-                'data': {
-                    'title': 'Eucaby',
-                    'message': msg
-                }
-            }
-            data = json.dumps(data)
+        data = dict(title='Eucaby', message='New incoming messages')
+        gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
+        try:
+            resp = gcm_app.json_request(
+                registration_ids=regs.keys(), data=data, retries=7)
+        except gcm.GCMException as e:
+            logging.error('Failed to push notification. {}: {}'.format(
+                e.__class__.__name__, e.message))
+            return e.message, 500
 
-            req = urllib2.Request(url, data, headers)
-            resp = urllib2.urlopen(req)
-            print resp.read()
+        commit = False
+        if 'errors' in resp:
+            for error, reg_ids in resp['errors'].items():
+                if error in ['NotRegistered', 'InvalidRegistration']:
+                    # Deactivate multiple devices
+                    for reg_id in reg_ids:
+                        regs[reg_id].deactivate(commit=False)
+                        commit = True
 
-        # APNs
-        # XXX: Handle properly multiple messages
-        for token in ios_tokens:
-            payload = apns.Payload(alert=msg, sound="default")
-            apns_socket.gateway_server.send_notification(token, payload)
-
-        # XXX: If NotRegistered error, cleanup in cleanup queue
-
+        if 'canonical' in resp:
+            for reg_id, canonical_id in resp['canonical'].items():
+                # Replace registration_id with canonical_id
+                device = regs[reg_id]
+                device.device_key = canonical_id
+                models.db.session.add(device)
+                commit = True
+        if commit:
+            models.db.session.commit()
         return OK
 
 
-class CleanupDevicesTask(views.View):
-    pass
+class APNsNotificationsTask(views.MethodView):
+
+    """Push notifications for APNs."""
+    methods = ['POST']
+
+    def post(self):
+        # XXX: Handle properly multiple messages
+        # ios_tokens = []
+        # for token in ios_tokens:
+        #     payload = apns.Payload(alert=msg, sound="default")
+        #     apns_socket.gateway_server.send_notification(token, payload)
+
+        return OK
 
 
 class MailTask(views.View):
@@ -89,8 +99,8 @@ class MailTask(views.View):
 
 
 tasks_app.add_url_rule(
-    '/push', view_func=PushNotificationsTask.as_view('push'))
+    '/push/gcm', view_func=GCMNotificationsTask.as_view('push_gcm'))
 tasks_app.add_url_rule(
-    '/push/cleanup', view_func=CleanupDevicesTask.as_view('cleanup_devices'))
+    '/push/apns', view_func=APNsNotificationsTask.as_view('push_apns'))
 tasks_app.add_url_rule(
     '/mail', view_func=MailTask.as_view('mail'))

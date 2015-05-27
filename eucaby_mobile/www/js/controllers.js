@@ -181,6 +181,7 @@ angular.module('eucaby.controllers',
     function($scope, $rootScope, $ionicLoading, utils, Notification) {
 
     $scope.form = {};
+
     // Hack for deselected radio button. This will avoid creating a custom radio
     // button directive. Idea: http://jsfiddle.net/8s4m2e5e/3/
     $scope.selectedUser;
@@ -203,7 +204,7 @@ angular.module('eucaby.controllers',
         .then(function(data){
             $ionicLoading.hide();
             $scope.notifyModal.hide();
-            utils.toast('Location is submitted');
+            utils.toast('Location submitted');
         }, function(data){
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');

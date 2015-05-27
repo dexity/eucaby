@@ -79,10 +79,15 @@ class RequestLocationView(flask_restful.Resource):
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
 
-        # # Send push notification only for different user
-        # if recipient_username != flask.request.user.username:
-        #     taskqueue.add(
-        #         queue_name='push', url=flask.url_for('tasks.push'))
+        # Send notifications to Android and iOS devices of the registered user
+        # (sender and recipient can be the same person)
+        if recipient_username:
+            taskqueue.add(
+                queue_name='push', url=flask.url_for('tasks.push_gcm'),
+                params=dict(recipient_username=recipient_username))
+            taskqueue.add(
+                queue_name='push', url=flask.url_for('tasks.push_apns'),
+                params=dict(recipient_username=recipient_username))
 
         if recipient_email:
             # Send email copy to sender?
@@ -163,6 +168,17 @@ class NotifyLocationView(flask_restful.Resource):
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
+
+        # Send notifications to Android and iOS devices of the registered user
+        # (sender and recipient can be the same person)
+        if recipient_username:
+            taskqueue.add(
+                queue_name='push', url=flask.url_for('tasks.push_gcm'),
+                params=dict(recipient_username=recipient_username))
+            taskqueue.add(
+                queue_name='push', url=flask.url_for('tasks.push_apns'),
+                params=dict(recipient_username=recipient_username))
+
         if recipient_email:
             # Send email copy to sender?
             # Send email notification to recipient

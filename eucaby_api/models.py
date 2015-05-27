@@ -262,7 +262,7 @@ class Device(db.Model):
         return obj
 
     @classmethod
-    def get_by_user(cls, username, platform=None):
+    def get_by_username(cls, username, platform=None):
         """List of active device objects by user."""
         kwargs = dict(active=True)
         if platform in api_args.PLATFORM_CHOICES:
@@ -270,8 +270,9 @@ class Device(db.Model):
         return cls.query.filter(
             cls.users.any(username=username)).filter_by(**kwargs).all()
 
-    def deactivate(self):
+    def deactivate(self, commit=True):
         """Deactivates the device."""
         self.active = False
         db.session.add(self)
-        db.session.commit()
+        if commit:
+            db.session.commit()
