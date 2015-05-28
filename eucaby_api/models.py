@@ -254,11 +254,12 @@ class Device(db.Model):
         if obj:
             if user not in obj.users:
                 obj.users.append(user)
+                db.session.commit()
             return obj
         obj = cls(device_key=device_key, platform=platform)
+        obj.users.append(user)
         db.session.add(obj)
         db.session.commit()
-        obj.users.append(user)
         return obj
 
     @classmethod

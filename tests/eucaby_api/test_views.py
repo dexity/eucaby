@@ -11,7 +11,7 @@ from flask_oauthlib import client as f_oauth_client
 
 from google.appengine.ext import testbed
 
-from eucaby_api import args
+from eucaby_api import args as api_args
 from eucaby_api import fields as api_fields
 from eucaby_api import models
 from eucaby_api import ndb_models
@@ -20,6 +20,26 @@ from eucaby_api.utils import date as utils_date
 from tests.eucaby_api import base as test_base
 from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
+
+
+def _verify_push_notifications(taskq, client, req_mock):
+    """Verifies push notification tasks."""
+    # print dir(taskq)
+    tasks = taskq.get_filtered_tasks(queue_names='push')
+    assert 2 == len(tasks)
+    # Android task
+    req_mock.return_value = {}
+    resp_android = test_utils.execute_queue_task(client, tasks[0])
+
+    # Test GCM request
+    data = dict(title='Eucaby', message='New incoming messages')
+    assert 1 == req_mock.call_count
+    req_mock.assert_called_with(
+        registration_ids=['12'], data=data, retries=7)
+    assert 200 == resp_android.status_code
+
+    # XXX: iOS task
+    # resp_ios = test_utils.execute_queue_task(client, tasks[1])
 
 
 class GeneralTest(test_base.TestCase):
@@ -435,8 +455,16 @@ class TestRequestLocation(test_base.TestCase):
         self.testbed.init_mail_stub()
         self.testbed.init_taskqueue_stub(root_path='.')
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
+        # Create devices
+        device_params = [('12', api_args.ANDROID), ('34', api_args.IOS)]
+        for user in [self.user, self.user2]:
+            for param in device_params:  # Both users own both devices
+                models.Device.get_or_create(user, *param)
 
     def tearDown(self):
+        super(TestRequestLocation, self).tearDown()
         self.testbed.deactivate()
 
     def _verify_data_email(
@@ -520,42 +548,56 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        # No push notification sent
+        tasks = self.taskq.get_filtered_tasks(queue_names='push')
+        self.assertEqual(0, len(tasks))
         self._verify_data_email(
             resp, None, None, recipient_email, 'hello',
             ['hello', u'from Test Юзер', 'Join Eucaby'])
 
-    def test_existing_email(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_existing_email(self, req_mock):
         """Tests valid existing email address."""
         recipient_email = 'test2@example.com'
+
         resp = self.client.post(
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
 
-    def test_self_email(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_self_email(self, req_mock):
         """Test that user can send email to himself."""
         recipient_email = 'test@example.com'
         resp = self.client.post(
             '/location/request', data=dict(
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
 
-    def test_user(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_user(self, req_mock):
         """Tests valid recipient user."""
         resp = self.client.post(
             '/location/request', data=dict(
                 username=self.user2.username, message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
 
-    def test_email_user(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_email_user(self, req_mock):
         """Tests email and username parameters."""
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
@@ -563,6 +605,9 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, username=self.user2.username,
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        # No push notification sent
+        tasks = self.taskq.get_filtered_tasks(queue_names='push')
+        self.assertEqual(0, len(tasks))
         self._verify_data_email(resp, None, None, recipient_email, u'Привет',
                                 [u'Привет', u'from Test Юзер', 'Join Eucaby'])
 
@@ -580,6 +625,9 @@ class TestRequestById(test_base.TestCase):
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -697,6 +745,9 @@ class TestNotificationById(test_base.TestCase):
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -815,9 +866,18 @@ class TestNotifyLocation(test_base.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
+        self.testbed.init_taskqueue_stub(root_path='.')
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
+        # Create devices
+        device_params = [('12', api_args.ANDROID), ('34', api_args.IOS)]
+        for user in [self.user, self.user2]:
+            for param in device_params:  # Both users own both devices
+                models.Device.get_or_create(user, *param)
 
     def tearDown(self):
+        super(TestNotifyLocation, self).tearDown()
         self.testbed.deactivate()
 
     def _verify_data_email(
@@ -935,7 +995,8 @@ class TestNotifyLocation(test_base.TestCase):
 
         # XXX: Add test deny access for non-sender and non-receiver user
 
-    def test_token(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_token(self, req_mock):
         """Tests notification by session token."""
         # Create request
         # user2 created request to user: user2 -> user
@@ -944,6 +1005,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
         data = json.loads(resp.data)
         token = data['data']['session']['token']
+        self.taskq.FlushQueue('push')
 
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
@@ -957,6 +1019,7 @@ class TestNotifyLocation(test_base.TestCase):
             'hello world', ['hello world', 'Hi, Test2 User2',
                             u'Test Юзер sent a message'],
             session_dict)
+        _verify_push_notifications(self.taskq, self.client, req_mock)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -967,7 +1030,8 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(2, ndb_models.LocationNotification.query().count())
         self.assertEqual(1, ndb_models.Session.query().count())
 
-    def test_self_token(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_self_token(self, req_mock):
         """Tests notification by session token to himself."""
         # Create request
         # user created request to user: user -> user
@@ -976,12 +1040,14 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         token = data['data']['session']['token']
+        self.taskq.FlushQueue('push')
 
         # user notifies himself
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
@@ -995,11 +1061,15 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email='test3@example.com', message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        # No push notification sent
+        tasks = self.taskq.get_filtered_tasks(queue_names='push')
+        self.assertEqual(0, len(tasks))
         self._verify_data_email(
             resp, None, None, 'test3@example.com', '',
             [u'Test Юзер shared', 'Join Eucaby'])
 
-    def test_existing_email(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_existing_email(self, req_mock):
         """Tests notification to existing email."""
         # user sends notification to user2: user --> user2
         resp = self.client.post(
@@ -1007,29 +1077,34 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, email=self.user2.email,
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
                         u'Test Юзер sent a message'])
 
-    def test_self_email(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_self_email(self, req_mock):
         """Tests notification his own email."""
         # user sends notification to self: user --> user
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user.email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
 
-    def test_username(self):
+    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
+    def test_username(self, req_mock):
         """Tests notification by username."""
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        _verify_push_notifications(self.taskq, self.client, req_mock)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])
@@ -1159,6 +1234,9 @@ class TestUserActivity(test_base.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
 
         # Test Cases
         # ----------
@@ -1264,7 +1342,7 @@ class TestUserActivity(test_base.TestCase):
 
         # Invalid activity type
         invalid_request = dict(
-            fields=dict(type=args.INVALID_ACTIVITY_TYPE),
+            fields=dict(type=api_args.INVALID_ACTIVITY_TYPE),
             message='Invalid request parameters', code='invalid_request')
         params = urllib.urlencode(dict(type='wrong'))
         resp = self.client.get(
@@ -1276,7 +1354,7 @@ class TestUserActivity(test_base.TestCase):
 
         # Invalid offset or limit
         invalid_request = dict(
-            fields=dict(offset=args.INVALID_INT, limit=args.INVALID_INT),
+            fields=dict(offset=api_args.INVALID_INT, limit=api_args.INVALID_INT),
             message='Invalid request parameters', code='invalid_request')
         params = urllib.urlencode(dict(type='outgoing', offset='a', limit='b'))
         resp = self.client.get(
@@ -1488,8 +1566,8 @@ class TestRegisterDeviceView(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(400, resp.status_code)
         ec_missing_params = dict(
-            fields=dict(device_key=args.MISSING_PARAM.format('device_key'),
-                        platform=args.INVALID_PLATFORM),
+            fields=dict(device_key=api_args.MISSING_PARAM.format('device_key'),
+                        platform=api_args.INVALID_PLATFORM),
             message='Invalid request parameters', code='invalid_request')
         self.assertEqual(ec_missing_params, data)
 
@@ -1501,7 +1579,7 @@ class TestRegisterDeviceView(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(400, resp.status_code)
         ec_invalid_platform = dict(
-            fields=dict(platform=args.INVALID_PLATFORM),
+            fields=dict(platform=api_args.INVALID_PLATFORM),
             message='Invalid request parameters', code='invalid_request')
         self.assertEqual(ec_invalid_platform, data)
 

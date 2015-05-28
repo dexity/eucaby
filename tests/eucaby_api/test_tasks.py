@@ -165,7 +165,7 @@ class TestGCMNotifications(test_base.TestCase):
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
 
-        # Explore request
+        # Test request
         req = urlopen_mock.call_args[0][0]
         self.assertEqual(1, urlopen_mock.call_count)
         self.assertEqual(

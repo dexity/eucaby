@@ -40,7 +40,8 @@ class GCMNotificationsTask(views.MethodView):
         username = flask.request.form.get('recipient_username')
         if not username:
             return 'Missing recipient_username parameter', 400
-        devices = models.Device.get_by_username(username, platform=api_args.ANDROID)
+        devices = models.Device.get_by_username(
+            username, platform=api_args.ANDROID)
         if not devices:
             return 'User device not found', 404
 
