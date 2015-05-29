@@ -2,19 +2,17 @@
 
 angular.module('eucaby',
     ['ionic', 'ngCordova', 'eucaby.controllers', 'eucaby.filters',
-     'eucaby.push', 'eucaby.api'])
+     'eucaby.api'])
 
-.run(function($rootScope, $state, $ionicPlatform, $window, push, EucabyApi) {
+.run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
 
     var storage = $window.localStorage;
     EucabyApi.init(storage);
 
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
-            // org.apache.cordova.statusbar required
             window.StatusBar.styleDefault();
-        }
-        push.initNotifications();
+        };
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {

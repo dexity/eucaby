@@ -5,11 +5,11 @@ var SF_LAT = 37.7833;
 var SF_LNG = -122.4167;
 
 angular.module('eucaby.controllers',
-               ['eucaby.services', 'eucaby.utils', 'eucaby.api'])
+               ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
 .controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$interval', '$ionicSideMenuDelegate', 'EucabyApi',
-    function($scope, $rootScope, $state, $interval, $ionicSideMenuDelegate, EucabyApi) {
+    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate', 'EucabyApi',
+    function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi) {
 
     var storage = window.localStorage;
 
@@ -49,14 +49,15 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('LoginCtrl',
-    ['$scope', '$location', '$ionicLoading', 'EucabyApi', 'utils',
-     function($scope, $location, $ionicLoading, EucabyApi, utils) {
+    ['$scope', '$location', '$ionicLoading', 'EucabyApi', 'push', 'utils',
+     function($scope, $location, $ionicLoading, EucabyApi, push, utils) {
 
     $scope.facebookLogin = function(){
 
         $ionicLoading.show();
         EucabyApi.login().then(function () {
                 $location.path('/app/tab/map');
+                push.initNotifications();
             }, function(data) {
                 utils.alert('Error', 'Error during log in. ' +
                                      'Please try again in a moment.');

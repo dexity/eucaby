@@ -38,10 +38,17 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
         getAccessToken: function(){
             return storage.getItem('ec_access_token');
         },
-        clearAuth: function(){
+        clearAll: function(){
             storage.removeItem('ec_access_token');
             storage.removeItem('ec_refresh_token');
+            storage.removeItem('device_key');
             delete storage.fbtoken;
+        },
+        getDeviceKey: function(){
+            return storage.getItem('device_key');
+        },
+        setDeviceKey: function(deviceKey){
+            storage.setItem('device_key', deviceKey);
         }
     };
 
@@ -161,8 +168,19 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
             self.login().then(makeApiRequest, errorHandler);
             return deferred.promise;
         },
+        registerDevice: function(deviceKey, platform){
+            var self = this;
+            if (storageManager.getDeviceKey()){
+                return;  // Device is already registered with GCM or APNs
+            }
+            self.api({method: 'POST', path: '/device/register',
+                      data: {device_key: deviceKey, platform: platform}})
+                .then(function(){
+                    storageManager.setDeviceKey(deviceKey);
+                });  // Silently fail if device registration fails
+        },
         logout: function(){
-            storageManager.clearAuth();
+            storageManager.clearAll();
             OpenFB.logout();
         }
     };

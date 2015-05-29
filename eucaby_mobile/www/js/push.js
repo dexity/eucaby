@@ -3,43 +3,40 @@
 angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
 .factory('push',
-    ['$cordovaPush', '$rootScope', '$state', '$ionicPopup',
-     function($cordovaPush, $rootScope, $state, $ionicPopup) {
+    ['$cordovaPush', '$rootScope', 'EucabyApi', '$state', '$ionicPopup',
+     function($cordovaPush, $rootScope, EucabyApi, $state, $ionicPopup) {
 
     var initAndroid = function() {
+        // Init push notifications for Android
         var config = {
             senderID: '376614047301'
         };
 
         $cordovaPush.register(config).then(function(result) {
-            console.debug('$cordovaPush.register: ' + result);
-            // Store registration id in localStorage
-            // Send the registration id to the server
-        }, function(err) {
-            console.error(err);
-            // Error
+            // No registration id at the stage
+            console.log('Android registration accepted');
         });
 
         $rootScope.$on('$cordovaPush:notificationReceived', function(event, notification) {
 
           switch(notification.event) {
-
             case 'registered':
-              if (notification.regid.length > 0 ) {
-                  console.debug('registration ID = ' + notification.regid);
+              if (!notification.regid) {
+                  break
               }
+              EucabyApi.registerDevice(notification.regid, 'android');
               break;
 
             case 'message':
-                $rootScope.checkMessages(true);
+              $rootScope.checkMessages(true);
               break;
 
             case 'error':
-              console.debug('GCM error = ' + notification.msg);
+              console.error('GCM error: ' + notification.msg);
               break;
 
             default:
-              console.debug('An unknown GCM event has occurred');
+              console.error('An unknown GCM event has occurred');
               break;
           }
         });
@@ -55,12 +52,14 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
     };
 
     var initIOS = function(){
+        // Init push notifications for iOS
         var config = {
             badge: true,
             sound: true,
             alert: true
         };
         $cordovaPush.register(config).then(function(deviceToken) {
+            EucabyApi.registerDevice(deviceToken, 'ios');
             console.log("deviceToken: " + deviceToken);
         }, function(err) {
             alert("Registration error: " + err);
@@ -83,6 +82,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
     return {
         initNotifications: function(){
+            // Register device and set up notifications to receive messages
             try {
                 if (device.platform === 'iOS') {
                     initIOS();
