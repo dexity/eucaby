@@ -36,14 +36,18 @@ class GCMNotificationsTask(views.MethodView):
     """Push notifications for GCM."""
     methods = ['POST']
 
-    def post(self):
+    def post(self):  # pylint: disable=no-self-use
         username = flask.request.form.get('recipient_username')
         if not username:
-            return 'Missing recipient_username parameter', 400
+            msg = 'Missing recipient_username parameter'
+            logging.error(msg)
+            return msg
         devices = models.Device.get_by_username(
             username, platform=api_args.ANDROID)
         if not devices:
-            return 'User device not found', 404
+            msg = 'User device not found'
+            logging.info(msg)
+            return msg
 
         regs = {}
         for dev in devices:
@@ -55,8 +59,9 @@ class GCMNotificationsTask(views.MethodView):
             resp = gcm_app.json_request(
                 registration_ids=regs.keys(), data=data, retries=7)
         except gcm.GCMException as e:
-            logging.error('Failed to push notification. {}: {}'.format(
-                e.__class__.__name__, e.message))
+            logging.error(
+                'Failed to push notification. %s: %s',
+                e.__class__.__name__, e.message)
             return e.message, 500
 
         commit = False
@@ -77,7 +82,9 @@ class GCMNotificationsTask(views.MethodView):
                 commit = True
         if commit:
             models.db.session.commit()
-        return OK
+        msg = 'GCM result: {}'.format(str(resp))
+        logging.debug(msg)
+        return msg
 
 
 class APNsNotificationsTask(views.MethodView):
@@ -85,7 +92,7 @@ class APNsNotificationsTask(views.MethodView):
     """Push notifications for APNs."""
     methods = ['POST']
 
-    def post(self):
+    def post(self):  # pylint: disable=no-self-use
         # XXX: Handle properly multiple messages
         # ios_tokens = []
         # for token in ios_tokens:
@@ -95,8 +102,13 @@ class APNsNotificationsTask(views.MethodView):
         return OK
 
 
-class MailTask(views.View):
-    pass
+class MailTask(views.MethodView):
+
+    methods = ['POST']
+
+    def post(self):  # pylint: disable=no-self-use
+        # XXX: Implement
+        return OK
 
 
 tasks_app.add_url_rule(

@@ -29,7 +29,7 @@ MAP_BASE = 'https://maps.google.com/maps'
 class IndexView(flask_restful.Resource):
 
     """Index view."""
-    def get(self):
+    def get(self):  # pylint: disable=no-self-use
         data = dict(message='Yo, dude. I am here :).')
         return flask_restful.marshal(
             data, api_fields.INDEX_FIELDS, envelope='data')

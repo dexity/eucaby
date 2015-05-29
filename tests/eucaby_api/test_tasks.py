@@ -17,6 +17,14 @@ from tests.eucaby_api import base as test_base
 from tests.utils import utils as test_utils
 
 
+def _gcm_response(success, failure=0, canonical_ids=0, results=None):
+    """Returns GCM response."""
+    resp = dict(multicast_id=random.randrange(100), success=success,
+                failure=failure, canonical_ids=canonical_ids,
+                results=results or [])
+    return json.dumps(resp)
+
+
 class TestGCMNotifications(test_base.TestCase):
 
     """Tests mobile push notifications."""
@@ -43,13 +51,6 @@ class TestGCMNotifications(test_base.TestCase):
         super(TestGCMNotifications, self).tearDown()
         self.testbed.deactivate()
 
-    def _gcm_response(self, success, failure=0, canonical_ids=0, results=[]):
-        """Returns GCM response."""
-        resp = dict(multicast_id=random.randrange(100), success=success,
-                    failure=failure, canonical_ids=canonical_ids,
-                    results=results)
-        return json.dumps(resp)
-
     def _assert_device_data(self, expected):
         """Verifies device key and active status."""
         devices = models.Device.get_by_username(
@@ -64,7 +65,8 @@ class TestGCMNotifications(test_base.TestCase):
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         self.assertEqual(1, len(tasks))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
-        self.assertEqual(400, resp.status_code)
+        # The failed task should not be retried so I return 200 code
+        self.assertEqual(200, resp.status_code)
         self.assertEqual('Missing recipient_username parameter', resp.data)
 
         # Either user or device, or user device found
@@ -73,7 +75,7 @@ class TestGCMNotifications(test_base.TestCase):
             params=dict(recipient_username='unknown'))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         resp = test_utils.execute_queue_task(self.client, tasks[1])
-        self.assertEqual(404, resp.status_code)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual('User device not found', resp.data)
 
     @mock.patch('gcm.gcm.urllib2.urlopen')
@@ -106,7 +108,7 @@ class TestGCMNotifications(test_base.TestCase):
             params=dict(recipient_username=self.user.username))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(error='Unavailable')]
-        gcm_resp = self._gcm_response(success=1, failure=1, results=results)
+        gcm_resp = _gcm_response(success=1, failure=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
@@ -125,7 +127,7 @@ class TestGCMNotifications(test_base.TestCase):
             params=dict(recipient_username=self.user.username))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(error='InvalidRegistration')]
-        gcm_resp = self._gcm_response(success=1, failure=1, results=results)
+        gcm_resp = _gcm_response(success=1, failure=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
@@ -143,7 +145,7 @@ class TestGCMNotifications(test_base.TestCase):
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22', registration_id='55'),
                    dict(error='NotRegistered')]
-        gcm_resp = self._gcm_response(
+        gcm_resp = _gcm_response(
             success=1, failure=1, canonical_ids=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
@@ -160,7 +162,7 @@ class TestGCMNotifications(test_base.TestCase):
             params=dict(recipient_username=self.user.username))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(message_id='0:33')]
-        gcm_resp = self._gcm_response(success=2, results=results)
+        gcm_resp = _gcm_response(success=2, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
@@ -190,8 +192,7 @@ class TestGCMNotifications(test_base.TestCase):
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'),
                    dict(message_id='0:33', registration_id='44')]
-        gcm_resp = self._gcm_response(
-            success=2, canonical_ids=1, results=results)
+        gcm_resp = _gcm_response(success=2, canonical_ids=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])

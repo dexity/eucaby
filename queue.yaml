@@ -11,11 +11,13 @@ queue:
 
 - name: push
   rate: 5/s
+  target: push
   retry_parameters:
     task_retry_limit: 7
 
 - name: mail
   rate: 5/s
+  target: mail
   retry_parameters:
     task_retry_limit: 7
 

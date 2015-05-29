@@ -596,8 +596,7 @@ class TestRequestLocation(test_base.TestCase):
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
 
-    @mock.patch('eucaby_api.tasks.gcm.GCM.json_request')
-    def test_email_user(self, req_mock):
+    def test_email_user(self):
         """Tests email and username parameters."""
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
@@ -1354,7 +1353,8 @@ class TestUserActivity(test_base.TestCase):
 
         # Invalid offset or limit
         invalid_request = dict(
-            fields=dict(offset=api_args.INVALID_INT, limit=api_args.INVALID_INT),
+            fields=dict(offset=api_args.INVALID_INT,
+                        limit=api_args.INVALID_INT),
             message='Invalid request parameters', code='invalid_request')
         params = urllib.urlencode(dict(type='outgoing', offset='a', limit='b'))
         resp = self.client.get(
