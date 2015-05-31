@@ -6,6 +6,7 @@ from flask import current_app
 from gcm import gcm
 import logging
 import os
+from sqlalchemy import exc
 
 from eucaby_api import args as api_args
 from eucaby_api import models
@@ -53,6 +54,7 @@ class GCMNotificationsTask(views.MethodView):
         for dev in devices:
             regs[dev.device_key] = dev
 
+        # XXX: Personalize message
         data = dict(title='Eucaby', message='New incoming messages')
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
         try:
@@ -64,14 +66,14 @@ class GCMNotificationsTask(views.MethodView):
                 e.__class__.__name__, e.message)
             return e.message, 500
 
-        commit = False
+        msg = 'GCM result: {}'.format(str(resp))
+        logging.debug(msg)
         if 'errors' in resp:
             for error, reg_ids in resp['errors'].items():
                 if error in ['NotRegistered', 'InvalidRegistration']:
                     # Deactivate multiple devices
                     for reg_id in reg_ids:
-                        regs[reg_id].deactivate(commit=False)
-                        commit = True
+                        regs[reg_id].deactivate()
 
         if 'canonical' in resp:
             for reg_id, canonical_id in resp['canonical'].items():
@@ -79,11 +81,15 @@ class GCMNotificationsTask(views.MethodView):
                 device = regs[reg_id]
                 device.device_key = canonical_id
                 models.db.session.add(device)
-                commit = True
-        if commit:
-            models.db.session.commit()
-        msg = 'GCM result: {}'.format(str(resp))
-        logging.debug(msg)
+                try:
+                    # Note: From time to time GCM garbage collects registration
+                    #       ids by issuing a new canonical id which replace
+                    #       other registration ids for the same device. You
+                    #       need to deactivate the devices
+                    models.db.session.commit()
+                except exc.IntegrityError:
+                    models.db.session.rollback()
+                    device.deactivate()
         return msg
 
 

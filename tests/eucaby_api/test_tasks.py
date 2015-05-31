@@ -32,6 +32,7 @@ class TestGCMNotifications(test_base.TestCase):
         super(TestGCMNotifications, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
+        self.username = self.user.username
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
@@ -53,8 +54,9 @@ class TestGCMNotifications(test_base.TestCase):
 
     def _assert_device_data(self, expected):
         """Verifies device key and active status."""
-        devices = models.Device.get_by_username(
-            self.user.username, api_args.ANDROID)
+        # Note: Need to explicitly use username because transaction can be
+        #       rolled back and self.user is not bound to a session
+        devices = models.Device.get_by_username(self.username, api_args.ANDROID)
         self.assertEqual(expected,
                          [(dev.device_key, dev.active) for dev in devices])
 
@@ -190,13 +192,17 @@ class TestGCMNotifications(test_base.TestCase):
             queue_name='push', url='/tasks/push/gcm',
             params=dict(recipient_username=self.user.username))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        results = [dict(message_id='0:22'),
-                   dict(message_id='0:33', registration_id='44')]
-        gcm_resp = _gcm_response(success=2, canonical_ids=1, results=results)
+        # Newly created device
+        models.Device.get_or_create(self.user, '44', api_args.ANDROID)
+        results = [dict(message_id='0:22'),  # reg_id='44'
+                   dict(message_id='0:33', registration_id='44'),  # reg_id='12'
+                   dict(message_id='0:55', registration_id='44')]  # reg_id='23'
+        gcm_resp = _gcm_response(success=3, canonical_ids=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
         resp = test_utils.execute_queue_task(self.client, tasks[0])
-        self._assert_device_data([('12', True), ('44', True)])
+        # Note: Devices with reg_id '12' and '23' got deactivated
+        self._assert_device_data([('44', True)])
         self.assertEqual(200, resp.status_code)
 
 
