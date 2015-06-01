@@ -62,23 +62,25 @@ class TestGCMNotifications(test_base.TestCase):
 
     def test_general_errors(self):
         """Tests general errors for push tasks."""
-        # No parameter recipient_username
-        taskqueue.add(queue_name='push', url='/tasks/push/gcm')
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        self.assertEqual(1, len(tasks))
-        resp = test_utils.execute_queue_task(self.client, tasks[0])
-        # The failed task should not be retried so I return 200 code
-        self.assertEqual(200, resp.status_code)
-        self.assertEqual('Missing recipient_username parameter', resp.data)
-
-        # Either user or device, or user device found
-        taskqueue.add(
-            queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username='unknown'))
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        resp = test_utils.execute_queue_task(self.client, tasks[1])
-        self.assertEqual(200, resp.status_code)
-        self.assertEqual('User device not found', resp.data)
+        kwargs = dict(queue_name='push', url='/tasks/push/gcm')
+        cases = [
+            (None, 'Missing recipient_username parameter'),
+            (dict(recipient_username='unknown'), 'User device not found'),
+            (dict(recipient_username=self.user.username, type='wrong'),
+             'Message type can be either location or request')
+        ]
+        for i in range(len(cases)):
+            case = cases[i]
+            qkwargs = kwargs.copy()
+            if case[0]:  # params parameter
+                qkwargs['params'] = case[0]
+            taskqueue.add(**qkwargs)
+            tasks = self.taskq.get_filtered_tasks(queue_names='push')
+            self.assertEqual(i+1, len(tasks))
+            resp = test_utils.execute_queue_task(self.client, tasks[i])
+            # The failed task should not be retried so return 200 code
+            self.assertEqual(200, resp.status_code)
+            self.assertIn(case[1], resp.data)
 
     @mock.patch('gcm.gcm.urllib2.urlopen')
     def test_error_code(self, urlopen_mock):

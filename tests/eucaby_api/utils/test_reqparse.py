@@ -33,6 +33,11 @@ class RequestParserTest(unittest.TestCase):
                 self.assertEqual(
                     dict(param3='Unrecognized parameter'), ex.unparsed)
 
+    def test_clean_args(self):
+        """Tests clean_args function."""
+        # XXX: Implement
+        pass
+
 
 class ArgumentParserTest(unittest.TestCase):
 

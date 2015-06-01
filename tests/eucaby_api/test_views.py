@@ -22,9 +22,8 @@ from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
-def _verify_push_notifications(taskq, client, req_mock):
+def _verify_push_notifications(taskq, client, req_mock, data):
     """Verifies push notification tasks."""
-    # print dir(taskq)
     tasks = taskq.get_filtered_tasks(queue_names='push')
     assert 2 == len(tasks)
     # Android task
@@ -32,7 +31,6 @@ def _verify_push_notifications(taskq, client, req_mock):
     resp_android = test_utils.execute_queue_task(client, tasks[0])
 
     # Test GCM request
-    data = dict(title='Eucaby', message='New incoming messages')
     assert 1 == req_mock.call_count
     req_mock.assert_called_with(
         registration_ids=['12'], data=data, retries=7)
@@ -462,6 +460,8 @@ class TestRequestLocation(test_base.TestCase):
         for user in [self.user, self.user2]:
             for param in device_params:  # Both users own both devices
                 models.Device.get_or_create(user, *param)
+        self.payload_data = dict(
+            title=u'Test Юзер', message='sent you a new request')
 
     def tearDown(self):
         super(TestRequestLocation, self).tearDown()
@@ -564,7 +564,8 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -578,7 +579,8 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
@@ -591,7 +593,8 @@ class TestRequestLocation(test_base.TestCase):
                 username=self.user2.username, message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -874,6 +877,8 @@ class TestNotifyLocation(test_base.TestCase):
         for user in [self.user, self.user2]:
             for param in device_params:  # Both users own both devices
                 models.Device.get_or_create(user, *param)
+        self.payload_data = dict(
+            title=u'Test Юзер', message='sent you a new location')
 
     def tearDown(self):
         super(TestNotifyLocation, self).tearDown()
@@ -1018,7 +1023,8 @@ class TestNotifyLocation(test_base.TestCase):
             'hello world', ['hello world', 'Hi, Test2 User2',
                             u'Test Юзер sent a message'],
             session_dict)
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -1046,7 +1052,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
@@ -1076,7 +1083,8 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, email=self.user2.email,
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
@@ -1090,7 +1098,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user.email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
@@ -1103,7 +1112,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, req_mock)
+        _verify_push_notifications(
+            self.taskq, self.client, req_mock, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])

@@ -11,6 +11,7 @@ from sqlalchemy import exc
 from eucaby_api import args as api_args
 from eucaby_api import models
 from eucaby_api.utils import reqparse
+from eucaby_api.utils import utils as api_utils
 
 
 tasks_app = flask.Blueprint('tasks', __name__)
@@ -21,15 +22,6 @@ def create_apns_socket():
     return apns.APNs(
         use_sandbox=True, cert_file=os.path.abspath('private/EucabyCert.pem'),
         key_file=os.path.abspath('private/EucabyKey.pem'))
-
-
-def payload_data(name, msg_type):
-    """Creates payload data."""
-    title = name or 'Eucaby'
-    message = 'New incoming messages'
-    if msg_type:
-        message = 'sent you a new ' + msg_type
-    return dict(title=title, message=message)
 
 
 apns_socket = create_apns_socket()
@@ -66,7 +58,7 @@ class GCMNotificationsTask(views.MethodView):
         for dev in devices:
             regs[dev.device_key] = dev
 
-        data = payload_data(sender_name, msg_type)
+        data = api_utils.gcm_payload_data(sender_name, msg_type)
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
         try:
             resp = gcm_app.json_request(

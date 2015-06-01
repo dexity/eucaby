@@ -89,3 +89,12 @@ def generate_uuid(is_hex=True):
 def zone2offset(zone):
     """Converts timezone hour to offset minute."""
     return zone*60
+
+
+def gcm_payload_data(name, msg_type):
+    """Creates payload data for GCM message."""
+    title = name or 'Eucaby'
+    message = 'New incoming messages'
+    if msg_type:
+        message = 'sent you a new ' + msg_type
+    return dict(title=title, message=message)
