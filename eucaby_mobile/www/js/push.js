@@ -3,9 +3,27 @@
 angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
 .factory('push',
-    ['$cordovaPush', '$rootScope', 'EucabyApi', '$state', '$ionicPopup',
-     function($cordovaPush, $rootScope, EucabyApi, $state, $ionicPopup) {
+    ['$cordovaPush', '$rootScope', 'EucabyApi', 'storageManager',
+     function($cordovaPush, $rootScope, EucabyApi, storageManager) {
 
+    var registerDevice = function(deviceKey, platform){
+        if (storageManager.getDeviceStatus()){
+            return;  // Device is already registered with GCM or APNs
+        }
+        EucabyApi.api({method: 'POST', path: '/device/register',
+                       data: {device_key: deviceKey, platform: platform}})
+            .then(function(){
+                storageManager.setDeviceStatus(true);
+            });  // Silently fail if device registration fails
+    };
+    var checkMessages = function(status){
+        // Checks if new incoming messages have arrived
+        if (status !== undefined){
+            storageManager.setNewMessages(status);
+            $rootScope.hasMessages = status;
+        }
+        return storageManager.hasNewMessages();
+    };
     var initAndroid = function() {
         // Init push notifications for Android
         var config = {
@@ -17,18 +35,19 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             console.log('Android registration accepted');
         });
 
-        $rootScope.$on('$cordovaPush:notificationReceived', function(event, notification) {
+        $rootScope.$on('$cordovaPush:notificationReceived',
+                       function(event, notification) {
 
+          console.log('Received notification: ' + notification);
           switch(notification.event) {
             case 'registered':
-              if (!notification.regid) {
-                  break
+              if (notification.regid) {
+                  registerDevice(notification.regid, 'android');
               }
-              EucabyApi.registerDevice(notification.regid, 'android');
               break;
 
             case 'message':
-              $rootScope.checkMessages(true);
+              checkMessages(true);
               break;
 
             case 'error':
@@ -59,15 +78,15 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             alert: true
         };
         $cordovaPush.register(config).then(function(deviceToken) {
-            EucabyApi.registerDevice(deviceToken, 'ios');
+            registerDevice(deviceToken, 'ios');
             console.log("deviceToken: " + deviceToken);
         }, function(err) {
-            alert("Registration error: " + err);
+            console.error("Registration error: " + err);
         });
 
         $rootScope.$on('$cordovaPush:notificationReceived',
                        function(event, notification) {
-            $rootScope.checkMessages(true);
+            checkMessages(true);
         });
 
         /*
@@ -81,7 +100,9 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
     };
 
     return {
+        checkMessages: checkMessages,
         initNotifications: function(){
+            console.log('Initialize notifications');
             // Register device and set up notifications to receive messages
             try {
                 if (device.platform === 'iOS') {

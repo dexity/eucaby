@@ -2,12 +2,12 @@
 
 angular.module('eucaby',
     ['ionic', 'ngCordova', 'eucaby.controllers', 'eucaby.filters',
-     'eucaby.api'])
+     'eucaby.utils', 'eucaby.api'])
 
-.run(function($rootScope, $state, $ionicPlatform, $window, EucabyApi) {
+.run(['$rootScope', '$state', '$ionicPlatform', '$window', 'EucabyApi', 'storageManager',
+      function($rootScope, $state, $ionicPlatform, $window, EucabyApi, storageManager) {
 
-    var storage = $window.localStorage;
-    EucabyApi.init(storage);
+    EucabyApi.init();
 
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
@@ -17,7 +17,7 @@ angular.module('eucaby',
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
         if (toState.name !== 'app.login' && toState.name !== 'app.logout' &&
-            !storage.getItem('ec_access_token')) {
+            !storageManager.getAccessToken()) {
             $state.go('app.login');
             event.preventDefault();
         }
@@ -28,7 +28,7 @@ angular.module('eucaby',
     });
 
 
-})
+}])
 
 .constant('$ionicLoadingConfig', {
     template: '<ion-spinner icon="lines"/>',

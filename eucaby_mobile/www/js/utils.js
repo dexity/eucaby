@@ -187,4 +187,56 @@ angular.module('eucaby.utils', [])
             return ht;
         }
     };
+ })
+
+.factory('storageManager', function(){
+
+    var storage = window.localStorage;
+    var ACCESS_TOKEN = 'ec_access_token';
+    var REFRESH_TOKEN = 'ec_refresh_token';
+    var FB_TOKEN = 'fbtoken';
+    var DEVICE_STATUS = 'device_registered';
+    var NEW_MESSAGES = 'incoming_messages';
+
+    return {
+        getStorage: function(){
+            return storage;
+        },
+        saveAuth: function(data){
+            storage.setItem(ACCESS_TOKEN, data.access_token);
+            storage.setItem(REFRESH_TOKEN, data.refresh_token);
+            delete storage.fbtoken;
+        },
+        getRefreshToken: function(){
+            return storage.getItem(REFRESH_TOKEN);
+        },
+        getFbToken: function(){
+            // Note: Storage in openfb-angular module has different interface
+            //       from localStorage so we look up by key
+            return storage.fbtoken;
+        },
+        getAccessToken: function(){
+            return storage.getItem(ACCESS_TOKEN);
+        },
+        getDeviceStatus: function(){
+            return storage.getItem(DEVICE_STATUS) === 'true';
+        },
+        setDeviceStatus: function(value){
+            storage.setItem(DEVICE_STATUS, value);
+        },
+        setNewMessages: function(value){
+            storage.setItem(NEW_MESSAGES, value);
+        },
+        hasNewMessages: function(){
+            storage.getItem(NEW_MESSAGES) === 'true';
+        },
+        clearAll: function(){
+            storage.removeItem(ACCESS_TOKEN);
+            storage.removeItem(REFRESH_TOKEN);
+            storage.removeItem(FB_TOKEN);
+            delete storage.fbtoken;
+            storage.removeItem(DEVICE_STATUS);
+            storage.removeItem(NEW_MESSAGES);
+        }
+    };
  });

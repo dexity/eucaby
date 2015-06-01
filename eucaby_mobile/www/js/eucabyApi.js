@@ -10,53 +10,21 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
 
 .constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 
-.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'utils', 'ENDPOINT',
-         function ($http, $q, OpenFB, utils, ENDPOINT) {
+.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'utils', 'storageManager', 'ENDPOINT',
+         function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
 
     var runningInCordova = false;
-    var storage;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
     document.addEventListener('deviceready', function () {
         runningInCordova = true;
     }, false);
 
-    var storageManager = {
-        saveAuth: function(data){
-            storage.setItem('ec_access_token', data.access_token);
-            storage.setItem('ec_refresh_token', data.refresh_token);
-            delete storage.fbtoken;
-        },
-        getRefreshToken: function(){
-            return storage.getItem('ec_refresh_token');
-        },
-        getFbToken: function(){
-            // Storage in openfb-angular module has different interface
-            // from localStorage so we look up by key
-            return storage.fbtoken;
-        },
-        getAccessToken: function(){
-            return storage.getItem('ec_access_token');
-        },
-        clearAll: function(){
-            storage.removeItem('ec_access_token');
-            storage.removeItem('ec_refresh_token');
-            storage.removeItem('device_key');
-            delete storage.fbtoken;
-        },
-        getDeviceKey: function(){
-            return storage.getItem('device_key');
-        },
-        setDeviceKey: function(deviceKey){
-            storage.setItem('device_key', deviceKey);
-        }
-    };
-
     return {
-        init: function(storage_){
-            storage = storage_;
+        init: function(){
             OpenFB.init('809426419123624',
-                        'http://localhost:8100/oauthcallback.html', storage_);
+                        'http://localhost:8100/oauthcallback.html',
+                        storageManager.getStorage());
         },
         login: function(force){
             var deferred = $q.defer();
@@ -167,17 +135,6 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
 
             self.login().then(makeApiRequest, errorHandler);
             return deferred.promise;
-        },
-        registerDevice: function(deviceKey, platform){
-            var self = this;
-            if (storageManager.getDeviceKey()){
-                return;  // Device is already registered with GCM or APNs
-            }
-            self.api({method: 'POST', path: '/device/register',
-                      data: {device_key: deviceKey, platform: platform}})
-                .then(function(){
-                    storageManager.setDeviceKey(deviceKey);
-                });  // Silently fail if device registration fails
         },
         logout: function(){
             storageManager.clearAll();

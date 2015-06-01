@@ -196,7 +196,7 @@ class TestGCMNotifications(test_base.TestCase):
         models.Device.get_or_create(self.user, '44', api_args.ANDROID)
         results = [dict(message_id='0:22'),  # reg_id='44'
                    dict(message_id='0:33', registration_id='44'),  # reg_id='12'
-                   dict(message_id='0:55', registration_id='44')]  # reg_id='23'
+                   dict(error='NotRegistered')]  # reg_id='23'
         gcm_resp = _gcm_response(success=3, canonical_ids=1, results=results)
         urlopen_mock.return_value = mock.Mock(
             read=mock.Mock(return_value=gcm_resp))
