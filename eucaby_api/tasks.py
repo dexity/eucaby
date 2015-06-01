@@ -10,11 +10,10 @@ from sqlalchemy import exc
 
 from eucaby_api import args as api_args
 from eucaby_api import models
+from eucaby_api.utils import reqparse
 
 
 tasks_app = flask.Blueprint('tasks', __name__)
-
-OK = 'ok'
 
 
 def create_apns_socket():
@@ -22,6 +21,15 @@ def create_apns_socket():
     return apns.APNs(
         use_sandbox=True, cert_file=os.path.abspath('private/EucabyCert.pem'),
         key_file=os.path.abspath('private/EucabyKey.pem'))
+
+
+def payload_data(name, msg_type):
+    """Creates payload data."""
+    title = name or 'Eucaby'
+    message = 'New incoming messages'
+    if msg_type:
+        message = 'sent you a new ' + msg_type
+    return dict(title=title, message=message)
 
 
 apns_socket = create_apns_socket()
@@ -38,13 +46,17 @@ class GCMNotificationsTask(views.MethodView):
     methods = ['POST']
 
     def post(self):  # pylint: disable=no-self-use
-        username = flask.request.form.get('recipient_username')
-        if not username:
-            msg = 'Missing recipient_username parameter'
-            logging.error(msg)
-            return msg
+        args = reqparse.clean_args(api_args.GCM_TASK_ARGS, is_task=True)
+        if isinstance(args, flask.Response):
+            logging.error(str(args.data))
+            return args
+
+        recipient_username = args['recipient_username']
+        sender_name = args['sender_name']
+        msg_type = args['type']
+
         devices = models.Device.get_by_username(
-            username, platform=api_args.ANDROID)
+            recipient_username, platform=api_args.ANDROID)
         if not devices:
             msg = 'User device not found'
             logging.info(msg)
@@ -54,8 +66,7 @@ class GCMNotificationsTask(views.MethodView):
         for dev in devices:
             regs[dev.device_key] = dev
 
-        # XXX: Personalize message
-        data = dict(title='Eucaby', message='New incoming messages')
+        data = payload_data(sender_name, msg_type)
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
         try:
             resp = gcm_app.json_request(
@@ -105,7 +116,7 @@ class APNsNotificationsTask(views.MethodView):
         #     payload = apns.Payload(alert=msg, sound="default")
         #     apns_socket.gateway_server.send_notification(token, payload)
 
-        return OK
+        return 'ok'
 
 
 class MailTask(views.MethodView):
@@ -114,7 +125,7 @@ class MailTask(views.MethodView):
 
     def post(self):  # pylint: disable=no-self-use
         # XXX: Implement
-        return OK
+        return 'ok'
 
 
 tasks_app.add_url_rule(

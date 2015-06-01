@@ -82,12 +82,15 @@ class RequestLocationView(flask_restful.Resource):
         # Send notifications to Android and iOS devices of the registered user
         # (sender and recipient can be the same person)
         if recipient_username:
+            params = dict(
+                recipient_username=recipient_username,
+                sender_name=user.name, type=api_args.REQUEST)
             taskqueue.add(
                 queue_name='push', url=flask.url_for('tasks.push_gcm'),
-                params=dict(recipient_username=recipient_username))
+                params=params)
             taskqueue.add(
                 queue_name='push', url=flask.url_for('tasks.push_apns'),
-                params=dict(recipient_username=recipient_username))
+                params=params)
 
         if recipient_email:
             # Send email copy to sender?
@@ -172,12 +175,15 @@ class NotifyLocationView(flask_restful.Resource):
         # Send notifications to Android and iOS devices of the registered user
         # (sender and recipient can be the same person)
         if recipient_username:
+            params = dict(
+                recipient_username=recipient_username,
+                sender_name=user.name, type=api_args.LOCATION)
             taskqueue.add(
                 queue_name='push', url=flask.url_for('tasks.push_gcm'),
-                params=dict(recipient_username=recipient_username))
+                params=params)
             taskqueue.add(
                 queue_name='push', url=flask.url_for('tasks.push_apns'),
-                params=dict(recipient_username=recipient_username))
+                params=params)
 
         if recipient_email:
             # Send email copy to sender?

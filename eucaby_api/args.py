@@ -20,16 +20,19 @@ MISSING_EMAIL_USERNAME_REQ = (
     'Missing token, email or username parameters')
 INVALID_ACTIVITY_TYPE = ('Activity type can be either outgoing, incoming, '
                          'request or notification')
+INVALID_MESSAGE = 'Message type can be either location or request'
 INVALID_PLATFORM = 'Platform can be either android or ios'
 INVALID_INT = 'Integer type is expected'
 OUTGOING = 'outgoing'
 INCOMING = 'incoming'
 REQUEST = 'request'
 NOTIFICATION = 'notification'
+LOCATION = 'location'
 ANDROID = 'android'
 IOS = 'ios'
 ACTIVITY_CHOICES = [OUTGOING, INCOMING, REQUEST, NOTIFICATION]
 PLATFORM_CHOICES = [ANDROID, IOS]
+MESSAGE_CHOICES = [REQUEST, LOCATION]
 
 
 class ValidationError(Exception):
@@ -95,4 +98,12 @@ REGISTER_DEVICE = [
                       help=MISSING_PARAM.format('device_key')),
     reqparse.Argument(name='platform', type=str, choices=PLATFORM_CHOICES,
                       required=True, help=INVALID_PLATFORM)
+]
+
+GCM_TASK_ARGS = [
+    reqparse.Argument(name='recipient_username', type=str, required=True,
+                      help=MISSING_PARAM.format('recipient_username')),
+    reqparse.Argument(name='sender_name', type=unicode),
+    reqparse.Argument(name='type', type=str, choices=MESSAGE_CHOICES,
+                      help=INVALID_MESSAGE)
 ]
