@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import unittest
 
 from eucaby_api import app as eucaby_app
@@ -17,17 +19,17 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             dict(title='Eucaby', message='New incoming messages'), data)
         # Name parameter is set
-        data = api_utils.gcm_payload_data('Full Name', '')
+        data = api_utils.gcm_payload_data(u'Юзер', '')
         self.assertEqual(
-            dict(title='Full Name', message='New incoming messages'), data)
+            dict(title=u'Юзер', message='New incoming messages'), data)
         # Message type is set
         data = api_utils.gcm_payload_data(None, 'something')
         self.assertEqual(
             dict(title='Eucaby', message='sent you a new something'), data)
         # Name and message are set
-        data = api_utils.gcm_payload_data('Full Name', 'something')
+        data = api_utils.gcm_payload_data(u'Юзер', 'something')
         self.assertEqual(
-            dict(title='Full Name', message='sent you a new something'), data)
+            dict(title=u'Юзер', message='sent you a new something'), data)
 
     def test_apns_payload_data(self):
         """Tests APNs payload data."""
@@ -36,16 +38,16 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(dict(alert='Eucaby\nNew incoming messages',
                               sound='default'), data)
         # Name parameter is set
-        data = api_utils.apns_payload_data('Full Name', '')
-        self.assertEqual(dict(alert='Full Name\nNew incoming messages',
+        data = api_utils.apns_payload_data(u'Юзер', '')
+        self.assertEqual(dict(alert=u'Юзер\nNew incoming messages',
                               sound='default'), data)
         # Message type is set
         data = api_utils.apns_payload_data(None, 'something')
         self.assertEqual(dict(alert='Eucaby\nsent you a new something',
                               sound='default'), data)
         # Name and message are set
-        data = api_utils.apns_payload_data('Full Name', 'something')
-        self.assertEqual(dict(alert='Full Name\nsent you a new something',
+        data = api_utils.apns_payload_data(u'Юзер', 'something')
+        self.assertEqual(dict(alert=u'Юзер\nsent you a new something',
                               sound='default'), data)
 
 
