@@ -5,8 +5,8 @@ from flask import views
 from flask import current_app
 from gcm import gcm
 import logging
-import os
 from sqlalchemy import exc
+import time
 
 from eucaby_api import args as api_args
 from eucaby_api import models
@@ -17,48 +17,46 @@ from eucaby_api.utils import utils as api_utils
 tasks_app = flask.Blueprint('tasks', __name__)
 
 
-def create_apns_socket():
-    """Creates socket for APNs service."""
-    return apns.APNs(
-        use_sandbox=True, cert_file=os.path.abspath('private/EucabyCert.pem'),
-        key_file=os.path.abspath('private/EucabyKey.pem'))
-
-
-apns_socket = create_apns_socket()
-
-
 class PushNotificationsTask(views.MethodView):
 
-    pass
-
-
-class GCMNotificationsTask(views.MethodView):
-
-    """Push notifications for GCM."""
     methods = ['POST']
 
-    def post(self):  # pylint: disable=no-self-use
-        args = reqparse.clean_args(api_args.GCM_TASK_ARGS, is_task=True)
+    def handle_input(self, platform):
+        args = reqparse.clean_args(api_args.PUSH_TASK_ARGS, is_task=True)
         if isinstance(args, flask.Response):
             logging.error(str(args.data))
             return args
 
-        recipient_username = args['recipient_username']
-        sender_name = args['sender_name']
-        msg_type = args['type']
+        flask.request.recipient_username = args['recipient_username']
+        flask.request.sender_name = args['sender_name']
+        flask.request.message_type = args['type']
 
         devices = models.Device.get_by_username(
-            recipient_username, platform=api_args.ANDROID)
+            flask.request.recipient_username, platform=platform)
         if not devices:
             msg = 'User device not found'
             logging.info(msg)
-            return msg
+            return flask.make_response(msg)
+        flask.request.devices = devices
+
+
+class GCMNotificationsTask(PushNotificationsTask):
+
+    """Push notifications for GCM."""
+
+    def post(self):  # pylint: disable=no-self-use
+        res = self.handle_input(api_args.ANDROID)
+        if isinstance(res, flask.Response):
+            return res
 
         regs = {}
-        for dev in devices:
+        for dev in flask.request.devices:
             regs[dev.device_key] = dev
+        logging.info('Pushing GCM notifications to %s devices',
+                     len(flask.request.devices))
 
-        data = api_utils.gcm_payload_data(sender_name, msg_type)
+        data = api_utils.gcm_payload_data(
+            flask.request.sender_name, flask.request.message_type)
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
         try:
             resp = gcm_app.json_request(
@@ -70,7 +68,7 @@ class GCMNotificationsTask(views.MethodView):
             return e.message, 500
 
         msg = 'GCM result: {}'.format(str(resp))
-        logging.debug(msg)
+        logging.info(msg)
         if 'errors' in resp:
             for error, reg_ids in resp['errors'].items():
                 if error in ['NotRegistered', 'InvalidRegistration']:
@@ -96,19 +94,32 @@ class GCMNotificationsTask(views.MethodView):
         return msg
 
 
-class APNsNotificationsTask(views.MethodView):
+class APNsNotificationsTask(PushNotificationsTask):
 
     """Push notifications for APNs."""
-    methods = ['POST']
 
     def post(self):  # pylint: disable=no-self-use
-        # XXX: Handle properly multiple messages
-        # ios_tokens = []
-        # for token in ios_tokens:
-        #     payload = apns.Payload(alert=msg, sound="default")
-        #     apns_socket.gateway_server.send_notification(token, payload)
+        res = self.handle_input(api_args.IOS)
+        if isinstance(res, flask.Response):
+            return res
 
-        return 'ok'
+        logging.info('Pushing APNs notifications to %s devices',
+                     len(flask.request.devices))
+        frame = apns.Frame()
+        expiry = time.time() + 3600
+        priority = 10
+        kwargs = api_utils.apns_payload_data(
+            flask.request.sender_name, flask.request.message_type)
+        payload = apns.Payload(**kwargs)
+        for device in flask.request.devices:
+            identifier = 1
+            frame.add_item(
+                device.device_key, payload, identifier, expiry, priority)
+        current_app.apns_socket.gateway_server.send_notification_multiple(frame)
+
+        msg = 'Notification to APNs is pushed'
+        logging.info(msg)
+        return msg
 
 
 class MailTask(views.MethodView):

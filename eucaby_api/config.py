@@ -1,10 +1,11 @@
 """API configuration."""
 
+import os
 from eucaby_api import secret_keys
 
-LOCAL_APP_ID = 'local-dev'
 PRD_APP_ID = 'eucaby-prd'
 DEV_APP_ID = 'eucaby-dev'
+LOCAL_APP_ID = 'local-dev'
 
 
 class Config(object):
@@ -24,6 +25,9 @@ class Config(object):
     EUCABY_URL = 'http://localhost:8888'
     NOREPLY_EMAIL = 'alex@eucaby.com'
     GCM_API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
+    APNS_CERT_FILE = os.path.abspath('private/dev/EucabyCert.pem')
+    APNS_KEY_FILE = os.path.abspath('private/dev/EucabyKey.pem')
+    APNS_USE_SANDBOX = True
 
 
 class Testing(Config):
@@ -91,3 +95,6 @@ class Production(Config):
     EUCABY_URL = 'http://eucaby-prd.appspot.com'
     DEBUG = False
     CORS_ENABLED = False
+    APNS_CERT_FILE = os.path.abspath('private/prd/EucabyCert.pem')
+    APNS_KEY_FILE = os.path.abspath('private/prd/EucabyKey.pem')
+    APNS_USE_SANDBOX = False

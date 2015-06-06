@@ -25,7 +25,31 @@ def _gcm_response(success, failure=0, canonical_ids=0, results=None):
     return json.dumps(resp)
 
 
-class TestGCMNotifications(test_base.TestCase):
+class TestPushNotifications(test_base.TestCase):
+
+    def _assert_general_errors(self, url):
+        kwargs = dict(queue_name='push', url=url)
+        cases = [
+            (None, 'Missing recipient_username parameter'),
+            (dict(recipient_username='unknown'), 'User device not found'),
+            (dict(recipient_username=self.user.username, type='wrong'),
+             'Message type can be either location or request')
+        ]
+        for i in range(len(cases)):
+            case = cases[i]
+            qkwargs = kwargs.copy()
+            if case[0]:  # params parameter
+                qkwargs['params'] = case[0]
+            taskqueue.add(**qkwargs)
+            tasks = self.taskq.get_filtered_tasks(queue_names='push')
+            self.assertEqual(i+1, len(tasks))
+            resp = test_utils.execute_queue_task(self.client, tasks[i])
+            # The failed task should not be retried so return 200 code
+            self.assertEqual(200, resp.status_code)
+            self.assertIn(case[1], resp.data)
+
+
+class TestGCMNotifications(TestPushNotifications):
 
     """Tests mobile push notifications."""
     def setUp(self):
@@ -61,26 +85,8 @@ class TestGCMNotifications(test_base.TestCase):
                          [(dev.device_key, dev.active) for dev in devices])
 
     def test_general_errors(self):
-        """Tests general errors for push tasks."""
-        kwargs = dict(queue_name='push', url='/tasks/push/gcm')
-        cases = [
-            (None, 'Missing recipient_username parameter'),
-            (dict(recipient_username='unknown'), 'User device not found'),
-            (dict(recipient_username=self.user.username, type='wrong'),
-             'Message type can be either location or request')
-        ]
-        for i in range(len(cases)):
-            case = cases[i]
-            qkwargs = kwargs.copy()
-            if case[0]:  # params parameter
-                qkwargs['params'] = case[0]
-            taskqueue.add(**qkwargs)
-            tasks = self.taskq.get_filtered_tasks(queue_names='push')
-            self.assertEqual(i+1, len(tasks))
-            resp = test_utils.execute_queue_task(self.client, tasks[i])
-            # The failed task should not be retried so return 200 code
-            self.assertEqual(200, resp.status_code)
-            self.assertIn(case[1], resp.data)
+        """Tests general errors for gcm push tasks."""
+        self._assert_general_errors('/tasks/push/gcm')
 
     @mock.patch('gcm.gcm.urllib2.urlopen')
     def test_error_code(self, urlopen_mock):
@@ -205,6 +211,54 @@ class TestGCMNotifications(test_base.TestCase):
         resp = test_utils.execute_queue_task(self.client, tasks[0])
         # Note: Devices with reg_id '12' and '23' got deactivated
         self._assert_device_data([('44', True)])
+        self.assertEqual(200, resp.status_code)
+
+
+class TestAPNsNotifications(TestPushNotifications):
+
+    """Tests APNs mobile push notifications."""
+    def setUp(self):
+        super(TestAPNsNotifications, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.username = self.user.username
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
+        # Create devices
+        device_params = [
+            ('12', api_args.ANDROID), ('23', api_args.IOS),
+            ('34', api_args.IOS)]
+        self.devices = [models.Device.get_or_create(
+            self.user, *param) for param in device_params]
+
+    def test_general_errors(self):
+        """Tests general errors for apns push tasks."""
+        self._assert_general_errors('/tasks/push/apns')
+
+    @mock.patch('eucaby_api.tasks.apns.Payload')
+    @mock.patch('eucaby_api.tasks.apns.Frame.add_item')
+    def test_success(self, mock_add_item, mock_payload):
+        taskqueue.add(
+            queue_name='push', url='/tasks/push/apns',
+            params=dict(recipient_username=self.user.username,
+                        sender_name='Name', type=api_args.LOCATION))
+        tasks = self.taskq.get_filtered_tasks(queue_names='push')
+        # To patch current_app you need to run within the application context
+        with self.app.app_context():
+            with mock.patch(
+                'eucaby_api.tasks.current_app.apns_socket.gateway_server.'
+                'send_notification_multiple') as mock_send_notif:
+                resp = test_utils.execute_queue_task(self.client, tasks[0])
+                self.assertEqual(1, mock_send_notif.call_count)
+        mock_payload.assert_called_with(
+            sound='default', alert='Name\nsent you a new location')
+        self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
         self.assertEqual(200, resp.status_code)
 
 

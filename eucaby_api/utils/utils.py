@@ -98,3 +98,10 @@ def gcm_payload_data(name, msg_type):
     if msg_type:
         message = 'sent you a new ' + msg_type
     return dict(title=title, message=message)
+
+
+def apns_payload_data(name, msg_type):
+    """Creates payload data for APNs message."""
+    data = gcm_payload_data(name, msg_type)
+    return dict(
+        alert='{title}\n{message}'.format(**data), sound='default')

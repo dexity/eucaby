@@ -100,7 +100,7 @@ REGISTER_DEVICE = [
                       required=True, help=INVALID_PLATFORM)
 ]
 
-GCM_TASK_ARGS = [
+PUSH_TASK_ARGS = [
     reqparse.Argument(name='recipient_username', type=str, required=True,
                       help=MISSING_PARAM.format('recipient_username')),
     reqparse.Argument(name='sender_name', type=unicode),

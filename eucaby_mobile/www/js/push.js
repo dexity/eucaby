@@ -78,7 +78,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             alert: true
         };
         $cordovaPush.register(config).then(function(deviceToken) {
-            registerDevice(deviceToken, 'ios');
+//            registerDevice(deviceToken, 'ios');
             console.log("deviceToken: " + deviceToken);
         }, function(err) {
             console.error("Registration error: " + err);
