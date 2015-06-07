@@ -262,12 +262,45 @@ class TestAPNsNotifications(TestPushNotifications):
         self.assertEqual(200, resp.status_code)
 
 
-class TestCleanupiOSDevicesTask():
-    pass
-    # def test(self):
-    #     print self.app.apns_socket.feedback_server.items()
-    #     for (token_hex, fail_time) in self.app.apns_socket.feedback_server.items():
-    #         print token_hex, fail_time
+class TestCleanupiOSDevicesTask(test_base.TestCase):
+
+    def setUp(self):
+        super(TestCleanupiOSDevicesTask, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
+        # Create devices
+        device_params = [
+            ('12', api_args.ANDROID), ('23', api_args.IOS),
+            ('34', api_args.IOS)]
+        self.devices = [models.Device.get_or_create(
+            self.user, *param) for param in device_params]
+
+    def test_cleanup_devices(self):
+        """Tests cleanup ios devices."""
+        with self.app.app_context():
+            with mock.patch(
+                'eucaby_api.tasks.current_app.apns_socket'
+            ) as mock_apns_socket:
+                mock_apns_socket.feedback_server =  {
+                    '12': mock.Mock(), '23': mock.Mock(), '34': mock.Mock()}
+                # Execute cron job
+                resp = self.client.get('/tasks/push/apns/cleanup',
+                                       headers={'X-Appengine-Cron': 'true'})
+                self.assertEqual(200, resp.status_code)
+                self.assertIn(
+                    'The following iOS devices are subject to cleanup',
+                    resp.data)
+                devices = models.Device.get_by_username(self.user.username)
+                # Android device can't be deactivated
+                self.assertEqual(self.devices[:1], devices)
 
 
 if __name__ == '__main__':

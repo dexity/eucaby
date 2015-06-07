@@ -295,5 +295,4 @@ class Device(db.Model):
         if platform:
             objs = objs.filter(cls.platform == platform)
         objs.update(dict(active=False), synchronize_session=False)
-        return objs
 

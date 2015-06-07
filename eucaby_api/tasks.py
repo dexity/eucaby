@@ -133,8 +133,9 @@ class CleanupiOSDevicesTask(views.MethodView):
         for device_key, fail_time in items_gen:
             device_keys.append(device_key)
 
-        models.Device.deactivate_multiple(device_keys)
-        msg = 'Successfully cleaned up iOS devices: {}'.format(str(device_keys))
+        models.Device.deactivate_multiple(device_keys, platform=api_args.IOS)
+        msg = 'The following iOS devices are subject to cleanup: {}'.format(
+            str(device_keys))
         logging.info(msg)
         return msg
 
