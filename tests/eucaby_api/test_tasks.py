@@ -31,7 +31,7 @@ class TestPushNotifications(test_base.TestCase):
         kwargs = dict(queue_name='push', url=url)
         cases = [
             (None, 'Missing recipient_username parameter'),
-            (dict(recipient_username='unknown'), 'User device not found'),
+            (dict(recipient_username='unknown'), 'No android devices found'),
             (dict(recipient_username=self.user.username, type='wrong'),
              'Message type can be either location or request')
         ]
@@ -241,25 +241,27 @@ class TestAPNsNotifications(TestPushNotifications):
         """Tests general errors for apns push tasks."""
         self._assert_general_errors('/tasks/push/apns')
 
+    @mock.patch('eucaby_api.tasks.api_utils.create_apns_socket')
     @mock.patch('eucaby_api.tasks.apns.Payload')
     @mock.patch('eucaby_api.tasks.apns.Frame.add_item')
-    def test_success(self, mock_add_item, mock_payload):
+    def test_success(self, mock_add_item, mock_payload, mock_create_socket):
+        """Tests sending push notifications to iOS devices."""
+        apns_socket = mock.Mock()
+        mock_create_socket.return_value = apns_socket
         taskqueue.add(
             queue_name='push', url='/tasks/push/apns',
             params=dict(recipient_username=self.user.username,
                         sender_name='Name', type=api_args.LOCATION))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        # To patch current_app you need to run within the application context
-        with self.app.app_context():
-            with mock.patch(
-                'eucaby_api.tasks.current_app.apns_socket.gateway_server.'
-                'send_notification_multiple') as mock_send_notif:
-                resp = test_utils.execute_queue_task(self.client, tasks[0])
-                self.assertEqual(1, mock_send_notif.call_count)
+
+        resp = test_utils.execute_queue_task(self.client, tasks[0])
+        self.assertEqual(200, resp.status_code)
+
         mock_payload.assert_called_with(
             sound='default', alert='Name\nsent you a new location')
         self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
-        self.assertEqual(200, resp.status_code)
+        mock_send_notif = apns_socket.gateway_server.send_notification_multiple
+        self.assertEqual(1, mock_send_notif.call_count)
 
 
 class TestCleanupiOSDevicesTask(test_base.TestCase):
@@ -283,24 +285,25 @@ class TestCleanupiOSDevicesTask(test_base.TestCase):
         self.devices = [models.Device.get_or_create(
             self.user, *param) for param in device_params]
 
-    def test_cleanup_devices(self):
+    @mock.patch('eucaby_api.tasks.api_utils.create_apns_socket')
+    def test_cleanup_devices(self, mock_create_socket):
         """Tests cleanup ios devices."""
-        with self.app.app_context():
-            with mock.patch(
-                'eucaby_api.tasks.current_app.apns_socket'
-            ) as mock_apns_socket:
-                mock_apns_socket.feedback_server =  {
-                    '12': mock.Mock(), '23': mock.Mock(), '34': mock.Mock()}
-                # Execute cron job
-                resp = self.client.get('/tasks/push/apns/cleanup',
-                                       headers={'X-Appengine-Cron': 'true'})
-                self.assertEqual(200, resp.status_code)
-                self.assertIn(
-                    'The following iOS devices are subject to cleanup',
-                    resp.data)
-                devices = models.Device.get_by_username(self.user.username)
-                # Android device can't be deactivated
-                self.assertEqual(self.devices[:1], devices)
+        apns_socket = mock.Mock(
+            feedback_server={
+                '12': mock.Mock(), '23': mock.Mock(), '34': mock.Mock()})
+        mock_create_socket.return_value = apns_socket
+
+        # Execute cron job
+        resp = self.client.get('/tasks/push/apns/cleanup',
+                               headers={'X-Appengine-Cron': 'true'})
+        self.assertEqual(200, resp.status_code)
+        self.assertIn(
+            'The following iOS devices are subject to cleanup',
+            resp.data)
+        devices = models.Device.get_by_username(self.user.username)
+        # iOS devices are deactivated
+        self.assertEqual(1, len(devices))
+        self.assertEqual(self.devices[0].device_key, devices[0].device_key)
 
 
 if __name__ == '__main__':

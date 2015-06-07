@@ -21,7 +21,8 @@ class PushNotificationsTask(views.MethodView):
 
     methods = ['POST']
 
-    def handle_input(self, platform):
+    @classmethod
+    def handle_input(cls, platform):
         args = reqparse.clean_args(api_args.PUSH_TASK_ARGS, is_task=True)
         if isinstance(args, flask.Response):
             logging.error(str(args.data))
@@ -34,7 +35,7 @@ class PushNotificationsTask(views.MethodView):
         devices = models.Device.get_by_username(
             flask.request.recipient_username, platform=platform)
         if not devices:
-            msg = 'User device not found'
+            msg = 'No android devices found'
             logging.info(msg)
             return flask.make_response(msg)
         flask.request.devices = devices
@@ -115,7 +116,8 @@ class APNsNotificationsTask(PushNotificationsTask):
             identifier = 1
             frame.add_item(
                 device.device_key, payload, identifier, expiry, priority)
-        current_app.apns_socket.gateway_server.send_notification_multiple(frame)
+        apns_socket = api_utils.create_apns_socket(current_app)
+        apns_socket.gateway_server.send_notification_multiple(frame)
 
         msg = 'Notification to APNs is pushed'
         logging.info(msg)
@@ -129,8 +131,9 @@ class CleanupiOSDevicesTask(views.MethodView):
 
     def get(self):  # pylint: disable=no-self-use
         device_keys = []
-        items_gen = current_app.apns_socket.feedback_server.items()
-        for device_key, fail_time in items_gen:
+        apns_socket = api_utils.create_apns_socket(current_app)
+        items_gen = apns_socket.feedback_server.items()
+        for device_key, fail_time in items_gen:  # pylint: disable=unused-variable
             device_keys.append(device_key)
 
         models.Device.deactivate_multiple(device_keys, platform=api_args.IOS)
@@ -154,6 +157,7 @@ tasks_app.add_url_rule(
 tasks_app.add_url_rule(
     '/push/apns', view_func=APNsNotificationsTask.as_view('push_apns'))
 tasks_app.add_url_rule(
-    '/push/apns/cleanup', view_func=CleanupiOSDevicesTask.as_view('cleanup_apns'))
+    '/push/apns/cleanup',
+    view_func=CleanupiOSDevicesTask.as_view('cleanup_apns'))
 tasks_app.add_url_rule(
     '/mail', view_func=MailTask.as_view('mail'))

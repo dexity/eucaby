@@ -3,7 +3,6 @@
 import datetime
 import flask
 import flask_sqlalchemy
-import sqlalchemy
 from sqlalchemy_utils.types import choice
 
 from eucaby_api import args as api_args
@@ -295,4 +294,5 @@ class Device(db.Model):
         if platform:
             objs = objs.filter(cls.platform == platform)
         objs.update(dict(active=False), synchronize_session=False)
+        db.session.commit()
 

@@ -1,6 +1,5 @@
 """Application utils."""
 
-import apns
 import flask
 import flask_cors
 from eucaby_api import auth
@@ -22,15 +21,6 @@ def create_app():
     return _app
 
 
-def set_apns_socket(app):
-    """Creates APNs socket. App should be configured"""
-    app.apns_socket = apns.APNs(
-        use_sandbox=app.config['APNS_USE_SANDBOX'],
-        cert_file=app.config['APNS_CERT_FILE'],
-        key_file=app.config['APNS_KEY_FILE'],
-        enhanced=True)
-
-
 def config_app(app, gae_project_id):
     """Configure the app."""
     if gae_project_id and gae_project_id == config.Production.APP_ID:
@@ -39,8 +29,6 @@ def config_app(app, gae_project_id):
         app.config.from_object('eucaby_api.config.Development')
     else:
         app.config.from_object('eucaby_api.config.LocalDevelopment')
-
-    set_apns_socket(app)
 
     # CORS
     if app.config.get('CORS_ENABLED', False):

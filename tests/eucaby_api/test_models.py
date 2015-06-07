@@ -204,28 +204,28 @@ class TestDevice(test_base.TestCase):
         device_params = [
             ('12', api_args.ANDROID), ('23', api_args.IOS),
             ('34', api_args.IOS), ('45', api_args.ANDROID)]
-        self.devices = [models.Device.get_or_create(
+        devices = [models.Device.get_or_create(
             self.user, *param) for param in device_params]
-        self.devices[0].deactivate()
+        devices[0].deactivate()
 
-        def _verify_devices(username, devices):
+        def _verify_devices(username, device_objs):
             objs = models.Device.get_by_username(username)
-            self.assertEqual(devices, objs)
+            self.assertEqual(device_objs, objs)
 
         # No device keys or no devices for the device keys
         cases = [[], ['11', '22']]
         for device_keys in cases:
             models.Device.deactivate_multiple(device_keys)
-            _verify_devices(self.user.username, self.devices[1:])
+            _verify_devices(self.user.username, devices[1:])
 
         # Existing devices
         models.Device.deactivate_multiple(['23', '34'])
-        _verify_devices(self.user.username, self.devices[3:])
+        _verify_devices(self.user.username, devices[3:])
 
         # Deactivate by platform
         # Has no iOS device with the device_key
         models.Device.deactivate_multiple(['45',], platform=api_args.IOS)
-        _verify_devices(self.user.username, self.devices[3:])
+        _verify_devices(self.user.username, devices[3:])
 
         # Has Android device with the device_key
         models.Device.deactivate_multiple(['45',], platform=api_args.ANDROID)

@@ -1,5 +1,6 @@
 """Api utils."""
 
+import apns
 import uuid
 from flask import json
 from flask import jsonify
@@ -105,3 +106,12 @@ def apns_payload_data(name, msg_type):
     data = gcm_payload_data(name, msg_type)
     return dict(
         alert=u'{title}\n{message}'.format(**data), sound='default')
+
+
+def create_apns_socket(app):
+    """Creates APNs socket. App should be configured at the stage."""
+    return apns.APNs(
+        use_sandbox=app.config['APNS_USE_SANDBOX'],
+        cert_file=app.config['APNS_CERT_FILE'],
+        key_file=app.config['APNS_KEY_FILE'], enhanced=True)
+

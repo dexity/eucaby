@@ -38,14 +38,16 @@ def _verify_push_notifications(taskq, client, data):
         assert 200 == resp_android.status_code
 
     # iOS task
-    with client.application.app_context():
-        with mock.patch(
-            'eucaby_api.tasks.current_app.apns_socket.gateway_server.'
-            'send_notification_multiple') as mock_send_notif:
-            # Test APNs request
-            resp_ios = test_utils.execute_queue_task(client, tasks[1])
-            assert 1 == mock_send_notif.call_count
-            assert 200 == resp_ios.status_code
+    with mock.patch(
+        'eucaby_api.tasks.api_utils.create_apns_socket'
+    ) as mock_create_socket:
+        apns_socket = mock.Mock()
+        mock_create_socket.return_value = apns_socket
+        # Test APNs request
+        mock_send_notif = apns_socket.gateway_server.send_notification_multiple
+        resp_ios = test_utils.execute_queue_task(client, tasks[1])
+        assert 1 == mock_send_notif.call_count
+        assert 200 == resp_ios.status_code
 
 
 class GeneralTest(test_base.TestCase):
@@ -1072,7 +1074,7 @@ class TestNotifyLocation(test_base.TestCase):
             resp, None, None, 'test3@example.com', '',
             [u'Test Юзер shared', 'Join Eucaby'])
 
-    def test_existing_email(self, req_mock):
+    def test_existing_email(self):
         """Tests notification to existing email."""
         # user sends notification to user2: user --> user2
         resp = self.client.post(

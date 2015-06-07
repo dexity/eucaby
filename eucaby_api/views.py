@@ -95,7 +95,6 @@ class RequestLocationView(flask_restful.Resource):
         if recipient_email:
             # Send email copy to sender?
             # Send email notification to recipient
-            # XXX: Create notification task
             # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
@@ -188,7 +187,6 @@ class NotifyLocationView(flask_restful.Resource):
         if recipient_email:
             # Send email copy to sender?
             # Send email notification to recipient
-            # XXX: Create notification task
             # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
