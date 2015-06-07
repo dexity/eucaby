@@ -3,6 +3,7 @@
 import datetime
 import flask
 import flask_sqlalchemy
+import sqlalchemy
 from sqlalchemy_utils.types import choice
 
 from eucaby_api import args as api_args
@@ -277,3 +278,22 @@ class Device(db.Model):
         db.session.add(self)
         if commit:
             db.session.commit()
+
+    @classmethod
+    def deactivate_multiple(cls, device_keys, platform=None):
+        """Deactivates multiple active devices.
+
+        Note: The method should only be performed by admin
+        """
+        if not device_keys:
+            return
+
+        if platform not in api_args.PLATFORM_CHOICES:
+            platform = None
+        objs = cls.query.filter(
+            cls.device_key.in_(device_keys), cls.active == True)
+        if platform:
+            objs = objs.filter(cls.platform == platform)
+        objs.update(dict(active=False), synchronize_session=False)
+        return objs
+

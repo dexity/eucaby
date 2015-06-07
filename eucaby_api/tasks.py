@@ -122,6 +122,23 @@ class APNsNotificationsTask(PushNotificationsTask):
         return msg
 
 
+class CleanupiOSDevicesTask(views.MethodView):
+
+    """Cleans up iOS devices."""
+    methods = ['GET']
+
+    def get(self):  # pylint: disable=no-self-use
+        device_keys = []
+        items_gen = current_app.apns_socket.feedback_server.items()
+        for device_key, fail_time in items_gen:
+            device_keys.append(device_key)
+
+        models.Device.deactivate_multiple(device_keys)
+        msg = 'Successfully cleaned up iOS devices: {}'.format(str(device_keys))
+        logging.info(msg)
+        return msg
+
+
 class MailTask(views.MethodView):
 
     methods = ['POST']
@@ -135,5 +152,7 @@ tasks_app.add_url_rule(
     '/push/gcm', view_func=GCMNotificationsTask.as_view('push_gcm'))
 tasks_app.add_url_rule(
     '/push/apns', view_func=APNsNotificationsTask.as_view('push_apns'))
+tasks_app.add_url_rule(
+    '/push/apns/cleanup', view_func=CleanupiOSDevicesTask.as_view('cleanup_apns'))
 tasks_app.add_url_rule(
     '/mail', view_func=MailTask.as_view('mail'))

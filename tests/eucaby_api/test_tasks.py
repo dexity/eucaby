@@ -262,5 +262,13 @@ class TestAPNsNotifications(TestPushNotifications):
         self.assertEqual(200, resp.status_code)
 
 
+class TestCleanupiOSDevicesTask():
+    pass
+    # def test(self):
+    #     print self.app.apns_socket.feedback_server.items()
+    #     for (token_hex, fail_time) in self.app.apns_socket.feedback_server.items():
+    #         print token_hex, fail_time
+
+
 if __name__ == '__main__':
     unittest.main()
