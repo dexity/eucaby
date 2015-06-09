@@ -5,10 +5,11 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    ('Alex Dementsov', 'alex@eucaby.com')
+    #('Alex Dementsov', 'alex@eucaby.com')
 )
 
 MANAGERS = ADMINS
+DEFAULT_FROM_EMAIL = 'alex@eucaby.com'
 
 DATABASES = {
     'default': {
@@ -22,8 +23,8 @@ DATABASES = {
 }
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
-# See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+# See https://docs.djangoproject.com/en/1.8/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = ['*']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

@@ -9,3 +9,6 @@ DATABASES = {
         'HOST': '/cloudsql/eucaby-prd:eucaby',
     }
 }
+
+DEBUG = False
+# ALLOWED_HOSTS = []
