@@ -2,7 +2,7 @@
 
 echo 'Running pylint'
 pylint eucaby_api
-# pylint eucaby
+pylint eucaby
 pylint tests
 
 

@@ -12,12 +12,8 @@ handlers:
   static_dir: eucaby/static
   expiration: 0
 
-- url: /tasks/.*
-  script: eucaby.wsgi.application
-  login: admin
-
-- url: /.*
-  script: eucaby.wsgi.application
+- url: .*
+  script: eucaby.eucaby.wsgi.app
 
 libraries:
 - name: MySQLdb
@@ -25,8 +21,8 @@ libraries:
 - name: ssl
   version: latest
 
-env_variables:
-  DJANGO_SETTINGS_MODULE: 'eucaby.eucaby.settings'
+#env_variables:
+#  DJANGO_SETTINGS_MODULE: 'eucaby.eucaby.settings'
 
 builtins:
 - django_wsgi: on

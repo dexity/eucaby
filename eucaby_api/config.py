@@ -11,6 +11,7 @@ LOCAL_APP_ID = 'local-dev'
 class Config(object):
 
     """General configuration."""
+    APP_ID = LOCAL_APP_ID
     SECRET_KEY = secret_keys.CSRF_SECRET_KEY
     CSRF_SESSION_KEY = secret_keys.SESSION_KEY
     OAUTH2_PROVIDER_TOKEN_EXPIRES_IN = 60 * 60 * 24 * 30  # 30 days  pylint: disable=invalid-name
@@ -47,7 +48,6 @@ class Testing(Config):
 class LocalDevelopment(Config):
 
     """Development configuration."""
-    APP_ID = LOCAL_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql+mysqldb://dev:devpass@localhost/eucaby?'
         'charset=utf8&use_unicode=0')
@@ -98,3 +98,10 @@ class Production(Config):
     APNS_CERT_FILE = os.path.abspath('private/prd/EucabyCert.pem')
     APNS_KEY_FILE = os.path.abspath('private/prd/EucabyKey.pem')
     APNS_USE_SANDBOX = False
+
+
+CONFIG_MAP = {
+    DEV_APP_ID: 'eucaby_api.config.Development',
+    PRD_APP_ID: 'eucaby_api.config.Production',
+    'default': 'eucaby_api.config.LocalDevelopment'
+}

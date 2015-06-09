@@ -1,5 +1,5 @@
 
-Django==1.7
+Django==1.8
 Flask==0.10
 redis==2.10.3
 Flask-OAuthlib==0.8

@@ -7,8 +7,6 @@ skip_files:
 - ^(.*/)?.*\.py[co]$
 - ^deploy*
 - ^run_*
-- ^lib/Django.*
-- ^lib/django
 - ^lib/MySQL
 - ^lib/_mysql
 - ^lib/PyYAML*

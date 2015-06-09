@@ -23,12 +23,11 @@ def create_app():
 
 def config_app(app, gae_project_id):
     """Configure the app."""
-    if gae_project_id and gae_project_id == config.Production.APP_ID:
-        app.config.from_object('eucaby_api.config.Production')
-    elif gae_project_id and gae_project_id == config.Development.APP_ID:
-        app.config.from_object('eucaby_api.config.Development')
-    else:
-        app.config.from_object('eucaby_api.config.LocalDevelopment')
+    try:
+        object_str = config.CONFIG_MAP[gae_project_id]
+    except KeyError:
+        object_str = config.CONFIG_MAP['default']
+    app.config.from_object(object_str)
 
     # CORS
     if app.config.get('CORS_ENABLED', False):

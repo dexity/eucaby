@@ -18,7 +18,7 @@ class Home(generic.View):
         return http.HttpResponse('Eucaby rocks')
 
 
-class ViewLocation(generic.View):
+class LocationView(generic.View):
 
     http_method_names = ['get', ]
 
@@ -34,9 +34,12 @@ class ViewLocation(generic.View):
         return shortcuts.render(self.request, 'location.html', c)
 
 
-class NotifyLocation(generic.View):
+class NotifyLocationView(generic.View):
 
-    http_method_names = ['post', ]
+    http_method_names = ['get', 'post']
+
+    def get(self, request, *args, **kwargs):
+        pass
 
     def post(self, *args, **kwargs):
         data = self.request.POST
