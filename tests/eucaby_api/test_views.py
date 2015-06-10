@@ -787,8 +787,8 @@ class TestNotificationById(test_base.TestCase):
 
         # user places notification to a new email address
         notif = ndb_models.LocationNotification.create(
-            fixtures.LATLNG, self.user.username, self.user.name, None, None,
-            'testnew@example.com')
+            fixtures.LATLNG, self.user.username, self.user.name,
+            recipient_email='testnew@example.com')
         notif_id = notif.key.id()
 
         # user2 is not authorized: neither sender or recipient
@@ -831,6 +831,22 @@ class TestNotificationById(test_base.TestCase):
         # User is notification sender or notification recipient
         self._validate_notification(notif, True)
 
+    def test_mobile_notification(self):
+        """Tests if location notification is mobile."""
+        # Notification: user -> user2
+        # Note: Non-mobile location notification can only be created with
+        #       Python API!
+        notif = ndb_models.LocationNotification.create(
+            fixtures.LATLNG, self.user.username, self.user.name,
+            recipient_username=self.user2.username,
+            recipient_name=self.user2.name, is_mobile=False)
+        notif_id = notif.key.id()
+        resp = self.client.get(
+            '/location/notification/{}'.format(notif_id),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)['data']
+        self.assertFalse(data['is_mobile'])
+
     def _validate_notification(self, notif, has_request):
         """Validates notification."""
         notif_id = notif.key.id()
@@ -848,6 +864,7 @@ class TestNotificationById(test_base.TestCase):
             self.assertEqual(user_b, data['sender'])
             self.assertEqual(user_aa, data['recipient'])
             self.assertEqual(notif_id, data['id'])
+            self.assertEqual(notif.is_mobile, data['is_mobile'])
             self.assertEqual(dict(lat=11, lng=-11), data['location'])
             created_date = utils_date.timezone_date(notif.created_date)
             self.assertEqual(created_date.isoformat(), data['created_date'])
@@ -917,7 +934,7 @@ class TestNotifyLocation(test_base.TestCase):
         # Check response
         created_date = utils_date.timezone_date(loc_notif.created_date)
         ec_valid_data = dict(data=dict(
-            id=loc_notif.id, type='notification',
+            id=loc_notif.id, type='notification', is_mobile=True,
             location=dict(lat=location.lat, lng=location.lon),
             recipient=dict(
                 username=recipient_username, name=recipient_name,

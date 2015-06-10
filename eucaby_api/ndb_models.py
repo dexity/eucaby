@@ -87,11 +87,13 @@ class LocationNotification(LocationMessage):
     """Location notification."""
 
     location = ndb.GeoPtProperty(required=True)
+    is_mobile = ndb.BooleanProperty(default=True, indexed=True)
 
     @classmethod
     def create(cls, latlng, sender_username, sender_name,
                recipient_username=None, recipient_name=None,
-               recipient_email=None, message=None, session=None):
+               recipient_email=None, message=None, is_mobile=True,
+               session=None):
         """Create LocationNotification entity."""
         assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
                 'Either recipient username or email should be set')
@@ -101,6 +103,6 @@ class LocationNotification(LocationMessage):
             session=session, message=message, sender_username=sender_username,
             sender_name=sender_name, recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            location=ndb.GeoPt(latlng))
+            location=ndb.GeoPt(latlng), is_mobile=is_mobile)
         obj.put()
         return obj

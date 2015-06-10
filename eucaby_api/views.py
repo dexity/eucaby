@@ -161,12 +161,14 @@ class NotifyLocationView(flask_restful.Resource):
         message = flask.request.message
         user = flask.request.user  # Sender
         # Create location response
-        # Note: There might be several location responses for a single session
+        # Notes:
+        #   - There might be several location responses for a single session
+        #   - API requests are considered as mobile
         loc_notif = ndb_models.LocationNotification.create(
             latlng, user.username, user.name,
             recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            message=message, session=session)
+            message=message, is_mobile=True, session=session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18
