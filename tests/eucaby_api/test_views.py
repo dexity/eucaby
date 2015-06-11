@@ -839,13 +839,13 @@ class TestNotificationById(test_base.TestCase):
         notif = ndb_models.LocationNotification.create(
             fixtures.LATLNG, self.user.username, self.user.name,
             recipient_username=self.user2.username,
-            recipient_name=self.user2.name, is_mobile=False)
+            recipient_name=self.user2.name, is_web=True)
         notif_id = notif.key.id()
         resp = self.client.get(
             '/location/notification/{}'.format(notif_id),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)['data']
-        self.assertFalse(data['is_mobile'])
+        self.assertTrue(data['is_web'])
 
     def _validate_notification(self, notif, has_request):
         """Validates notification."""
@@ -864,7 +864,7 @@ class TestNotificationById(test_base.TestCase):
             self.assertEqual(user_b, data['sender'])
             self.assertEqual(user_aa, data['recipient'])
             self.assertEqual(notif_id, data['id'])
-            self.assertEqual(notif.is_mobile, data['is_mobile'])
+            self.assertEqual(notif.is_web, data['is_web'])
             self.assertEqual(dict(lat=11, lng=-11), data['location'])
             created_date = utils_date.timezone_date(notif.created_date)
             self.assertEqual(created_date.isoformat(), data['created_date'])
@@ -934,7 +934,7 @@ class TestNotifyLocation(test_base.TestCase):
         # Check response
         created_date = utils_date.timezone_date(loc_notif.created_date)
         ec_valid_data = dict(data=dict(
-            id=loc_notif.id, type='notification', is_mobile=True,
+            id=loc_notif.id, type='notification', is_web=False,
             location=dict(lat=location.lat, lng=location.lon),
             recipient=dict(
                 username=recipient_username, name=recipient_name,

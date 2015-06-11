@@ -121,6 +121,38 @@ angular.module('eucaby.utils', [])
                 }
                 return ((x < y) ? -1 : ((x > y) ? 1 : 0));
             });
+        },
+        formatMessages: function(data, formatter){
+            var items = [];
+            for (var i=0; i < data.length; i++){
+                var item = data[i];
+                var form = formatter(item);
+                var url = '';
+                var icon = '';
+                if (item.type === 'notification') {
+                    icon = 'ion-ios-location-outline';
+                    url = form.notification_url;
+                    if (item.session.complete) {
+                        icon = 'ion-ios-location';
+                    }
+                } else if (item.type === 'request') {
+                    icon = 'ion-ios-bolt-outline';
+                    if (item.session.complete) {
+                        url = form.request_url;
+                        icon = 'ion-ios-bolt';
+                    }
+                }
+                items.push({
+                    item: item,
+                    complete: item.session.complete,
+                    name: form.name,
+                    description: form.description,
+                    message: item.message,
+                    url: url,
+                    icon: icon
+                });
+            }
+            return items;
         }
     };
 }])

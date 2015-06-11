@@ -8,11 +8,13 @@
             <div ng-switch on="isOutgoing">
                 <div ng-switch-when="true">
                     Location sent to <br>
-                    <b>{{ item.recipient | userName }}</b><br>
+                    <b>{{ item.recipient | userName }}</b>
+                    <div ng-show="item.is_web" class="badge-web-detail">web</div><br>
                 </div>
                 <div ng-switch-when="false">
                     Location received from <br>
-                    <b>{{ item.sender | userName }}</b><br>
+                    <b>{{ item.sender | userName }}</b>
+                    <div ng-show="item.is_web" class="badge-web-detail">web</div><br>
                 </div>
             </div>
         </div>

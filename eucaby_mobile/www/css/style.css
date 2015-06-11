@@ -111,19 +111,14 @@ hr.separator {
     border-bottom: 0px;
 }
 
-.badge-mobile,
-.badge-web {
+.badge-web,
+.badge-web-detail {
     float:right;
-    margin-right: -15px;
     font-size: 14px;
-}
-
-.badge-mobile {
-    color: #28a54c;
-}
-
-.badge-web {
     color: #e42012;
+}
+.badge-web {
+    margin-right: -15px;
 }
 
 /* Ionic adjustments */

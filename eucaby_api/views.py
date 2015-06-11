@@ -168,7 +168,7 @@ class NotifyLocationView(flask_restful.Resource):
             latlng, user.username, user.name,
             recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            message=message, is_mobile=True, session=session)
+            message=message, session=session)
 
         # XXX: Add user configuration to receive notifications to email
         #      (for Eucaby users). See #18

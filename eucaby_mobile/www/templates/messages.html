@@ -9,7 +9,7 @@
                 ng-repeat="item in messages"
                 type="item-text-wrap" href="{{ item.url }}">
           <i class="icon {{ item.icon }}"></i>
-          <div ng-show="item.source" class="{{ item.sourceClass}}">{{ item.source }}</div>
+          <div ng-show="item.is_web" class="badge-web">web</div>
           <h2>{{ item.name }}</h2>
           <div ng-show="item.message" class="item-message">{{ item.message }}</div>
           <span class="item-description">{{ item.description }}</span>

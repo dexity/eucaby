@@ -293,54 +293,20 @@ angular.module('eucaby.controllers',
     function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
 
     $ionicLoading.show();
-    var formatOutgoing = function(data){
-        var items = [];
-        for (var i=0; i < data.length; i++){
-            var item = data[i];
-            var description = 'received ' + dateUtils.ts2h(
-                Date.parse(item.created_date));
-            var url = '';
-            var icon = '';
-            var source = '';
-            var sourceClass = '';
-            if (item.type === 'notification') {
-                source = 'mobile';
-                sourceClass = 'badge-mobile';
-                icon = 'ion-ios-location-outline';
-                url = '#/app/tab/outgoing_notification/' + item.id;
-                if (item.is_mobile === false) {
-                    source = 'web';
-                    sourceClass = 'badge-web';
-                }
-                if (item.session.complete) {
-                    icon = 'ion-ios-location';
-                }
-            } else if (item.type === 'request') {
-                icon = 'ion-ios-bolt-outline';
-                if (item.session.complete) {
-                    url = '#/app/tab/outgoing_request/' + item.id;
-                    icon = 'ion-ios-bolt';
-                }
-            }
-            items.push({
-                item: item,
-                complete: item.session.complete,
-                name: item.recipient.name || item.recipient.email,
-                description: description,
-                message: item.message,
-                url: url,
-                icon: icon,
-                source: source,
-                sourceClass: sourceClass
-            });
+    // Outgoing formatter
+    var formatter = function(item){
+        return {
+            description: 'received ' + dateUtils.ts2h(
+                Date.parse(item.created_date)),
+            name: item.recipient.name || item.recipient.email,
+            notification_url: '#/app/tab/outgoing_notification/' + item.id,
+            request_url: '#/app/tab/outgoing_request/' + item.id
         }
-        return items;
     };
-
     var loadItems = function(){
         // Load outgoing items
         return Activity.outgoing().then(function(data){
-            $scope.messages = formatOutgoing(data.data);
+            $scope.messages = utils.formatMessages(data.data, formatter);
             $scope.viewTitle = 'Outgoing';
         }, function(data){
             utils.alert('Error', 'Error loading data');
@@ -364,54 +330,20 @@ angular.module('eucaby.controllers',
     function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
 
     $ionicLoading.show();
-    var formatIncoming = function(data){
-        var items = [];
-        for (var i=0; i < data.length; i++){
-            var item = data[i];
-            var description = 'sent ' + dateUtils.ts2h(
-                Date.parse(item.created_date));
-            var url = '';
-            var icon = '';
-            var source = '';
-            var sourceClass = '';
-            if (item.type === 'notification'){
-                source = 'mobile';
-                sourceClass = 'badge-mobile';
-                icon = 'ion-ios-location-outline';
-                url = '#/app/tab/incoming_notification/' + item.id;
-                if (item.is_mobile === false) {
-                    source = 'web';
-                    sourceClass = 'badge-web';
-                }
-                if (item.session.complete) {
-                    icon = 'ion-ios-location';
-                }
-            } else if (item.type === 'request') {
-                icon = 'ion-ios-bolt-outline';
-                url = '#/app/tab/incoming_request/' + item.id;
-                if (item.session.complete) {
-                    icon = 'ion-ios-bolt';
-                }
-            }
-            items.push({
-                item: item,
-                complete: item.session.complete,
-                name: item.sender.name,
-                description: description,
-                message: item.message,
-                url: url,
-                icon: icon,
-                source: source,
-                sourceClass: sourceClass
-            });
+    // Incoming formatter
+    var formatter = function(item){
+        return {
+            description: 'sent ' + dateUtils.ts2h(
+                Date.parse(item.created_date)),
+            name: item.sender.name,
+            notification_url: '#/app/tab/incoming_notification/' + item.id,
+            request_url: '#/app/tab/incoming_request/' + item.id
         }
-        return items;
     };
-
     var loadItems = function() {
         // Load incoming items
         return Activity.incoming().then(function (data) {
-            $scope.messages = formatIncoming(data.data);
+            $scope.messages = utils.formatMessages(data.data, formatter);
             $scope.viewTitle = 'Incoming';
         }, function (data) {
             utils.alert('Error', 'Error loading data');
