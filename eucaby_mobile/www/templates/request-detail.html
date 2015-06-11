@@ -20,7 +20,7 @@
             {{ item.message }}
         </div>
     </div>
-    <form ng-submit="sendLocation()">
+    <form ng-hide="isOutgoing" ng-submit="sendLocation()">
         <input type="hidden" ng-model="form.token">
         <div class="padding">
             <label class="item item-input message">
@@ -30,6 +30,10 @@
             <button class="button button-block button-positive" type="submit">Send Location</button>
         </div>
     </form>
+
+    <div ng-show="item.showBrowserWarning" class="note-area">
+        Note: Location sent from a browser might not be accurate
+    </div>
     <div ng-show="item.notifications">
         <ion-list>
             <div class="item item-divider">Locations</div>
@@ -38,16 +42,18 @@
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
                         Location received from <br>
-                        <b>{{ notif.sender | userName }}</b><br>
+                        <b>{{ notif.sender | userName }}</b>
+                        <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
                     </div>
                     <div ng-switch-when="false">
                         Location sent to <br>
-                        <b>{{ notif.recipient | userName }}</b><br>
+                        <b>{{ notif.recipient | userName }}</b>
+                        <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
                     </div>
                 </div>
                 <div ng-show="notif.message">
                     <hr class="separator">
-                    {{ notif.message }}
+                    <span class="message-text">{{ notif.message }}</span>
                 </div>
             </ion-item>
         </ion-list>

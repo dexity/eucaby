@@ -93,7 +93,7 @@ input {
     /*font-size: 14px;*/
 }
 
-.item-message {
+.message-text {
     color: #0c63ee;
 }
 
@@ -119,6 +119,13 @@ hr.separator {
 }
 .badge-web {
     margin-right: -15px;
+}
+.note-area {
+    border: 0;
+    border-left: 4px solid #D7DBE4;
+    background: #F0F3F8;
+    margin: 20px 10px;
+    padding: 5px 10px;
 }
 
 /* Ionic adjustments */

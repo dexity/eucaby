@@ -389,9 +389,14 @@ angular.module('eucaby.controllers',
              Request, Notification) {
 
         var stateName = $ionicHistory.currentView().stateName;
+        var showBrowserWarning = false;
         var populateMarkers = function(notifs){
             for (var i = 0; i < notifs.length; i++){
-                var loc = notifs[i].location;
+                var item = notifs[i];
+                var loc = item.location;
+                if (item.is_web){
+                    showBrowserWarning = true;
+                }
                 if ($scope.map){
                     $scope.markers.push(
                         map.createMarker($scope.map, loc.lat, loc.lng, ''));
@@ -409,6 +414,7 @@ angular.module('eucaby.controllers',
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
                 populateMarkers($scope.item.notifications);
+                $scope.showBrowserWarning = showBrowserWarning;
             });
         };
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;

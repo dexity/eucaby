@@ -18,9 +18,12 @@
                 </div>
             </div>
         </div>
-        <div class="item item-text-wrap" ng-show="item.message">
+        <div class="item item-text-wrap message-text" ng-show="item.message">
             {{ item.message }}
         </div>
+    </div>
+    <div ng-show="item.is_web" class="note-area">
+        Note: Location sent from a browser might not be accurate
     </div>
     <div ng-show="item.request">
         <div class="card" ng-cloak>
