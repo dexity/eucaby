@@ -90,7 +90,7 @@ angular.module('eucaby',
         url: '/map',
         views: {
             'tab-map': {
-                templateUrl: 'templates/tab-map.html',
+                templateUrl: 'templates/map.html',
                 controller: 'MapCtrl'
             }
         }
@@ -99,7 +99,7 @@ angular.module('eucaby',
         url: '/outgoing',
         views: {
             'tab-outgoing': {
-                templateUrl: 'templates/tab-outgoing.html',
+                templateUrl: 'templates/messages.html',
                 controller: 'OutgoingCtrl'
             }
         }
@@ -126,7 +126,7 @@ angular.module('eucaby',
         url: '/incoming',
         views: {
             'tab-incoming': {
-                templateUrl: 'templates/tab-incoming.html',
+                templateUrl: 'templates/messages.html',
                 controller: 'IncomingCtrl'
             }
         }

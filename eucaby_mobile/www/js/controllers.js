@@ -301,9 +301,17 @@ angular.module('eucaby.controllers',
                 Date.parse(item.created_date));
             var url = '';
             var icon = '';
-            if (item.type === 'notification'){
+            var source = '';
+            var sourceClass = '';
+            if (item.type === 'notification') {
+                source = 'mobile';
+                sourceClass = 'badge-mobile';
                 icon = 'ion-ios-location-outline';
                 url = '#/app/tab/outgoing_notification/' + item.id;
+                if (item.is_mobile === false) {
+                    source = 'web';
+                    sourceClass = 'badge-web';
+                }
                 if (item.session.complete) {
                     icon = 'ion-ios-location';
                 }
@@ -321,7 +329,9 @@ angular.module('eucaby.controllers',
                 description: description,
                 message: item.message,
                 url: url,
-                icon: icon
+                icon: icon,
+                source: source,
+                sourceClass: sourceClass
             });
         }
         return items;
@@ -330,7 +340,8 @@ angular.module('eucaby.controllers',
     var loadItems = function(){
         // Load outgoing items
         return Activity.outgoing().then(function(data){
-            $scope.outgoing = formatOutgoing(data.data);
+            $scope.messages = formatOutgoing(data.data);
+            $scope.viewTitle = 'Outgoing';
         }, function(data){
             utils.alert('Error', 'Error loading data');
             console.error(data);
@@ -361,9 +372,17 @@ angular.module('eucaby.controllers',
                 Date.parse(item.created_date));
             var url = '';
             var icon = '';
+            var source = '';
+            var sourceClass = '';
             if (item.type === 'notification'){
+                source = 'mobile';
+                sourceClass = 'badge-mobile';
                 icon = 'ion-ios-location-outline';
                 url = '#/app/tab/incoming_notification/' + item.id;
+                if (item.is_mobile === false) {
+                    source = 'web';
+                    sourceClass = 'badge-web';
+                }
                 if (item.session.complete) {
                     icon = 'ion-ios-location';
                 }
@@ -381,7 +400,9 @@ angular.module('eucaby.controllers',
                 description: description,
                 message: item.message,
                 url: url,
-                icon: icon
+                icon: icon,
+                source: source,
+                sourceClass: sourceClass
             });
         }
         return items;
@@ -390,7 +411,8 @@ angular.module('eucaby.controllers',
     var loadItems = function() {
         // Load incoming items
         return Activity.incoming().then(function (data) {
-            $scope.incoming = formatIncoming(data.data);
+            $scope.messages = formatIncoming(data.data);
+            $scope.viewTitle = 'Incoming';
         }, function (data) {
             utils.alert('Error', 'Error loading data');
             console.error(data);

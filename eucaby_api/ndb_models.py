@@ -28,6 +28,7 @@ class LocationMessage(polymodel.PolyModel):
 
     """Base model for messages."""
 
+    uuid = ndb.StringProperty(required=True, indexed=True)
     session = ndb.StructuredProperty(Session, required=True)
     message = ndb.StringProperty()
     sender_username = ndb.StringProperty(required=True, indexed=True)
@@ -36,6 +37,15 @@ class LocationMessage(polymodel.PolyModel):
     recipient_name = ndb.StringProperty()
     recipient_email = ndb.StringProperty(indexed=True)
     created_date = ndb.DateTimeProperty(required=True, auto_now_add=True)
+
+    @classmethod
+    def get_by_sender_username(cls, username, limit=None, offset=None):
+        """Returns messages by sender_username."""
+        res = cls.query(cls.sender_username == username).order(
+            -cls.created_date)
+        if limit is not None and offset is not None:
+            res = res.fetch(limit, offset=offset)
+        return res
 
     @property
     def sender(self):
@@ -78,7 +88,8 @@ class LocationRequest(LocationMessage):
         obj = cls(
             session=session, message=message, sender_username=sender_username,
             sender_name=sender_name, recipient_username=recipient_username,
-            recipient_name=recipient_name, recipient_email=recipient_email)
+            recipient_name=recipient_name, recipient_email=recipient_email,
+            uuid=api_utils.generate_uuid())
         obj.put()
         return obj
 
@@ -103,6 +114,7 @@ class LocationNotification(LocationMessage):
             session=session, message=message, sender_username=sender_username,
             sender_name=sender_name, recipient_username=recipient_username,
             recipient_name=recipient_name, recipient_email=recipient_email,
-            location=ndb.GeoPt(latlng), is_mobile=is_mobile)
+            location=ndb.GeoPt(latlng), is_mobile=is_mobile,
+            uuid=api_utils.generate_uuid())
         obj.put()
         return obj

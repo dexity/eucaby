@@ -1,4 +1,4 @@
-<ion-view title="Incoming">
+<ion-view title="{{ viewTitle }}">
   <ion-content>
     <ion-refresher
         pulling-text="Pull to refresh..." pulling-icon="ion-chevron-down"
@@ -6,11 +6,12 @@
     </ion-refresher>
     <ion-list>
       <ion-item class="item-icon-left item-icon-right item-container"
-                ng-repeat="item in incoming"
+                ng-repeat="item in messages"
                 type="item-text-wrap" href="{{ item.url }}">
           <i class="icon {{ item.icon }}"></i>
+          <div ng-show="item.source" class="{{ item.sourceClass}}">{{ item.source }}</div>
           <h2>{{ item.name }}</h2>
-          <div ng-show="item.message">{{ item.message }}</div>
+          <div ng-show="item.message" class="item-message">{{ item.message }}</div>
           <span class="item-description">{{ item.description }}</span>
           <i ng-show="item.url" class="icon ion-ios-arrow-right"></i>
       </ion-item>
