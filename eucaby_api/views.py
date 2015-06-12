@@ -98,11 +98,11 @@ class RequestLocationView(flask_restful.Resource):
             # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
+            req_url = '{}/request/{}'.format(eucaby_url, req.uuid)
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                url='{}?q={}'.format(eucaby_url, req.session.token),
-                message=message)
+                url=req_url, message=message)
             utils_mail.send_mail(
                 'Location Request', body, noreply_email, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
@@ -187,16 +187,15 @@ class NotifyLocationView(flask_restful.Resource):
                 params=params)
 
         if recipient_email:
-            # Send email copy to sender?
             # Send email notification to recipient
             # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
+            location_url = '{}/location/{}'.format(eucaby_url, loc_notif.uuid)
             body = flask.render_template(
                 'mail/location_response_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
-                location_url='{}?q={}'.format(MAP_BASE, latlng),
-                message=message)
+                location_url=location_url, message=message)
             utils_mail.send_mail(
                 'Location Notification', body, noreply_email, [recipient_email])
         logging.info('Location Notification: %s', str(loc_notif.to_dict()))

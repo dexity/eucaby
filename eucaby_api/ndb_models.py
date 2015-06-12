@@ -65,6 +65,11 @@ class LocationMessage(polymodel.PolyModel):
         return cls.query(
             cls.session.token == token).order(-cls.created_date).fetch()
 
+    @classmethod
+    def get_by_uuid(cls, uuid):
+        """Returns message by uuid."""
+        return cls.query(cls.uuid == uuid).fetch(0)
+
     @property
     def sender(self):
         return dict(username=self.sender_username, name=self.sender_name)

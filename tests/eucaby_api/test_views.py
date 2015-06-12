@@ -506,7 +506,8 @@ class TestRequestLocation(test_base.TestCase):
         # Check email content
         messages = self.mail_stub.get_sent_messages()
         test_utils.verify_email(
-            messages, 1, recipient_email, in_list + [req.session.token, ])
+            messages, 1, recipient_email, in_list + [
+                '.com/request/' + req.uuid, ])
 
     def test_general_errors(self):
         """Tests general errors."""
@@ -949,8 +950,7 @@ class TestNotifyLocation(test_base.TestCase):
             messages.pop(0)  # Don't need the first message
         test_utils.verify_email(
             messages, 1, recipient_email, in_list + [
-                'https://maps.google.com/maps?q={},{}'.format(
-                    location.lat, location.lon)])
+                '.com/location/' + loc_notif.uuid, ])
 
     def test_general_errors(self):
         """Tests general errors."""
