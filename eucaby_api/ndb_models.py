@@ -39,13 +39,31 @@ class LocationMessage(polymodel.PolyModel):
     created_date = ndb.DateTimeProperty(required=True, auto_now_add=True)
 
     @classmethod
+    def _get_by_username(cls, username_field, username, limit=None, offset=None):
+        res = cls.query(getattr(cls, username_field) == username).order(
+            -cls.created_date)
+        kwargs = {}
+        if limit is not None and offset is not None:
+            kwargs = dict(limit=limit, offset=offset)
+        return res.fetch(**kwargs)
+
+    @classmethod
+    def get_by_recipient_username(cls, username, limit=None, offset=None):
+        """Returns messages by recipient_username."""
+        return cls._get_by_username(
+            'recipient_username', username, limit, offset)
+
+    @classmethod
     def get_by_sender_username(cls, username, limit=None, offset=None):
         """Returns messages by sender_username."""
-        res = cls.query(cls.sender_username == username).order(
-            -cls.created_date)
-        if limit is not None and offset is not None:
-            res = res.fetch(limit, offset=offset)
-        return res
+        return cls._get_by_username(
+            'sender_username', username, limit, offset)
+
+    @classmethod
+    def get_by_session_token(cls, token):
+        """Returns messages by session token."""
+        return cls.query(
+            cls.session.token == token).order(-cls.created_date).fetch()
 
     @property
     def sender(self):

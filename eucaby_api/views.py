@@ -208,10 +208,7 @@ class NotifyLocationView(flask_restful.Resource):
     def handle_token(cls, token, latlng):
         """Handles token parameter."""
         # Get location request
-        session = ndb_models.Session(token=token)
-        loc_req = ndb_models.LocationRequest.query(
-            ndb_models.LocationRequest.session.token == token).fetch(1)
-            # ndb_models.LocationRequest.session == session).fetch(1)
+        loc_req = ndb_models.LocationRequest.get_by_session_token(token)
         if not loc_req:
             error = dict(message='Request not found', code='not_found')
             return api_utils.make_response(error, 404)
@@ -305,19 +302,9 @@ class UserActivityView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('history')]
 
     @classmethod
-    def _get_vector_data(cls, req_username, notif_username, offset, limit):
-        user = flask.request.user
-        username = user.username
+    def _get_vector_data(cls, requests, notifications, offset, limit):
         # WARNING: This is not efficient as it loads all requests and
         #          notifications to memory and sorts them
-        # Get requests sent or received by user
-        requests = ndb_models.LocationRequest.query(
-            req_username == username).order(
-                -ndb_models.LocationRequest.created_date).fetch()
-        # Get notifications sent or received by user
-        notifications = ndb_models.LocationNotification.query(
-            notif_username == username).order(
-                -ndb_models.LocationNotification.created_date).fetch()
         items = itertools.chain(requests, notifications)
         merged_items = sorted(
             items, key=lambda x: x.created_date, reverse=True)
@@ -335,27 +322,28 @@ class UserActivityView(flask_restful.Resource):
     @classmethod
     def get_outgoing_data(cls, offset, limit):
         """Returns data for outgoing activities."""
-        return cls._get_vector_data(
-            ndb_models.LocationRequest.sender_username,
-            ndb_models.LocationNotification.sender_username, offset, limit)
+        username = flask.request.user.username
+        requests = ndb_models.LocationRequest.get_by_sender_username(username)
+        notifications = (ndb_models.LocationNotification
+                         .get_by_sender_username(username))
+        return cls._get_vector_data(requests, notifications, offset, limit)
 
     @classmethod
     def get_incoming_data(cls, offset, limit):
         """Returns data for request activities."""
-        return cls._get_vector_data(
-            ndb_models.LocationRequest.recipient_username,
-            ndb_models.LocationNotification.recipient_username, offset, limit)
+        username = flask.request.user.username
+        requests = (ndb_models.LocationRequest
+                    .get_by_recipient_username(username))
+        notifications = (ndb_models.LocationNotification
+                         .get_by_recipient_username(username))
+        return cls._get_vector_data(requests, notifications, offset, limit)
 
     @classmethod
     def get_request_data(cls, offset, limit):
         """Returns data for request activities."""
-        user = flask.request.user
-        username = user.username
-        req_class = ndb_models.LocationRequest
-        requests = req_class.query(
-            req_class.sender_username == username).order(
-                -req_class.created_date).fetch(limit, offset=offset)
-
+        username = flask.request.user.username
+        requests = ndb_models.LocationRequest.get_by_sender_username(
+            username, limit=limit, offset=offset)
         return flask_restful.marshal(
             dict(data=[req.to_dict() for req in requests]),
             api_fields.REQUEST_LIST_FIELDS)
@@ -363,12 +351,9 @@ class UserActivityView(flask_restful.Resource):
     @classmethod
     def get_notification_data(cls, offset, limit):
         """Returns data for notification activities."""
-        user = flask.request.user
-        username = user.username
-        notif_class = ndb_models.LocationNotification
-        notifications = notif_class.query(
-            notif_class.sender_username == username).order(
-                -notif_class.created_date).fetch(limit, offset=offset)
+        username = flask.request.user.username
+        notifications = ndb_models.LocationNotification.get_by_sender_username(
+            username, limit=limit, offset=offset)
 
         return flask_restful.marshal(
             dict(data=[notif.to_dict() for notif in notifications]),
@@ -424,10 +409,8 @@ class RequestDetailView(flask_restful.Resource):
                 message='Not authorized to access the data', code='auth_error')
             return api_utils.make_response(error, 401)
         # Look up related notifications
-        notif_class = ndb_models.LocationNotification
-        notifications = notif_class.query(
-            notif_class.session.token == loc_req.session.token).order(
-                -notif_class.created_date).fetch()
+        notifications = ndb_models.LocationNotification.get_by_session_token(
+            loc_req.session.token)
         resp_dict = loc_req.to_dict()
         resp_dict['notifications'] = [
             notif.to_dict() for notif in notifications]
@@ -457,10 +440,8 @@ class NotificationDetailView(flask_restful.Resource):
                 message='Not authorized to access the data', code='auth_error')
             return api_utils.make_response(error, 401)
         # Look up related notifications
-        req_class = ndb_models.LocationRequest
-        request = req_class.query(
-            req_class.session.token == loc_notif.session.token).order(
-                -req_class.created_date).fetch()
+        request = ndb_models.LocationRequest.get_by_session_token(
+            loc_notif.session.token)
         resp_dict = loc_notif.to_dict()
         resp_dict['request'] = (request and request[0]) or None
 
