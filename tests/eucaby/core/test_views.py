@@ -1,19 +1,73 @@
+# -*- coding: utf-8 -*-
 
 import os
+import datetime
 from eucaby.settings import utils as set_utils
-os.environ['DJANGO_SETTINGS_MODULE'] = set_utils.get_settings_module('testing')
+os.environ.setdefault(
+    'DJANGO_SETTINGS_MODULE', set_utils.get_settings_module('testing'))
 
+import django
 from django import test
+from eucaby_api import ndb_models
+from google.appengine.ext import testbed
+from tests.eucaby_api import fixtures
+
+django.setup()
 
 
-class TestNotifyLocationView(test.TestCase):
+class TestLocationView(test.TestCase):
+
+    """Tests LocationView class."""
 
     def setUp(self):
         self.client = test.Client()
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testbed.init_mail_stub()
+        self.today = datetime.datetime(2015, 6, 12)
+        self.notif = ndb_models.LocationNotification.create(
+            fixtures.LATLNG, 'testuser', u'Test Юзер',
+            recipient_email='test@example.com', message=u'Привет')
 
     def tearDown(self):
-        pass
+        self.testbed.deactivate()
+
+    def test_errors(self):
+        """Tests location view errors."""
+        # Invalid token size
+        resp = self.client.get('/location/123')
+        self.assertEqual(404, resp.status_code)
+
+        # No session
+        resp = self.client.get('/location/d2a31299c6174f63a863c426a8d189cc')
+        self.assertEqual(404, resp.status_code)
+
+        # Session is expired
+        self.notif.created_date = self.today - datetime.timedelta(days=2)
+        self.notif.put()
+        resp = self.client.get('/location/' + self.notif.uuid)
+        self.assertEqual(200, resp.status_code)
+        self.assertIn('Location link has expired', resp.content)
 
     def test_get(self):
-        resp = self.client.get('/request/123')
-        print resp
+        """Tests get request for location view."""
+        resp = self.client.get('/location/' + self.notif.uuid)
+        content = resp.content.decode('utf-8')
+        self.assertEqual(200, resp.status_code)
+        self.assertIn(u'Test Юзер', content)
+        self.assertIn(u'Привет', content)
+
+
+# class TestNotifyLocationView(test.TestCase):
+#
+#     def setUp(self):
+#         self.client = test.Client()
+#
+#     def tearDown(self):
+#         pass
+#
+#     def test_get(self):
+#         resp = self.client.get('/request/123')
+#         print resp

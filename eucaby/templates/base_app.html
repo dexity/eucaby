@@ -6,14 +6,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="">
         <meta name="author" content="Alex Dementsov">
+        <script src="/media/lib/angular/angular.js"></script>
+        <script src="/media/js/app.js"></script>
+        <script src="/media/js/controllers.js"></script>
+        <link href="/media/css/main.css" rel="stylesheet">
+
         {% block header %}{% endblock %}
     </head>
     <body>
-        <h1>Eucaby</h1>
-        <a href="#">Blog</a> | <a href="#">Features</a> | <a href="#">Forum</a> | <a href="#">Help</a> <br><br>
         {% block content %}{% endblock %}
-
-        <br><br>
-        Copyright &copy; 2015 <a href="/about/">About Us</a> | <a href="/terms/">Terms</a> | <a href="/privacy/">Privacy Policy</a> | <a href="/feedback/">Feedback</a> | <a href="#">Facebook</a> | <a href="#">Twitter</a>
+        {% block footer %}{% endblock %}
     </body>
 </html>
