@@ -42,33 +42,49 @@ class Feedback(generic.View):
         return shortcuts.render(request, 'feedback.html')
 
 
+def validate_object(request, model_class, uuid, obj_type):
+    obj = model_class.get_by_uuid(uuid)
+    if not obj:
+        raise http.Http404(obj_type + ' not found')
+
+    # Link expires after 1 day
+    expiration = obj.created_date + datetime.timedelta(days=1)
+    if expiration < datetime.datetime.now():
+        c = dict(error=obj_type + ' link has expired')
+        return shortcuts.render(request, 'error.html', c)
+    return obj
+
+
 class LocationView(generic.View):
 
     http_method_names = ['get', ]
 
-    def get(self, request, uuid):
-        notif = ndb_models.LocationNotification.get_by_uuid(uuid)
-        if not notif:
-            raise http.Http404('Location not found')
-        notif = notif[0]
-
-        # Link expires after 1 day
-        expiration = notif.created_date + datetime.timedelta(days=1)
-        if expiration < datetime.datetime.now():
-            c = dict(error='Location link has expired')
-            return shortcuts.render(request, 'error.html', c)
-
-        c = dict(notif=notif)
+    def get(self, request, loc_notif):
+        c = dict(loc_notif=loc_notif)
         return shortcuts.render(request, 'location.html', c)
 
+    def dispatch(self, request, uuid):
+        loc_notif = validate_object(
+            request, ndb_models.LocationNotification, uuid, 'Location')
+        if isinstance(loc_notif, http.HttpResponse):
+            return loc_notif
+        return super(LocationView, self).dispatch(request, loc_notif)
 
-# class NotifyLocationView(generic.View):
-#
-#     http_method_names = ['get', 'post']
-#
-#     def get(self, request, *args, **kwargs):
-#         pass
-#
+
+class NotifyLocationView(generic.View):
+
+    http_method_names = ['get', 'post']
+
+    def get(self, request, loc_req):
+        c = dict(loc_req=loc_req)
+        return shortcuts.render(request, 'request.html', c)
+
+
+    def post(self, request, loc_req):
+
+        pass
+
+
 #     def post(self, *args, **kwargs):
 #         data = self.request.POST
 #         _session = data.get('session', None)
@@ -97,4 +113,9 @@ class LocationView(generic.View):
 #             json.dumps(dict(message='Your location has been sent')),
 #             mimetype='application/json')
 
-
+    def dispatch(self, request, uuid):
+        loc_req = validate_object(
+            request, ndb_models.LocationRequest, uuid, 'Request')
+        if isinstance(loc_req, http.HttpResponse):
+            return loc_req
+        return super(NotifyLocationView, self).dispatch(request, loc_req)

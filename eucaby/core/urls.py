@@ -12,6 +12,6 @@ urlpatterns = urls.patterns('',
     urls.url(r'^feedback/$', views.Feedback.as_view(), name='feedback'),
     urls.url(r'^location/(?P<uuid>({}))$'.format(UUID_REGEX),
              views.LocationView.as_view(), name='view_location'),
-    # urls.url(r'^request/(?P<uuid>({}))$'.format(UUID_REGEX),
-    #          views.NotifyLocationView.as_view(), name='notify_location')
+    urls.url(r'^request/(?P<uuid>({}))$'.format(UUID_REGEX),
+             views.NotifyLocationView.as_view(), name='notify_location')
 )

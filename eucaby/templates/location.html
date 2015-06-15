@@ -4,11 +4,11 @@
 <script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
 {% endblock %}
 {% block content %}
-<div ng-controller="MapCtrl"
-     ng-init="lat='{{ notif.location.lat }}'; lng='{{ notif.location.lon }}'; message='{{ notif.message }}'">
+<div ng-controller="LocationCtrl"
+     ng-init="lat='{{ loc_notif.location.lat }}'; lng='{{ loc_notif.location.lon }}'; message='{{ loc_notif.message }}'">
     <div id="map"></div>
     <br>
-    Location sent by {{notif.sender_name}} at {{notif.created_date}} <br>
-    <div ng-show="'{{ notif.message }}'">Message: {{ notif.message }}</div>
+    Location sent by {{loc_notif.sender_name}} at {{loc_notif.created_date}} <br>
+    <div ng-show="'{{ loc_notif.message }}'">Message: {{ loc_notif.message }}</div>
 </div>
 {% endblock %}

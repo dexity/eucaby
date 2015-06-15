@@ -1,15 +1,16 @@
 {% extends  "base_app.html" %}
 
+{% block header %}
+<script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+{% endblock %}
 {% block content %}
-
-{% verbatim %}
-<div ng-switch on="message_type">
-    <div ng-switch-when="error">{{message}}</div>
-    <div ng-switch-when="success">{{message}}</div>
-    <div ng-switch-default>
-        Notify your location
-    </div>
+<div ng-controller="RequestCtrl">
+    <div id="map"></div>
+    <br>
+    Request sent by {{ loc_req.sender_name }} at {{ loc_req.created_date }} <br>
+    <form novalidate>
+        <input type="text" ng-model="message" placeholder="Optional message"><br>
+        <input type="submit" ng-click="sendLocation()" value="Send Location">
+    </form>
 </div>
-{% endverbatim %}
-<div ng-init="session='{{ session }}'"></div>
 {% endblock %}

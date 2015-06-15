@@ -68,7 +68,8 @@ class LocationMessage(polymodel.PolyModel):
     @classmethod
     def get_by_uuid(cls, uuid):
         """Returns message by uuid."""
-        return cls.query(cls.uuid == uuid).fetch(1)
+        obj = cls.query(cls.uuid == uuid).fetch(1)
+        return (obj and obj[0]) or None
 
     @property
     def sender(self):
