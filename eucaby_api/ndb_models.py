@@ -82,14 +82,14 @@ class LocationMessage(polymodel.PolyModel):
 
     def to_dict(self, timezone_offset=None):
         exclude = ['sender_username', 'sender_name', 'recipient_username',
-                   'recipient_name', 'recipient_email']
+                   'recipient_name', 'recipient_email', 'class_']
         d = self._to_dict(exclude=exclude)
         created_date = utils_date.timezone_date(
             self.created_date, timezone_offset)
         d.update(dict(
             id=self.id, sender=self.sender, recipient=self.recipient,
             message=self.message, session=self.session.to_dict(),
-            created_date=created_date))
+            created_date=str(created_date)))
         return d
 
     @property
@@ -142,3 +142,9 @@ class LocationNotification(LocationMessage):
             uuid=api_utils.generate_uuid())
         obj.put()
         return obj
+
+    def to_dict(self, timezone_offset=None):
+        d = super(LocationNotification, self).to_dict(
+            timezone_offset=timezone_offset)
+        d['location'] = dict(lat=self.location.lat, lon=self.location.lon)
+        return d

@@ -45,4 +45,18 @@ angular.module('eucaby.utils', [])
                 success(pos.coords.latitude, pos.coords.longitude);
             }, error);
         }
+}})
+
+.factory('utils', function(){
+    return {
+        toPostData: function(params){
+            // Converts object to post data
+            if (!params){
+                return '';
+            }
+            return Object.keys(params).map(function(prop) {
+                return [prop, params[prop]].map(encodeURIComponent).join("=");
+            }).join("&");
+        }
 }});
+

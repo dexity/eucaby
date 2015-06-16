@@ -4,7 +4,7 @@
 <script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
 {% endblock %}
 {% block content %}
-<div ng-controller="RequestCtrl">
+<div ng-controller="RequestCtrl" ng-init="uuid='{{ loc_req.uuid }}'">
     <div id="map"></div>
     <br>
     Request sent by {{ loc_req.sender_name }} at {{ loc_req.created_date }} <br>

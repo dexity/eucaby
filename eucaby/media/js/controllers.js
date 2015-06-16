@@ -11,7 +11,8 @@ angular.module('eucaby.controllers', ['eucaby.utils'])
 
 }])
 
-.controller('RequestCtrl', ['$scope', 'map', function($scope, map) {
+.controller('RequestCtrl', ['$scope', '$http', 'map', 'utils',
+            function($scope, $http, map, utils) {
     map.currentLocation(function(lat, lng){
         $scope.lat = lat;
         $scope.lng = lng;
@@ -20,6 +21,14 @@ angular.module('eucaby.controllers', ['eucaby.utils'])
     });
 
     $scope.sendLocation = function(){
+        $http.post('/request/' + $scope.uuid,
+                   utils.toPostData({
+                       lat: $scope.lat, lng: $scope.lng,
+                       message: $scope.message
+                   }), {
+                   headers: {
+                       'Content-Type': 'application/x-www-form-urlencoded'
+                   }});
         console.debug($scope.lat, $scope.lng, $scope.message);
     }
 }]);

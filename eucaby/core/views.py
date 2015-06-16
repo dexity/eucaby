@@ -2,6 +2,7 @@
 from google.appengine.ext import ndb
 from django.conf import settings
 from django.views import generic
+from django.views.generic import edit as edit_views
 from django import http
 from django import shortcuts
 import json
@@ -11,6 +12,7 @@ import re
 import redis
 from eucaby.eucaby import const
 from eucaby.core import models as core_models
+from eucaby.core import forms
 from eucaby_api import ndb_models
 
 
@@ -79,39 +81,29 @@ class NotifyLocationView(generic.View):
         c = dict(loc_req=loc_req)
         return shortcuts.render(request, 'request.html', c)
 
-
     def post(self, request, loc_req):
+        form = forms.LocationForm(request.POST)
+        if not form.is_valid():
+            msg = 'Something went wrong'
+            if 'lat' in form.errors or 'lng' in form.errors:
+                msg = 'Invalid location'
+            elif 'message' in form.errors:
+                msg = form.errors['message'][0]
+            resp = http.JsonResponse(dict(error=msg))
+            resp.status_code = 400
+            return resp
 
-        pass
+        data = form.cleaned_data
+        default_name = loc_req.recipient_email or 'Unknown user'
+        sender_username = loc_req.recipient_username or default_name
+        sender_name = loc_req.recipient_name or default_name
 
-
-#     def post(self, *args, **kwargs):
-#         data = self.request.POST
-#         _session = data.get('session', None)
-#         latlng = data.get('latlng', '')
-#         if not (_session or re.match(const.LATLNG_REGEX, latlng)):
-#             return http.HttpResponseBadRequest(
-#                 'Invalid latitude, longitude or missing session')
-#
-#         session = core_models.Session.query(
-#             core_models.Session.key == _session).get()
-#         if not session:
-#             return http.HttpResponseNotFound('Session does not exist')
-#         resp = core_models.Response.query(
-#             core_models.Response.session == session).get()
-#         if resp:    # Update response
-#             resp.location = ndb.GeoPt(latlng)
-#             resp.put()
-#         else:
-#             resp = core_models.Response.create(session, latlng)
-#         # Post to location channel
-#         r = redis.StrictRedis(
-#             host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
-#         r.publish('eucabyrt', json.dumps(resp.to_dict()))
-#
-#         return http.HttpResponse(
-#             json.dumps(dict(message='Your location has been sent')),
-#             mimetype='application/json')
+        loc_notif = ndb_models.LocationNotification.create(
+            '{lat},{lng}'.format(**data), sender_username, sender_name,
+            recipient_username=loc_req.sender_username,
+            recipient_name=loc_req.sender_name, message=data['message'],
+            is_web=True, session=loc_req.session)
+        return http.JsonResponse(loc_notif.to_dict())
 
     def dispatch(self, request, uuid):
         loc_req = validate_object(
