@@ -4,7 +4,8 @@ from eucaby.core import views
 
 UUID_REGEX = '[0-9a-f]{32}'
 
-urlpatterns = urls.patterns('',
+urlpatterns = urls.patterns(
+    '',
     urls.url(r'^$', views.Home.as_view(), name='home'),
     urls.url(r'^about/$', views.About.as_view(), name='about'),
     urls.url(r'^terms/$', views.Terms.as_view(), name='terms'),

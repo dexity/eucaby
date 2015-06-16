@@ -12,7 +12,7 @@ angular.module('eucaby',
     $ionicPlatform.ready(function() {
         if(window.StatusBar) {
             window.StatusBar.styleDefault();
-        };
+        }
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {

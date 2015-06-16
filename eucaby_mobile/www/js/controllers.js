@@ -301,7 +301,7 @@ angular.module('eucaby.controllers',
             name: item.recipient.name || item.recipient.email,
             notification_url: '#/app/tab/outgoing_notification/' + item.id,
             request_url: '#/app/tab/outgoing_request/' + item.id
-        }
+        };
     };
     var loadItems = function(){
         // Load outgoing items
@@ -338,7 +338,7 @@ angular.module('eucaby.controllers',
             name: item.sender.name,
             notification_url: '#/app/tab/incoming_notification/' + item.id,
             request_url: '#/app/tab/incoming_request/' + item.id
-        }
+        };
     };
     var loadItems = function() {
         // Load incoming items

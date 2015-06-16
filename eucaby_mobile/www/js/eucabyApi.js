@@ -8,8 +8,8 @@ Module to perform the following operations:
 
 angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
 
-//.constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
-.constant('ENDPOINT', 'http://localhost:8888')
+.constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
+//.constant('ENDPOINT', 'http://localhost:8888')
 
 .factory('EucabyApi', ['$http', '$q', 'OpenFB', 'utils', 'storageManager', 'ENDPOINT',
          function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {

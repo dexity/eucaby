@@ -104,6 +104,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         initNotifications: function(){
             console.log('Initialize notifications');
             // Register device and set up notifications to receive messages
+            // XXX: Fix 'device' is not defined.
             try {
                 if (device.platform === 'iOS') {
                     initIOS();

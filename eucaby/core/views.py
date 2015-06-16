@@ -1,46 +1,37 @@
 
-from google.appengine.ext import ndb
-from django.conf import settings
 from django.views import generic
-from django.views.generic import edit as edit_views
 from django import http
 from django import shortcuts
-import json
 import datetime
-import logging
-import re
-import redis
-from eucaby.eucaby import const
-from eucaby.core import models as core_models
 from eucaby.core import forms
 from eucaby_api import ndb_models
 
 
 class Home(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'index.html')
 
 
 class About(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'about.html')
 
 
 class Terms(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'terms.html')
 
 class Privacy(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'privacy.html')
 
 class Feedback(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'feedback.html')
 
 
@@ -52,8 +43,8 @@ def validate_object(request, model_class, uuid, obj_type):
     # Link expires after 1 day
     expiration = obj.created_date + datetime.timedelta(days=1)
     if expiration < datetime.datetime.now():
-        c = dict(error=obj_type + ' link has expired')
-        return shortcuts.render(request, 'error.html', c)
+        context = dict(error=obj_type + ' link has expired')
+        return shortcuts.render(request, 'error.html', context)
     return obj
 
 
@@ -61,11 +52,11 @@ class LocationView(generic.View):
 
     http_method_names = ['get', ]
 
-    def get(self, request, loc_notif):
-        c = dict(loc_notif=loc_notif)
-        return shortcuts.render(request, 'location.html', c)
+    def get(self, request, loc_notif):  # pylint: disable=no-self-use
+        context = dict(loc_notif=loc_notif)
+        return shortcuts.render(request, 'location.html', context)
 
-    def dispatch(self, request, uuid):
+    def dispatch(self, request, uuid):  # pylint: disable=arguments-differ
         loc_notif = validate_object(
             request, ndb_models.LocationNotification, uuid, 'Location')
         if isinstance(loc_notif, http.HttpResponse):
@@ -77,11 +68,11 @@ class NotifyLocationView(generic.View):
 
     http_method_names = ['get', 'post']
 
-    def get(self, request, loc_req):
-        c = dict(loc_req=loc_req)
-        return shortcuts.render(request, 'request.html', c)
+    def get(self, request, loc_req):  # pylint: disable=no-self-use
+        context = dict(loc_req=loc_req)
+        return shortcuts.render(request, 'request.html', context)
 
-    def post(self, request, loc_req):
+    def post(self, request, loc_req):  # pylint: disable=no-self-use
         form = forms.LocationForm(request.POST)
         if not form.is_valid():
             msg = 'Something went wrong'
@@ -105,7 +96,7 @@ class NotifyLocationView(generic.View):
             is_web=True, session=loc_req.session)
         return http.JsonResponse(loc_notif.to_dict())
 
-    def dispatch(self, request, uuid):
+    def dispatch(self, request, uuid):  # pylint: disable=arguments-differ
         loc_req = validate_object(
             request, ndb_models.LocationRequest, uuid, 'Request')
         if isinstance(loc_req, http.HttpResponse):

@@ -39,7 +39,8 @@ class LocationMessage(polymodel.PolyModel):
     created_date = ndb.DateTimeProperty(required=True, auto_now_add=True)
 
     @classmethod
-    def _get_by_username(cls, username_field, username, limit=None, offset=None):
+    def _get_by_username(
+            cls, username_field, username, limit=None, offset=None):
         res = cls.query(getattr(cls, username_field) == username).order(
             -cls.created_date)
         kwargs = {}
@@ -89,7 +90,7 @@ class LocationMessage(polymodel.PolyModel):
         d.update(dict(
             id=self.id, sender=self.sender, recipient=self.recipient,
             message=self.message, session=self.session.to_dict(),
-            created_date=str(created_date)))
+            created_date=created_date))
         return d
 
     @property

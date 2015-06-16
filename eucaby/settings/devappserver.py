@@ -1,5 +1,5 @@
 
-from eucaby.settings.base import *  # pylint: disable=wildcard-import
+from eucaby.settings.base import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 DATABASES = {
     'default': {
