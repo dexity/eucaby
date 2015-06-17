@@ -12,6 +12,7 @@ from django import test
 from eucaby_api import ndb_models
 from google.appengine.ext import testbed
 from tests.eucaby_api import fixtures
+from tests.utils import utils as test_utils
 
 django.setup()
 
@@ -73,10 +74,15 @@ class TestNotifyLocationView(test.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
+        self.testbed.init_taskqueue_stub(root_path='.')
+        self.taskq = self.testbed.get_stub(
+            testbed.TASKQUEUE_SERVICE_NAME)
         self.today = datetime.datetime(2015, 6, 12)
         self.loc_req = ndb_models.LocationRequest.create(
             'testuser', u'Test Юзер', recipient_email='test@example.com',
             message=u'Привет')
+        self.payload_data = dict(
+            title=u'Test Юзер', message='sent you a new location')
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -144,14 +150,18 @@ class TestNotifyLocationView(test.TestCase):
         notif = ndb_models.LocationNotification.get_by_session_token(
             self.loc_req.session.token)[0]
         data = json.loads(resp.content)
-        self.assertEqual(notif.to_dict(), data)
+        notif_dict = notif.to_dict()
+        notif_dict['created_date'] = data['created_date']
+        self.assertEqual(notif_dict, data)
         self.assertEqual(u'Салют', data['message'])
+        # # Push notifications
+        # test_utils.verify_push_notifications(
+        #     self.taskq, self.client, self.payload_data)
 
         # Existing user
         loc_req2 = ndb_models.LocationRequest.create(
             'testuser', u'Test Юзер', recipient_username='testuser2',
             recipient_name='Test2 User2', message=u'Привет')
-
         resp = self.client.post(
             '/request/' + loc_req2.uuid,
             data=dict(lat='11', lng='22', message=u'Салют'))
@@ -159,12 +169,12 @@ class TestNotifyLocationView(test.TestCase):
         notif = ndb_models.LocationNotification.get_by_session_token(
             loc_req2.session.token)[0]
         data = json.loads(resp.content)
-        self.assertEqual(notif.to_dict(), data)
+        notif_dict = notif.to_dict()
+        notif_dict['created_date'] = data['created_date']
+        self.assertEqual(notif_dict, data)
         self.assertEqual(
             dict(username='testuser2', name='Test2 User2'), data['sender'])
         self.assertEqual(
             dict(username='testuser', email=None, name=u'Test Юзер'),
             data['recipient'])
-
-        # XXX: Add tests for sending notifications
 

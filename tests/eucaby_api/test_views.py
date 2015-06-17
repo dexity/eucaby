@@ -22,34 +22,6 @@ from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
-def _verify_push_notifications(taskq, client, data):
-    """Verifies push notification tasks."""
-    tasks = taskq.get_filtered_tasks(queue_names='push')
-    assert 2 == len(tasks)
-    # Android task
-    with mock.patch('eucaby_api.tasks.gcm.GCM.json_request') as req_mock:
-        req_mock.return_value = {}
-        resp_android = test_utils.execute_queue_task(client, tasks[0])
-
-        # Test GCM request
-        assert 1 == req_mock.call_count
-        req_mock.assert_called_with(
-            registration_ids=['12'], data=data, retries=7)
-        assert 200 == resp_android.status_code
-
-    # iOS task
-    with mock.patch(
-        'eucaby_api.tasks.api_utils.create_apns_socket'
-    ) as mock_create_socket:
-        apns_socket = mock.Mock()
-        mock_create_socket.return_value = apns_socket
-        # Test APNs request
-        mock_send_notif = apns_socket.gateway_server.send_notification_multiple
-        resp_ios = test_utils.execute_queue_task(client, tasks[1])
-        assert 1 == mock_send_notif.call_count
-        assert 200 == resp_ios.status_code
-
-
 class GeneralTest(test_base.TestCase):
 
     def setUp(self):
@@ -574,7 +546,8 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -587,7 +560,8 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
@@ -599,7 +573,8 @@ class TestRequestLocation(test_base.TestCase):
                 username=self.user2.username, message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -1043,7 +1018,8 @@ class TestNotifyLocation(test_base.TestCase):
             'hello world', ['hello world', 'Hi, Test2 User2',
                             u'Test Юзер sent a message'],
             session_dict)
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -1070,7 +1046,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
@@ -1099,7 +1076,8 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, email=self.user2.email,
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
@@ -1112,7 +1090,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user.email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
@@ -1124,7 +1103,8 @@ class TestNotifyLocation(test_base.TestCase):
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        _verify_push_notifications(self.taskq, self.client, self.payload_data)
+        test_utils.verify_push_notifications(
+            self.taskq, self.client, self.payload_data)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])
