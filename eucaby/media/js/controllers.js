@@ -22,13 +22,17 @@ angular.module('eucaby.controllers', ['eucaby.utils'])
 
     $scope.sendLocation = function(){
         $http.post('/request/' + $scope.uuid,
-                   utils.toPostData({
-                       lat: $scope.lat, lng: $scope.lng,
-                       message: $scope.message
-                   }), {
-                   headers: {
-                       'Content-Type': 'application/x-www-form-urlencoded'
-                   }});
-        console.debug($scope.lat, $scope.lng, $scope.message);
+           utils.toPostData({
+               lat: $scope.lat, lng: $scope.lng,
+               message: $scope.message
+           }), {
+           headers: {
+               'Content-Type': 'application/x-www-form-urlencoded'
+           }}).then(function(data){
+              window.location.href = '/';
+           },
+           function(data){
+               console.debug(data);
+           });
     }
 }]);
