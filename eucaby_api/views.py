@@ -6,12 +6,11 @@ import flask_restful
 import itertools
 import logging
 
-from google.appengine.api import taskqueue
-
 from eucaby.utils import mail as utils_mail
 from eucaby_api import auth
 from eucaby_api import fields as api_fields
 from eucaby_api.utils import api as eucaby_api
+from eucaby_api.utils import gae as gae_utils
 from eucaby_api import args as api_args
 from eucaby_api import models
 from eucaby_api import ndb_models
@@ -82,15 +81,8 @@ class RequestLocationView(flask_restful.Resource):
         # Send notifications to Android and iOS devices of the registered user
         # (sender and recipient can be the same person)
         if recipient_username:
-            params = dict(
-                recipient_username=recipient_username,
-                sender_name=user.name, type=api_args.REQUEST)
-            taskqueue.add(
-                queue_name='push', url=flask.url_for('tasks.push_gcm'),
-                params=params)
-            taskqueue.add(
-                queue_name='push', url=flask.url_for('tasks.push_apns'),
-                params=params)
+            gae_utils.send_notification(
+                recipient_username, user.name, api_args.REQUEST)
 
         if recipient_email:
             # Send email copy to sender?
@@ -176,15 +168,8 @@ class NotifyLocationView(flask_restful.Resource):
         # Send notifications to Android and iOS devices of the registered user
         # (sender and recipient can be the same person)
         if recipient_username:
-            params = dict(
-                recipient_username=recipient_username,
-                sender_name=user.name, type=api_args.LOCATION)
-            taskqueue.add(
-                queue_name='push', url=flask.url_for('tasks.push_gcm'),
-                params=params)
-            taskqueue.add(
-                queue_name='push', url=flask.url_for('tasks.push_apns'),
-                params=params)
+            gae_utils.send_notification(
+                recipient_username, user.name, api_args.LOCATION)
 
         if recipient_email:
             # Send email notification to recipient

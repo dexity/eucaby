@@ -1,10 +1,14 @@
 
+import datetime
 from django.views import generic
 from django import http
 from django import shortcuts
-import datetime
+import logging
+
 from eucaby.core import forms
+from eucaby_api import args as api_args
 from eucaby_api import ndb_models
+from eucaby_api.utils import gae as gae_utils
 
 
 class Home(generic.View):
@@ -94,6 +98,11 @@ class NotifyLocationView(generic.View):
             recipient_username=loc_req.sender_username,
             recipient_name=loc_req.sender_name, message=data['message'],
             is_web=True, session=loc_req.session)
+
+        # Send notifications to Android and iOS devices
+        gae_utils.send_notification(
+            loc_req.sender_username, sender_name, api_args.LOCATION)
+
         return http.JsonResponse(loc_notif.to_dict())
 
     def dispatch(self, request, uuid):  # pylint: disable=arguments-differ

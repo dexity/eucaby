@@ -165,3 +165,6 @@ class TestNotifyLocationView(test.TestCase):
         self.assertEqual(
             dict(username='testuser', email=None, name=u'Test Юзер'),
             data['recipient'])
+
+        # XXX: Add tests for sending notifications
+

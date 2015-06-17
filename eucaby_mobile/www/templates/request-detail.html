@@ -16,7 +16,7 @@
                 </div>
             </div>
         </div>
-        <div class="item item-text-wrap" ng-show="item.message">
+        <div class="item item-text-wrap message-text" ng-show="item.message">
             {{ item.message }}
         </div>
     </div>
@@ -32,7 +32,7 @@
     </form>
 
     <div ng-show="item.showBrowserWarning" class="note-area">
-        Note: Location sent from a browser might not be accurate
+        <b>Note:</b> Location sent from a browser might not be accurate
     </div>
     <div ng-show="item.notifications">
         <ion-list>
