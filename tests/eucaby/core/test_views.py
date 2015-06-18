@@ -8,11 +8,11 @@ os.environ.setdefault(
     'DJANGO_SETTINGS_MODULE', set_utils.get_settings_module('testing'))
 
 import django
+import mock
 from django import test
 from eucaby_api import ndb_models
 from google.appengine.ext import testbed
 from tests.eucaby_api import fixtures
-from tests.utils import utils as test_utils
 
 django.setup()
 
@@ -81,8 +81,6 @@ class TestNotifyLocationView(test.TestCase):
         self.loc_req = ndb_models.LocationRequest.create(
             'testuser', u'Test Юзер', recipient_email='test@example.com',
             message=u'Привет')
-        self.payload_data = dict(
-            title=u'Test Юзер', message='sent you a new location')
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -140,9 +138,9 @@ class TestNotifyLocationView(test.TestCase):
         self.assertIn('RequestCtrl', content)
         self.assertIn(u'Test Юзер', content)
 
-    def test_post(self):
-        """Tests post request for request view."""
-        # Non-existing user
+    @mock.patch('eucaby.core.views.gae_utils.send_notification')
+    def test_post_new_user(self, mock_send_notif):
+        """Tests post request for request view for new user."""
         resp = self.client.post(
             '/request/' + self.loc_req.uuid,
             data=dict(lat='11', lng='22', message=u'Салют'))
@@ -154,11 +152,14 @@ class TestNotifyLocationView(test.TestCase):
         notif_dict['created_date'] = data['created_date']
         self.assertEqual(notif_dict, data)
         self.assertEqual(u'Салют', data['message'])
-        # # Push notifications
-        # test_utils.verify_push_notifications(
-        #     self.taskq, self.client, self.payload_data)
 
-        # Existing user
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            'testuser', 'test@example.com', 'location')
+
+    @mock.patch('eucaby.core.views.gae_utils.send_notification')
+    def test_post_existing_user(self, mock_send_notif):
+        """Tests post request for request view for existing user."""
         loc_req2 = ndb_models.LocationRequest.create(
             'testuser', u'Test Юзер', recipient_username='testuser2',
             recipient_name='Test2 User2', message=u'Привет')
@@ -178,3 +179,6 @@ class TestNotifyLocationView(test.TestCase):
             dict(username='testuser', email=None, name=u'Test Юзер'),
             data['recipient'])
 
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            'testuser', 'Test2 User2', 'location')

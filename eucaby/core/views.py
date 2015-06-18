@@ -3,7 +3,6 @@ import datetime
 from django.views import generic
 from django import http
 from django import shortcuts
-import logging
 
 from eucaby.core import forms
 from eucaby_api import args as api_args

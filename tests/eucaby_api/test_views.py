@@ -22,6 +22,9 @@ from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
+SEND_NOTIFICATION = 'eucaby_api.views.gae_utils.send_notification'
+
+
 class GeneralTest(test_base.TestCase):
 
     def setUp(self):
@@ -433,17 +436,7 @@ class TestRequestLocation(test_base.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
-        # Create devices
-        device_params = [('12', api_args.ANDROID), ('34', api_args.IOS)]
-        for user in [self.user, self.user2]:
-            for param in device_params:  # Both users own both devices
-                models.Device.get_or_create(user, *param)
-        self.payload_data = dict(
-            title=u'Test Юзер', message='sent you a new request')
 
     def tearDown(self):
         super(TestRequestLocation, self).tearDown()
@@ -524,7 +517,8 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(ec_user_not_found, data)
         self.assertEqual(404, resp.status_code)
 
-    def test_new_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_new_email(self, mock_send_notif):
         """Tests valid new email address."""
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
@@ -532,13 +526,13 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         # No push notification sent
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        self.assertEqual(0, len(tasks))
+        self.assertEqual(0, mock_send_notif.call_count)
         self._verify_data_email(
             resp, None, None, recipient_email, 'hello',
             ['hello', u'from Test Юзер', 'Join Eucaby'])
 
-    def test_existing_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_existing_email(self, mock_send_notif):
         """Tests valid existing email address."""
         recipient_email = 'test2@example.com'
 
@@ -546,13 +540,15 @@ class TestRequestLocation(test_base.TestCase):
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user2.username, self.user.name, api_args.REQUEST)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
 
-    def test_self_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_self_email(self, mock_send_notif):
         """Test that user can send email to himself."""
         recipient_email = 'test@example.com'
         resp = self.client.post(
@@ -560,26 +556,30 @@ class TestRequestLocation(test_base.TestCase):
                 email=recipient_email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user.username, self.user.name, api_args.REQUEST)
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
 
-    def test_user(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_user(self, mock_send_notif):
         """Tests valid recipient user."""
         resp = self.client.post(
             '/location/request', data=dict(
                 username=self.user2.username, message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user2.username, self.user.name, api_args.REQUEST)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
 
-    def test_email_user(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_email_user(self, mock_send_notif):
         """Tests email and username parameters."""
         recipient_email = 'testnew@example.com'
         resp = self.client.post(
@@ -588,8 +588,7 @@ class TestRequestLocation(test_base.TestCase):
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         # No push notification sent
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        self.assertEqual(0, len(tasks))
+        self.assertEqual(0, mock_send_notif.call_count)
         self._verify_data_email(resp, None, None, recipient_email, u'Привет',
                                 [u'Привет', u'from Test Юзер', 'Join Eucaby'])
 
@@ -865,17 +864,7 @@ class TestNotifyLocation(test_base.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
-        # Create devices
-        device_params = [('12', api_args.ANDROID), ('34', api_args.IOS)]
-        for user in [self.user, self.user2]:
-            for param in device_params:  # Both users own both devices
-                models.Device.get_or_create(user, *param)
-        self.payload_data = dict(
-            title=u'Test Юзер', message='sent you a new location')
 
     def tearDown(self):
         super(TestNotifyLocation, self).tearDown()
@@ -995,7 +984,8 @@ class TestNotifyLocation(test_base.TestCase):
 
         # XXX: Add test deny access for non-sender and non-receiver user
 
-    def test_token(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_token(self, mock_send_notif):
         """Tests notification by session token."""
         # Create request
         # user2 created request to user: user2 -> user
@@ -1004,7 +994,7 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID2)))
         data = json.loads(resp.data)
         token = data['data']['session']['token']
-        self.taskq.FlushQueue('push')
+        mock_send_notif.reset_mock()
 
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
@@ -1018,8 +1008,10 @@ class TestNotifyLocation(test_base.TestCase):
             'hello world', ['hello world', 'Hi, Test2 User2',
                             u'Test Юзер sent a message'],
             session_dict)
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user2.username, self.user.name, api_args.LOCATION)
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -1030,7 +1022,8 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(2, ndb_models.LocationNotification.query().count())
         self.assertEqual(1, ndb_models.Session.query().count())
 
-    def test_self_token(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_self_token(self, mock_send_notif):
         """Tests notification by session token to himself."""
         # Create request
         # user created request to user: user -> user
@@ -1039,22 +1032,24 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
         token = data['data']['session']['token']
-        self.taskq.FlushQueue('push')
+        mock_send_notif.reset_mock()
 
         # user notifies himself
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, token=token),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user.username, self.user.name, api_args.LOCATION)
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, None,
             [u'Hi, Test Юзер', u'Test Юзер shared'], session_dict)
 
-    def test_new_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_new_email(self, mock_send_notif):
         """Tests notification new email."""
         # user --> new email
         resp = self.client.post(
@@ -1062,13 +1057,14 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, email='test3@example.com', message=''),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         # No push notification sent
-        tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        self.assertEqual(0, len(tasks))
+        self.assertEqual(0, mock_send_notif.call_count)
+
         self._verify_data_email(
             resp, None, None, 'test3@example.com', '',
             [u'Test Юзер shared', 'Join Eucaby'])
 
-    def test_existing_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_existing_email(self, mock_send_notif):
         """Tests notification to existing email."""
         # user sends notification to user2: user --> user2
         resp = self.client.post(
@@ -1076,35 +1072,40 @@ class TestNotifyLocation(test_base.TestCase):
                 latlng=fixtures.LATLNG, email=self.user2.email,
                 message=u'Привет'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user2.username, self.user.name, api_args.LOCATION)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
                         u'Test Юзер sent a message'])
 
-    def test_self_email(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_self_email(self, mock_send_notif):
         """Tests notification his own email."""
         # user sends notification to self: user --> user
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, email=self.user.email, message='hello'),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user.username, self.user.name, api_args.LOCATION)
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
 
-    def test_username(self):
+    @mock.patch(SEND_NOTIFICATION)
+    def test_username(self, mock_send_notif):
         """Tests notification by username."""
         # user notifies user2 to existing request: user --> user2
         resp = self.client.post(
             '/location/notification', data=dict(
                 latlng=fixtures.LATLNG, username=self.user2.username),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        test_utils.verify_push_notifications(
-            self.taskq, self.client, self.payload_data)
+        self.assertEqual(1, mock_send_notif.call_count)
+        mock_send_notif.assert_called_with(
+            self.user2.username, self.user.name, api_args.LOCATION)
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])
