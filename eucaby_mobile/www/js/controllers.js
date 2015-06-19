@@ -1,9 +1,5 @@
 'use strict';
 
-// Default location
-var SF_LAT = 37.7833;
-var SF_LNG = -122.4167;
-
 angular.module('eucaby.controllers',
                ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
@@ -12,6 +8,8 @@ angular.module('eucaby.controllers',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
+    $rootScope.recentContacts = [];
+    $rootScope.contactsHistory = {};
     $rootScope.setNoMessages = function(){
         push.checkMessages(false);
     };
@@ -76,7 +74,7 @@ angular.module('eucaby.controllers',
             $ionicLoading.hide();
         },
         function(data){
-            $scope.map = map.createMap('map', SF_LAT, SF_LNG);
+            $scope.map = map.createMap('map');
             $ionicLoading.hide();
             utils.alert('Location Error',
                         'Unable to get location: ' + data.message);
@@ -182,7 +180,8 @@ angular.module('eucaby.controllers',
 
     $scope.sendLocation = function(){
         // Send location action
-        if (!$scope.isFormValid($scope.notificationForm)){
+        // Warning: This is a hack to access child scope directly
+        if (!$scope.isFormValid($scope.$$childHead.notificationForm)){
             return;
         }
 
@@ -216,7 +215,8 @@ angular.module('eucaby.controllers',
 
     $scope.sendRequest = function(){
         // Send request action
-        if (!$scope.isFormValid($scope.requestForm)){
+        // Warning: This is a hack to access child scope directly
+        if (!$scope.isFormValid($scope.$$childHead.requestForm)){
             return;
         }
 

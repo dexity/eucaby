@@ -2,11 +2,18 @@
 
 angular.module('eucaby.utils', [])
 
-.factory('map', ['$q', '$ionicLoading', 'utils',
-    function($q, $ionicLoading, utils){
+// Default location: San Francisco
+.constant('LATLNG', [37.7833, -122.4167])
+
+.factory('map', ['$q', '$ionicLoading', 'utils', 'LATLNG',
+    function($q, $ionicLoading, utils, LATLNG){
     return {
         createMap: function(id, lat, lng, config){
             // Creates map
+            if (lat === undefined || lng === undefined) {
+                lat = LATLNG[0];
+                lng = LATLNG[1];
+            }
             var mapOptions = {
                 center: new google.maps.LatLng(lat, lng),
                 zoom: (config && config.zoom) || 13,

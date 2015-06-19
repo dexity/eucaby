@@ -128,6 +128,19 @@ hr.separator {
     padding: 5px 10px;
 }
 
+.button.header-button {
+    padding-left: 15px;
+    padding-right: 10px;
+}
+
+.header-button .icon {
+    margin-left:10px;
+}
+
+.title-right-button {
+    left: 0px !important;
+}
+
 /* Ionic adjustments */
 
 .tab-title {
@@ -138,4 +151,26 @@ hr.separator {
 
 .item-icon-right .icon {
     right: 0px;
+}
+
+.item-divider {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+ion-footer-bar .button-bar .button {
+    border-width: 0px;
+    font-size: 15px;
+}
+
+.button-bar .button-icon {
+    margin-top: 5px;
+}
+
+.bar .button-bar > .button {
+    line-height: 42px;
+}
+
+ion-footer-bar.bar {
+    padding: 0px;
 }

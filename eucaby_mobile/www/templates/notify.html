@@ -1,13 +1,17 @@
-<ion-modal-view>
+<ion-modal-view ng-controller="NotificationCtrl">
   <ion-header-bar>
-    <h1 class="title">I am here</h1>
-    <div class="buttons">
-      <button class="button button-small button-icon button-clear ion-ios-close-empty" ng-click="notifyModal.hide()"></button>
-    </div>
+      <button class="button back-button buttons button-icon
+        ion-ios-arrow-left header-item" ng-click="notifyModal.hide()">
+      </button>
+      <h1 class="title title-right-button">I am here</h1>
+      <button class="button buttons button-positive header-button"
+          ng-click="sendLocation()">
+          Send Location <i class="icon ion-android-send"></i>
+      </button>
   </ion-header-bar>
-  <ion-content ng-controller="NotificationCtrl">
+  <ion-content>
     <div id="notifymap"></div>
-    <form ng-submit="sendLocation()" name="notificationForm" novalidate>
+    <form name="notificationForm" novalidate>
         <label class="item item-input message">
           <input type="text" placeholder="Optional message" name="message"
                  ng-model="form.message">
@@ -27,9 +31,6 @@
                     ng-click="clickRadio($event)">
                 {{ friend.name }}
             </ion-radio>
-        </div>
-        <div class="padding">
-            <button class="button button-block button-positive" type="submit">Send Location</button>
         </div>
     </form>
   </ion-content>

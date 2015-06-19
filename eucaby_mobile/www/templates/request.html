@@ -1,12 +1,16 @@
-<ion-modal-view>
+<ion-modal-view ng-controller="RequestCtrl">
   <ion-header-bar>
-    <h1 class="title">Where Are You?</h1>
-    <div class="buttons">
-      <button class="button button-small button-icon button-clear ion-ios-close-empty" ng-click="requestModal.hide()"></button>
-    </div>
+      <button class="button back-button buttons button-icon
+        ion-ios-arrow-left header-item" ng-click="requestModal.hide()">
+      </button>
+      <h1 class="title title-right-button">Where Are You?</h1>
+      <button class="button buttons button-positive header-button"
+          ng-click="sendRequest()">
+          Send Request <i class="icon ion-android-send"></i>
+      </button>
   </ion-header-bar>
-  <ion-content ng-controller="RequestCtrl">
-    <form ng-submit="sendRequest()" name="requestForm" novalidate>
+  <ion-content>
+    <form name="requestForm" novalidate>
         <label class="item item-input message">
           <input type="text" placeholder="Optional message" name="message"
                  ng-model="form.message">
@@ -25,9 +29,6 @@
                     name="user" ng-model="form.username" ng-click="clickRadio($event)">
                 {{ friend.name }}
             </ion-radio>
-        </div>
-        <div class="padding">
-            <button class="button button-block button-positive" type="submit">Send Request</button>
         </div>
     </form>
   </ion-content>
