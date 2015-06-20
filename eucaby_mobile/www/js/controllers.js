@@ -8,7 +8,7 @@ angular.module('eucaby.controllers',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
-    $rootScope.recentContacts = [];
+    $rootScope.recentContacts = [{name: 'Hello', username: 'Test User'}];
     $rootScope.contactsHistory = {};
     $rootScope.setNoMessages = function(){
         push.checkMessages(false);
@@ -178,10 +178,11 @@ angular.module('eucaby.controllers',
         $scope.selectedUser = $scope.form.username;
     };
 
-    $scope.sendLocation = function(){
+    $scope.$on('sendLocation', function(event){
         // Send location action
         // Warning: This is a hack to access child scope directly
-        if (!$scope.isFormValid($scope.$$childHead.notificationForm)){
+        //          messageForm in ng-included template.
+        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
             return;
         }
 
@@ -196,7 +197,7 @@ angular.module('eucaby.controllers',
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
         });
-    };
+    });
 }])
 
 .controller('RequestCtrl',
@@ -213,10 +214,10 @@ angular.module('eucaby.controllers',
         $scope.selectedUser = $scope.form.username;
     };
 
-    $scope.sendRequest = function(){
+    $scope.$on('sendRequest', function(event){
         // Send request action
         // Warning: This is a hack to access child scope directly
-        if (!$scope.isFormValid($scope.$$childHead.requestForm)){
+        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
             return;
         }
 
@@ -229,7 +230,7 @@ angular.module('eucaby.controllers',
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
         });
-    };
+    });
 }])
 
 .controller('ProfileCtrl',

@@ -1,35 +1,15 @@
-<ion-modal-view ng-controller="RequestCtrl">
+<ion-modal-view>
   <ion-header-bar>
       <button class="button back-button buttons button-icon
         ion-ios-arrow-left header-item" ng-click="requestModal.hide()">
       </button>
       <h1 class="title title-right-button">Where Are You?</h1>
       <button class="button buttons button-positive header-button"
-          ng-click="sendRequest()">
+          ng-click="$broadcast('sendRequest')">
           Send Request <i class="icon ion-android-send"></i>
       </button>
   </ion-header-bar>
-  <ion-content>
-    <form name="requestForm" novalidate>
-        <label class="item item-input message">
-          <input type="text" placeholder="Optional message" name="message"
-                 ng-model="form.message">
-        </label>
-        <div class="item item-divider">Enter email address</div>
-        <label class="item item-input">
-          <input type="email" placeholder="Email" name="email"
-                 ng-model="form.email">
-        </label>
-        <div class="item item-divider">or select a friend
-            <i class="ion-refresh refresh-friends"
-               ng-click="refreshFriends()"></i>
-        </div>
-        <div class="list">
-            <ion-radio ng-repeat="friend in friends" ng-value="friend.username"
-                    name="user" ng-model="form.username" ng-click="clickRadio($event)">
-                {{ friend.name }}
-            </ion-radio>
-        </div>
-    </form>
+  <ion-content ng-controller="RequestCtrl">
+    <ng-include src="'templates/form.html'"></ng-include>
   </ion-content>
 </ion-modal-view>
