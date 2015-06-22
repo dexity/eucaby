@@ -8,14 +8,27 @@
       <input type="email" placeholder="Email" name="email"
              ng-model="form.email">
     </label>
+    <div  ng-show="recentContacts.length">
+        <div class="item item-divider">or select from recent
+            <i class="ion-android-time icon-align-right"></i>
+        </div>
+        <div class="list">
+            <ion-radio ng-repeat="contact in recentContacts"
+                ng-value="contact.value" ng-model="form[contact.model]"
+                name="{{ contact.name }}"
+                ng-click="selectUser(contact.label)">
+                {{ contact.label }}
+            </ion-radio>
+        </div>
+    </div>
     <div class="item item-divider">or select a friend
-        <i class="ion-refresh refresh-friends"
+        <i class="ion-refresh icon-align-right"
            ng-click="refreshFriends()"></i>
     </div>
     <div class="list">
         <ion-radio ng-repeat="friend in friends" ng-value="friend.username"
-                name="user" ng-model="form.username"
-                ng-click="clickRadio($event)">
+            name="user" ng-model="form.username"
+            ng-click="selectUser(friend.name)">
             {{ friend.name }}
         </ion-radio>
     </div>

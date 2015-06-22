@@ -18,5 +18,4 @@ angular.module('eucaby.filters', ['eucaby.utils'])
     return function(date_time){
         return dateUtils.ts2h(Date.parse(date_time));
     };
-}])
-;
+}]);

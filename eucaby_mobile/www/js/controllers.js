@@ -8,7 +8,7 @@ angular.module('eucaby.controllers',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
-    $rootScope.recentContacts = [{name: 'Hello', username: 'Test User'}];
+    $rootScope.recentContacts = [];
     $rootScope.contactsHistory = {};
     $rootScope.setNoMessages = function(){
         push.checkMessages(false);
@@ -163,19 +163,12 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('NotificationCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'Notification',
-    function($scope, $rootScope, $ionicLoading, utils, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Notification',
+    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Notification) {
 
     $scope.form = {};
-
-    // Hack for deselected radio button. This will avoid creating a custom radio
-    // button directive. Idea: http://jsfiddle.net/8s4m2e5e/3/
-    $scope.selectedUser;
-    $scope.clickRadio = function(event) {
-        if ($scope.selectedUser === $scope.form.username){
-            $scope.form.username = false;
-        }
-        $scope.selectedUser = $scope.form.username;
+    $scope.selectUser = function(name){
+        ctrlUtils.selectUser($scope, name);
     };
 
     $scope.$on('sendLocation', function(event){
@@ -201,17 +194,12 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('RequestCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'Request',
-    function($scope, $rootScope, $ionicLoading, utils, Request) {
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request',
+    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request) {
 
     $scope.form = {};
-    // Hack for deselected radio button.
-    $scope.selectedUser;
-    $scope.clickRadio = function(event) {
-        if ($scope.selectedUser === $scope.form.username){
-            $scope.form.username = false;
-        }
-        $scope.selectedUser = $scope.form.username;
+    $scope.selectUser = function(name){
+        ctrlUtils.selectUser($scope, name);
     };
 
     $scope.$on('sendRequest', function(event){
@@ -226,6 +214,8 @@ angular.module('eucaby.controllers',
             $ionicLoading.hide();
             $scope.requestModal.hide();
             utils.toast('Request submitted');
+            // Update recent contacts
+            utils.manageRecent($rootScope.recentContacts);
         }, function(data){
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
@@ -437,4 +427,19 @@ angular.module('eucaby.controllers',
 
         Request.get($stateParams.id).then(requestCallback);
     }
-]);
+])
+
+.factory('ctrlUtils', function() {
+    return {
+        selectUser: function (scope, name) {
+            // Hack for deselected radio button. This will avoid creating
+            // a custom radio button directive.
+            // Idea: http://jsfiddle.net/8s4m2e5e/3/
+            if (scope.selectedUser === scope.form.username) {
+                scope.form.username = false;
+            }
+            scope.selectedUser = scope.form.username;
+            scope.selectedName = name;
+        }
+    }
+});

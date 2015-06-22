@@ -130,6 +130,7 @@ angular.module('eucaby.utils', [])
             });
         },
         formatMessages: function(data, formatter){
+            // Formats location or request message
             var items = [];
             for (var i=0; i < data.length; i++){
                 var item = data[i];
@@ -160,6 +161,23 @@ angular.module('eucaby.utils', [])
                 });
             }
             return items;
+        },
+        manageRecent: function(contacts, label, value, model){
+            // Manages recent contacts
+            // Note: Contact can only be either email or username
+            contacts = contacts || [];
+            if (contacts.length >= 3){
+                contacts.pop();
+            }
+            // Move the existing contact to the top  (avoid duplicate contacts)
+
+
+            // Append a new recent contact
+            contacts.unshift(
+                {label: 'Test User ' + i, value: i, model: 'username', name: 'user'}
+//                {label: 'Test User ' + i, value: i, model: 'username', name: 'user'}
+            );
+
         }
     };
 }])
