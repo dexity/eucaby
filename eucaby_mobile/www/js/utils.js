@@ -4,6 +4,7 @@ angular.module('eucaby.utils', [])
 
 // Default location: San Francisco
 .constant('LATLNG', [37.7833, -122.4167])
+.constant('MAX_RECENT_CONTACTS', 3)
 
 .factory('map', ['$q', '$ionicLoading', 'utils', 'LATLNG',
     function($q, $ionicLoading, utils, LATLNG){
@@ -76,8 +77,8 @@ angular.module('eucaby.utils', [])
 }])
 
 .factory('utils',
-    ['$ionicPopup', '$ionicLoading',
-     function($ionicPopup, $ionicLoading){
+    ['$rootScope', '$ionicPopup', '$ionicLoading', 'MAX_RECENT_CONTACTS',
+     function($rootScope, $ionicPopup, $ionicLoading, MAX_RECENT_CONTACTS){
     return {
         activityParams: function(form){
             // Creates parameters for activity request
@@ -162,22 +163,64 @@ angular.module('eucaby.utils', [])
             }
             return items;
         },
-        manageRecent: function(contacts, label, value, model){
+        manageRecent: function(form, label){
             // Manages recent contacts
-            // Note: Contact can only be either email or username
-            contacts = contacts || [];
-            if (contacts.length >= 3){
-                contacts.pop();
+            // It it guaranteed that the most current contact will be on the top
+            $rootScope.recentContacts = $rootScope.recentContacts || [];
+            $rootScope.recentFriends = $rootScope.recentFriends || {};
+
+            // Contact can only be either email or user
+            var model = 'email';
+            var name = 'email';
+            var value = form.email;
+            var text = value;
+            var removedContact = null;
+
+            if (form.username){
+                model = 'username';
+                name = 'user';
+                value = form.username;
+                text = label;
             }
+            var indexOf = function(contacts, field, value){
+                for (var i = 0; i < contacts.length; i++){
+                    if (contacts[i][field] === value){
+                        return i;
+                    }
+                }
+                return -1;
+            };
+            var idx = indexOf($rootScope.recentContacts, 'value', value);
             // Move the existing contact to the top  (avoid duplicate contacts)
-
-
+            if (idx >= 0){
+                $rootScope.recentContacts.splice(idx, 1);
+            }
             // Append a new recent contact
-            contacts.unshift(
-                {label: 'Test User ' + i, value: i, model: 'username', name: 'user'}
-//                {label: 'Test User ' + i, value: i, model: 'username', name: 'user'}
+            $rootScope.recentContacts.unshift(
+                {label: text, value: value, model: model, name: name}
             );
-
+            // Remove extra contacts
+            if ($rootScope.recentContacts.length > MAX_RECENT_CONTACTS){
+                removedContact = $rootScope.recentContacts.pop();
+            }
+            // Remove from friends list for recent friend contact
+            // Friends should be either in friends or recentFriends
+            if (model === 'username') {
+                idx = indexOf($rootScope.friends, 'username', value);
+                if (idx >= 0){
+                    // Remove from friends list
+                    var contact = $rootScope.friends.splice(idx, 1)[0];
+                    $rootScope.recentFriends[value] = contact;
+                }
+            }
+            // If removed contact is in recent friends return it back to
+            // friends array
+            if (removedContact &&
+                $rootScope.recentFriends.hasOwnProperty(removedContact.value)) {
+                $rootScope.friends.unshift(
+                    $rootScope.recentFriends[removedContact.value]);
+                delete $rootScope.recentFriends[removedContact.value];
+            }
         }
     };
 }])

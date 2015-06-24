@@ -26,7 +26,7 @@
            ng-click="refreshFriends()"></i>
     </div>
     <div class="list">
-        <ion-radio ng-repeat="friend in friends" ng-value="friend.username"
+        <ion-radio ng-repeat="friend in friends|orderBy:'name'" ng-value="friend.username"
             name="user" ng-model="form.username"
             ng-click="selectUser(friend.name)">
             {{ friend.name }}

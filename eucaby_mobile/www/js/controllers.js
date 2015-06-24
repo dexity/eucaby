@@ -8,7 +8,6 @@ angular.module('eucaby.controllers',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
-    $rootScope.recentContacts = [];
     $rootScope.contactsHistory = {};
     $rootScope.setNoMessages = function(){
         push.checkMessages(false);
@@ -135,7 +134,7 @@ angular.module('eucaby.controllers',
         var userValue = form.user.$viewValue;
         if ((!emailValue && !userValue) || (emailValue && userValue)){
             utils.alert(
-                'Error', 'Please either provide an email or select a friend');
+                'Error', 'Please provide either an email or select a friend');
             return false;
         }
         if (form.email.$dirty && form.email.$invalid) {
@@ -186,6 +185,9 @@ angular.module('eucaby.controllers',
             $ionicLoading.hide();
             $scope.notifyModal.hide();
             utils.toast('Location submitted');
+            // Update recent contacts
+            utils.manageRecent($scope.form, $scope.selectedName);
+            $scope.form = {};  // Clear form
         }, function(data){
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
@@ -215,7 +217,8 @@ angular.module('eucaby.controllers',
             $scope.requestModal.hide();
             utils.toast('Request submitted');
             // Update recent contacts
-            utils.manageRecent($rootScope.recentContacts);
+            utils.manageRecent($scope.form, $scope.selectedName);
+            $scope.form = {};  // Clear form
         }, function(data){
             $ionicLoading.hide();
             utils.alert('Error', data.message || 'Failed to send request');
