@@ -93,7 +93,7 @@ SETTINGS_ARGS = [
     reqparse.Argument(name='email_subscription', type=inputs.boolean)
 ]
 
-REGISTER_DEVICE = [
+REGISTER_DEVICE_ARGS = [
     reqparse.Argument(name='device_key', type=str, required=True,
                       help=MISSING_PARAM.format('device_key')),
     reqparse.Argument(name='platform', type=str, choices=PLATFORM_CHOICES,
@@ -107,3 +107,11 @@ PUSH_TASK_ARGS = [
     reqparse.Argument(name='type', type=str, choices=MESSAGE_CHOICES,
                       help=INVALID_MESSAGE)
 ]
+
+AUTO_ARGS = [
+    reqparse.Argument(name='query', type=str, required=True,
+                      help=MISSING_PARAM.format('query')),
+    reqparse.Argument(name='limit', type=positive_int, default=5,
+                      help=INVALID_INT)
+]
+

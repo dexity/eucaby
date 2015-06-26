@@ -180,18 +180,10 @@ angular.module('eucaby.controllers',
 
         $ionicLoading.show();
         Notification.post($scope.form, $rootScope.currentLatLng.lat,
-                          $rootScope.currentLatLng.lng)
-        .then(function(data){
-            $ionicLoading.hide();
-            $scope.notifyModal.hide();
-            utils.toast('Location submitted');
-            // Update recent contacts
-            utils.manageRecent($scope.form, $scope.selectedName);
-            $scope.form = {};  // Clear form
-        }, function(data){
-            $ionicLoading.hide();
-            utils.alert('Error', data.message || 'Failed to send request');
-        });
+                          $rootScope.currentLatLng.lng).then(
+            ctrlUtils.messageSuccess(
+                $scope, $scope.notifyModal, 'Location submitted'),
+            ctrlUtils.messageError('Failed to send location'));
     });
 }])
 
@@ -199,10 +191,26 @@ angular.module('eucaby.controllers',
     ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request',
     function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request) {
 
+
     $scope.form = {};
     $scope.selectUser = function(name){
         ctrlUtils.selectUser($scope, name);
     };
+
+
+    // Autocomplete test
+    $scope.autoTyping = function(){
+        Request.get('123').then(function(data){
+            console.debug('Hello');
+        });
+        $scope.autoItems = [1, 2, 3, 4, 5];
+    };
+    $scope.autoComplete = function(item){
+        $scope.autoItems = [];
+        $scope.form.email = item;
+    };
+
+
 
     $scope.$on('sendRequest', function(event){
         // Send request action
@@ -212,17 +220,10 @@ angular.module('eucaby.controllers',
         }
 
         $ionicLoading.show();
-        Request.post($scope.form).then(function(data){
-            $ionicLoading.hide();
-            $scope.requestModal.hide();
-            utils.toast('Request submitted');
-            // Update recent contacts
-            utils.manageRecent($scope.form, $scope.selectedName);
-            $scope.form = {};  // Clear form
-        }, function(data){
-            $ionicLoading.hide();
-            utils.alert('Error', data.message || 'Failed to send request');
-        });
+        Request.post($scope.form).then(
+            ctrlUtils.messageSuccess(
+                $scope, $scope.requestModal, 'Request submitted'),
+            ctrlUtils.messageError('Failed to send request'));
     });
 }])
 
@@ -432,17 +433,32 @@ angular.module('eucaby.controllers',
     }
 ])
 
-.factory('ctrlUtils', function() {
+.factory('ctrlUtils', ['$ionicLoading', 'utils', function($ionicLoading, utils) {
     return {
-        selectUser: function (scope, name) {
+        selectUser: function ($scope, name) {
             // Hack for deselected radio button. This will avoid creating
             // a custom radio button directive.
             // Idea: http://jsfiddle.net/8s4m2e5e/3/
-            if (scope.selectedUser === scope.form.username) {
-                scope.form.username = false;
+            if ($scope.selectedUser === $scope.form.username) {
+                $scope.form.username = false;
             }
-            scope.selectedUser = scope.form.username;
-            scope.selectedName = name;
+            $scope.selectedUser = $scope.form.username;
+            $scope.selectedName = name;
+        },
+        messageSuccess: function($scope, modal, status){
+            $ionicLoading.hide();
+            modal.hide();
+            utils.toast(status);
+            // Update recent contacts
+            utils.manageRecent($scope.form, $scope.selectedName);
+            $scope.form = {};  // Clear form
+            return function(data){};
+        },
+        messageError: function(default_error) {
+            return function(data){
+                $ionicLoading.hide();
+                utils.alert('Error ', data.message || default_error);
+            };
         }
-    }
-});
+    };
+}]);

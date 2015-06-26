@@ -6,9 +6,14 @@
     <div class="item item-divider">Enter email address</div>
     <label class="item item-input">
       <input type="email" placeholder="Email" name="email"
-             ng-model="form.email">
+             ng-model="form.email" ng-change="autoTyping()" autocomplete="off">
     </label>
-    <div  ng-show="recentContacts.length">
+    <div class="list autocomplete">
+        <a class="item" ng-repeat="item in autoItems" ng-click="autoComplete(item)">
+            {{ item }}
+        </a>
+    </div>
+    <div ng-show="recentContacts.length">
         <div class="item item-divider">or select from recent
             <i class="ion-android-time icon-align-right"></i>
         </div>

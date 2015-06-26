@@ -141,6 +141,17 @@ hr.separator {
     left: 0px !important;
 }
 
+.autocomplete {
+    margin: 0px 10px;
+    padding: 0px;
+}
+
+.autocomplete a {
+    background-color: #f6f9fe;
+    border-left: 0px;
+    border-right: 0px;
+}
+
 /* Ionic adjustments */
 
 .tab-title {

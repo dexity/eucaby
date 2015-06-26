@@ -87,3 +87,6 @@ DEVICE_FIELDS = dict(
     device_key=rest_fields.String,
     created_date=utils_fields.IsoDateTime(),
     active=rest_fields.Boolean)
+
+AUTO_FIELDS = dict(
+    data=rest_fields.List(rest_fields.String))

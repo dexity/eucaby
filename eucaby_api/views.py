@@ -439,7 +439,7 @@ class RegisterDeviceView(flask_restful.Resource):
     method_decorators = [auth.eucaby_oauth.require_oauth('profile')]
 
     def post(self):  # pylint: disable=no-self-use
-        args = reqparse.clean_args(api_args.REGISTER_DEVICE)
+        args = reqparse.clean_args(api_args.REGISTER_DEVICE_ARGS)
         if isinstance(args, flask.Response):
             return args
 
@@ -447,6 +447,23 @@ class RegisterDeviceView(flask_restful.Resource):
         obj = models.Device.get_or_create(
             user, args['device_key'], args['platform'])
         return flask_restful.marshal(obj, api_fields.DEVICE_FIELDS)
+
+
+class AutocompleteView(flask_restful.Resource):
+
+    """Returns notification detail view."""
+    method_decorators = [auth.eucaby_oauth.require_oauth('history')]
+
+    def get(self):  # pylint: disable=no-self-use
+        args = reqparse.clean_args(api_args.AUTO_ARGS)
+        if isinstance(args, flask.Response):
+            return args
+
+        user = flask.request.user
+        emails = [obj.text for obj in models.EmailHistory.get_by_user(
+            user.id, args['query'], args['limit'])]
+        return flask_restful.marshal(
+            dict(data=emails), api_fields.AUTO_FIELDS)
 
 
 api.add_resource(IndexView, '/', endpoint='index')
@@ -466,3 +483,4 @@ api.add_resource(UserSettingsView, '/settings', endpoint='settings')
 api.add_resource(UserActivityView, '/history', endpoint='history')
 api.add_resource(RegisterDeviceView, '/device/register',
                  endpoint='register_device')
+api.add_resource(AutocompleteView, '/autocomplete', endpoint='autocomplete')

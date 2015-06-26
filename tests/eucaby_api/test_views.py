@@ -103,24 +103,20 @@ class TestOAuthToken(test_base.TestCase):
         data = json.loads(resp.data)
         self.assertEqual(invalid_method_error, data)
 
-        # No parameters
-        resp = self.client.post('/oauth/token')
-        self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(400, resp.status_code)
-        data = json.loads(resp.data)
-        self.assertEqual(invalid_grant_error, data)
-
-        # Invalid grant type
-        resp = self.client.post('/oauth/token', dict(grant_type='wrong'))
-        self.assertEqual(400, resp.status_code)
-        self.assertEqual(invalid_grant_error, data)
-
-        # Grant type is set
-        resp = self.client.post(
-            '/oauth/token', data=dict(grant_type='password'))
-        data = json.loads(resp.data)
-        self.assertEqual(400, resp.status_code)
-        self.assertEqual(invalid_service_error, data)
+        # Invalid parameters
+        cases = (
+            (None, invalid_grant_error),  # No parameters
+            # Invalid grant type
+            (dict(grant_type='wrong'), invalid_grant_error),
+            # Grant type is set
+            (dict(grant_type='password'), invalid_service_error)
+        )
+        for data_, error in cases:
+            resp = self.client.post('/oauth/token', data=data_)
+            self.assertEqual(resp.content_type, 'application/json')
+            self.assertEqual(400, resp.status_code)
+            data = json.loads(resp.data)
+            self.assertEqual(error, data)
 
     @mock.patch('eucaby_api.auth.facebook.exchange_token')
     def test_exchange_invalid_token(self, fb_exchange_token):
@@ -486,36 +482,29 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
-        # No parameters
         ec_missing_params = dict(
             message='Missing email or username parameters',
             code='invalid_request')
-        resp = self.client.post(
-            '/location/request',
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(ec_missing_params, data)
-        self.assertEqual(400, resp.status_code)
-
-        # Invalid recipient email address
         ec_invalid_email = dict(
             fields=dict(email='Invalid email'),
             message='Invalid request parameters', code='invalid_request')
-        resp = self.client.post(
-            '/location/request', data=dict(email='wrong'),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(ec_invalid_email, data)
-        self.assertEqual(400, resp.status_code)
-
-        # Invalid recipient (not found or inactive)
-        resp = self.client.post(
-            '/location/request', data=dict(username='456'),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
         ec_user_not_found = dict(message='User not found', code='not_found')
-        self.assertEqual(ec_user_not_found, data)
-        self.assertEqual(404, resp.status_code)
+
+        # Invalid parameters
+        cases = (
+            (None, 400, ec_missing_params),  # No parameters
+            # Invalid recipient email address
+            (dict(email='wrong'), 400, ec_invalid_email),
+            # Invalid recipient (not found or inactive)
+            (dict(username='456'), 404, ec_user_not_found))
+
+        for data_, status_code, error in cases:
+            resp = self.client.post(
+                '/location/request', data=data_,
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(status_code, resp.status_code)
+            self.assertEqual(error, data)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_new_email(self, mock_send_notif):
@@ -928,59 +917,40 @@ class TestNotifyLocation(test_base.TestCase):
         self.assertEqual(fixtures.INVALID_TOKEN, data)
         self.assertEqual(401, resp.status_code)
 
-        # No parameters
         ec_missing_params = dict(
             message='Invalid request parameters', code='invalid_request',
             fields=dict(latlng='Missing or invalid latlng parameter'))
-        resp = self.client.post(
-            '/location/notification',
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(ec_missing_params, data)
-        self.assertEqual(400, resp.status_code)
-
-        # No token, email or username
-        ec_missing_params = dict(
+        ec_missing_params2 = dict(
             message='Missing token, email or username parameters',
             code='invalid_request')
-        resp = self.client.post(
-            '/location/notification', data=dict(latlng=fixtures.LATLNG),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(ec_missing_params, data)
-        self.assertEqual(400, resp.status_code)
-
-        # Invalid recipient email address
         ec_invalid_email = dict(
             fields=dict(email='Invalid email'),
             message='Invalid request parameters', code='invalid_request')
-        resp = self.client.post(
-            '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, email='wrong'),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(ec_invalid_email, data)
-        self.assertEqual(400, resp.status_code)
-
-        # Request not found
-        resp = self.client.post(
-            '/location/notification', data=dict(
-                latlng=fixtures.LATLNG, token='456'),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        ec_user_not_found = dict(message='Request not found', code='not_found')
-        self.assertEqual(ec_user_not_found, data)
-        self.assertEqual(404, resp.status_code)
-
-        # Invalid recipient (not found or inactive)
-        resp = self.client.post(
-            '/location/request', data=dict(
-                latlng=fixtures.LATLNG, username='456'),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
+        ec_req_not_found = dict(
+            message='Request not found', code='not_found')
         ec_user_not_found = dict(message='User not found', code='not_found')
-        self.assertEqual(ec_user_not_found, data)
-        self.assertEqual(404, resp.status_code)
+
+        # Invalid parameters
+        cases = (
+            (None, 400, ec_missing_params),  # No parameters
+            # No token, email or username
+            (dict(latlng=fixtures.LATLNG), 400, ec_missing_params2),
+            # Invalid recipient email address
+            (dict(latlng=fixtures.LATLNG, email='wrong'),
+             400, ec_invalid_email),
+            # Request not found
+            (dict(latlng=fixtures.LATLNG, token='456'), 404, ec_req_not_found),
+            # Invalid recipient (not found or inactive)
+            (dict(latlng=fixtures.LATLNG, username='456'),
+             404, ec_user_not_found))
+
+        for data_, status_code, error in cases:
+            resp = self.client.post(
+                '/location/notification', data=data_,
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(error, data)
+            self.assertEqual(status_code, resp.status_code)
 
         # XXX: Add test deny access for non-sender and non-receiver user
 
@@ -1341,39 +1311,34 @@ class TestUserActivity(test_base.TestCase):
         # Invalid method
         test_utils.verify_invalid_methods(self.client, ['post'], '/history')
 
-        # Invalid activity type
-        invalid_request = dict(
+        type_params = urllib.urlencode(dict(type='wrong'))
+        limit_params = urllib.urlencode(
+            dict(type='outgoing', offset='a', limit='b'))
+        limit_params2 = urllib.urlencode(
+            dict(type='outgoing', offset=-1, limit=-2))
+
+        ec_invalid_type = dict(
             fields=dict(type=api_args.INVALID_ACTIVITY_TYPE),
             message='Invalid request parameters', code='invalid_request')
-        params = urllib.urlencode(dict(type='wrong'))
-        resp = self.client.get(
-            '/history?{}'.format(params),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(invalid_request, data)
-        self.assertEqual(400, resp.status_code)
-
-        # Invalid offset or limit
-        invalid_request = dict(
+        ec_invalid_limit = dict(
             fields=dict(offset=api_args.INVALID_INT,
                         limit=api_args.INVALID_INT),
             message='Invalid request parameters', code='invalid_request')
-        params = urllib.urlencode(dict(type='outgoing', offset='a', limit='b'))
-        resp = self.client.get(
-            '/history?{}'.format(params),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(invalid_request, data)
-        self.assertEqual(400, resp.status_code)
+        cases = (
+            # Invalid activity type
+            ('/history?{}'.format(type_params), 400, ec_invalid_type),
+            # Invalid offset or limit
+            ('/history?{}'.format(limit_params), 400, ec_invalid_limit),
+            # Negative offset or limit
+            ('/history?{}'.format(limit_params2), 400, ec_invalid_limit))
 
-        # Negative offset or limit
-        params = urllib.urlencode(dict(type='outgoing', offset=-1, limit=-2))
-        resp = self.client.get(
-            '/history?{}'.format(params),
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(invalid_request, data)
-        self.assertEqual(400, resp.status_code)
+        for url, status_code, error in cases:
+            resp = self.client.get(
+                url,
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(error, data)
+            self.assertEqual(status_code, resp.status_code)
 
     def test_history_request(self):
         """Tests request activity type.
@@ -1561,29 +1526,26 @@ class TestRegisterDeviceView(test_base.TestCase):
         test_utils.verify_invalid_methods(
             self.client, ['get'], '/device/register')
 
-        # No parameters
-        resp = self.client.post(
-            '/device/register',
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
-        data = json.loads(resp.data)
-        self.assertEqual(400, resp.status_code)
         ec_missing_params = dict(
             fields=dict(device_key=api_args.MISSING_PARAM.format('device_key'),
                         platform=api_args.INVALID_PLATFORM),
             message='Invalid request parameters', code='invalid_request')
-        self.assertEqual(ec_missing_params, data)
-
-        # Invalid platform type
-        resp = self.client.post(
-            '/device/register',
-            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)),
-            data=dict(device_key='someregid', platform='windows'))
-        data = json.loads(resp.data)
-        self.assertEqual(400, resp.status_code)
         ec_invalid_platform = dict(
             fields=dict(platform=api_args.INVALID_PLATFORM),
             message='Invalid request parameters', code='invalid_request')
-        self.assertEqual(ec_invalid_platform, data)
+        # Invalid parameters
+        cases = (
+            (None, 400, ec_missing_params),  # No parameters
+            # Invalid platform type
+            (dict(device_key='someregid', platform='windows'),
+             400, ec_invalid_platform))
+        for data_, status_code, error in cases:
+            resp = self.client.post(
+                '/device/register', data=data_,
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(status_code, resp.status_code)
+            self.assertEqual(error, data)
 
     def test_register_device(self):
         """Tests device registration."""
@@ -1597,6 +1559,83 @@ class TestRegisterDeviceView(test_base.TestCase):
             active=True, device_key='someregid', platform='android',
             created_date=data['created_date'])
         self.assertEqual(ec_success_resp, data)
+
+
+class TestAutocompleteView(test_base.TestCase):
+
+    """Testing autocomplete."""
+    def setUp(self):
+        super(TestAutocompleteView, self).setUp()
+        self.client = self.app.test_client()
+        self.user = fixtures.create_user()
+        self.user2 = fixtures.create_user2()
+
+    def test_general_errors(self):
+        """Tests autocomplete general errors."""
+        # No token is passed
+        resp = self.client.get('/autocomplete')
+        data = json.loads(resp.data)
+        self.assertEqual(fixtures.INVALID_TOKEN, data)
+        self.assertEqual(401, resp.status_code)
+
+        # Invalid method
+        test_utils.verify_invalid_methods(
+            self.client, ['post'], '/autocomplete')
+
+        ec_missing_params = dict(
+            fields=dict(query=api_args.MISSING_PARAM.format('query')),
+            message='Invalid request parameters', code='invalid_request')
+        ec_invalid_params = dict(
+            fields=dict(limit=api_args.INVALID_INT),
+            message='Invalid request parameters', code='invalid_request')
+
+        # Invalid parameters
+        cases = (
+            ('', 400, ec_missing_params),  # No parameters
+            # Invalid limit
+            (urllib.urlencode(dict(query='a', limit='b')),
+             400, ec_invalid_params)
+        )
+        for params, status_code, error in cases:
+            resp = self.client.get(
+                '/autocomplete?{}'.format(params),
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(status_code, resp.status_code)
+            self.assertEqual(error, data)
+
+    def test_autocomplete(self):
+        """Tests autocomplete query."""
+        # Create history for user
+        text_list = ['Alaska', 'Arkansas', 'arizona', 'ARIZONA', 'colorado',
+                     'Connecticut', 'California', 'c2', 'c3', 'c4']
+        for text in text_list:
+            models.EmailHistory.get_or_create(self.user.id, text=text)
+        # Create history for user2
+        models.EmailHistory.get_or_create(self.user2.id, text='alabama')
+
+        ec_no_data = dict(data=[])
+        ec_query = dict(data=['alaska', 'arizona', 'arkansas'])
+        ec_query_limit = dict(data=['alaska', 'arizona'])
+        cases = (
+            ('query=aaa', 200, ec_no_data),  # Query has no data
+            ('query=a', 200, ec_query),  # Query has data
+            ('query=a&limit=2', 200, ec_query_limit))  # Query with limit
+
+        for params, status_code, data in cases:
+            resp = self.client.get(
+                '/autocomplete?' + params,
+                headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+            data = json.loads(resp.data)
+            self.assertEqual(status_code, resp.status_code)
+            self.assertEqual(data, data)
+
+        # Default limit is 5
+        resp = self.client.get(
+            '/autocomplete?query=c',
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(5, len(data['data']))
 
 
 if __name__ == '__main__':

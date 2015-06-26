@@ -296,3 +296,42 @@ class Device(db.Model):
         objs.update(dict(active=False), synchronize_session=False)
         db.session.commit()
 
+
+class EmailHistory(db.Model):
+
+    """Email history."""
+    __tablename__ = 'email_history'
+    __table_args__ = (db.UniqueConstraint(
+        'text', 'user_id', name='_text__user_id'),)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User')
+    text = db.Column(db.String(255), nullable=False, index=True)
+    created_date = db.Column(
+        db.DateTime, nullable=False, default=datetime.datetime.now)
+
+    @classmethod
+    def get_or_create(cls, user_id, text):
+        """Returns email history or creates a new one."""
+        text = text.lower()
+        obj = cls.query.filter_by(user_id=user_id, text=text).first()
+        if obj:
+            return obj
+        obj = cls(user_id=user_id, text=text)
+        db.session.add(obj)
+        db.session.commit()
+        return obj
+
+    @classmethod
+    def get_by_user(cls, user_id, query=None, limit=None):
+        """Returns email history by username."""
+        objs = cls.query.filter_by(user_id=user_id)
+        if query:
+            query = query.lower().replace('%', '')
+            objs = objs.filter(cls.text.startswith(query))
+        objs = objs.order_by(cls.text)
+        if limit:
+            objs = objs[:limit]
+        else:
+            objs = objs.all()
+        return objs
