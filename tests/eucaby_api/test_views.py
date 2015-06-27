@@ -519,12 +519,12 @@ class TestRequestLocation(test_base.TestCase):
         self._verify_data_email(
             resp, None, None, recipient_email, 'hello',
             ['hello', u'from Test Юзер', 'Join Eucaby'])
+        fixtures.verify_email_history(self.user.id, recipient_email)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_existing_email(self, mock_send_notif):
         """Tests valid existing email address."""
         recipient_email = 'test2@example.com'
-
         resp = self.client.post(
             '/location/request', data=dict(email=recipient_email),
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
@@ -535,6 +535,7 @@ class TestRequestLocation(test_base.TestCase):
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
+        fixtures.verify_email_history(self.user.id, recipient_email)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_self_email(self, mock_send_notif):
@@ -551,6 +552,7 @@ class TestRequestLocation(test_base.TestCase):
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
+        fixtures.verify_email_history(self.user.id, recipient_email)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_user(self, mock_send_notif):
@@ -580,6 +582,7 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(0, mock_send_notif.call_count)
         self._verify_data_email(resp, None, None, recipient_email, u'Привет',
                                 [u'Привет', u'from Test Юзер', 'Join Eucaby'])
+        fixtures.verify_email_history(self.user.id, recipient_email)
 
 
 class TestRequestById(test_base.TestCase):
@@ -1032,6 +1035,7 @@ class TestNotifyLocation(test_base.TestCase):
         self._verify_data_email(
             resp, None, None, 'test3@example.com', '',
             [u'Test Юзер shared', 'Join Eucaby'])
+        fixtures.verify_email_history(self.user.id, 'test3@example.com')
 
     @mock.patch(SEND_NOTIFICATION)
     def test_existing_email(self, mock_send_notif):
@@ -1049,6 +1053,7 @@ class TestNotifyLocation(test_base.TestCase):
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
                         u'Test Юзер sent a message'])
+        fixtures.verify_email_history(self.user.id, self.user2.email)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_self_email(self, mock_send_notif):
@@ -1064,6 +1069,7 @@ class TestNotifyLocation(test_base.TestCase):
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
+        fixtures.verify_email_history(self.user.id, self.user.email)
 
     @mock.patch(SEND_NOTIFICATION)
     def test_username(self, mock_send_notif):

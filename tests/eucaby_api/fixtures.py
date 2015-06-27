@@ -63,3 +63,10 @@ def create_user2():
         ec_token_kwargs=dict(
             access_token=UUID2, refresh_token='222'),
         fb_access_token='someaccesstoken2')
+
+
+def verify_email_history(user_id, email):
+    """Verifies email history."""
+    objs = models.EmailHistory.get_by_user(user_id, query=email)
+    assert 1 == len(objs)
+    assert email == objs[0].text

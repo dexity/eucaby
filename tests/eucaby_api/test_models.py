@@ -278,8 +278,7 @@ class TestEmailHistory(test_base.TestCase):
              ['alaska', 'arizona']),
             # Query with large limit
             (dict(user_id=self.user.id, query='a', limit=100),
-             ['alaska', 'arizona', 'arkansas']),
-        )
+             ['alaska', 'arizona', 'arkansas']))
         for kwargs, email_list in cases:
             objs = models.EmailHistory.get_by_user(**kwargs)
             self.assertEqual(email_list, [obj.text for obj in objs])

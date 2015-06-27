@@ -105,6 +105,8 @@ class RequestLocationView(flask_restful.Resource):
     def handle_email(cls, email):
         """Handles email parameter."""
         recipient = models.User.get_by_email(email)
+        user = flask.request.user
+        models.EmailHistory.get_or_create(user.id, email)
         return cls._handle_request(recipient, email)
 
     @classmethod
@@ -213,6 +215,8 @@ class NotifyLocationView(flask_restful.Resource):
     def handle_email(cls, email, latlng):
         """Handles email parameter."""
         recipient = models.User.get_by_email(email)
+        user = flask.request.user
+        models.EmailHistory.get_or_create(user.id, email)
         return cls._handle_request(recipient, email, latlng)
 
     @classmethod
