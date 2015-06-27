@@ -69,7 +69,7 @@ class TestUserSettings(test_base.TestCase):
                          objs[0].settings)
 
     def test_get_or_create(self):
-        """Tests get or create method."""
+        """Tests get or create user settings."""
         models.UserSettings.query.delete()  # Clear user settings first
 
         # User exists
@@ -146,6 +146,7 @@ class TestUserSettings(test_base.TestCase):
 
 class TestDevice(test_base.TestCase):
 
+    """Tests Device model."""
     def setUp(self):
         super(TestDevice, self).setUp()
         self.user = models.User.create(
@@ -230,6 +231,58 @@ class TestDevice(test_base.TestCase):
         # Has Android device with the device_key
         models.Device.deactivate_multiple(['45',], platform=api_args.ANDROID)
         _verify_devices(self.user.username, [])
+
+
+class TestEmailHistory(test_base.TestCase):
+
+    """Tests EmailHistory model."""
+    def setUp(self):
+        super(TestEmailHistory, self).setUp()
+        self.user = models.User.create(
+            username='2345', first_name='Test', last_name=u'Юзер',
+            email='test@example.com')
+        self.user2 = models.User.create(
+            username='1234', first_name='Test2', last_name=u'Юзер2',
+            email='test2@example.com')
+
+    def test_get_or_create(self):
+        """Tests get or create email history."""
+        cases = ['hello', 'Hello']
+        for text in cases:
+            obj = models.EmailHistory.get_or_create(self.user.id, text)
+            self.assertEqual('hello', obj.text)
+        self.assertEqual(1, models.EmailHistory.query.count())
+
+    def test_get_by_user(self):
+        """Tests filtering by user."""
+        # Populate email history
+        cases = (
+            (self.user, ['Alaska', 'Arkansas', 'arizona', 'ARIZONA', 'colorado',
+                         'Connecticut', 'California']),
+            (self.user2, ['alabama', ]))
+        for user, text_list in cases:
+            for text in text_list:
+                models.EmailHistory.get_or_create(user.id, text=text)
+
+        all_list = ['alaska', 'arizona', 'arkansas', 'california', 'colorado',
+                    'connecticut']
+        cases = (
+            (dict(user_id=None), []),  # Unknow user
+            (dict(user_id=self.user.id), all_list),  # Get by user
+            # Query with empty result
+            (dict(user_id=self.user.id, query='d'), []),
+            # Query with result, no limit
+            (dict(user_id=self.user.id, query='ar'), ['arizona', 'arkansas']),
+            # Query with limit
+            (dict(user_id=self.user.id, query='a', limit=2),
+             ['alaska', 'arizona']),
+            # Query with large limit
+            (dict(user_id=self.user.id, query='a', limit=100),
+             ['alaska', 'arizona', 'arkansas']),
+        )
+        for kwargs, email_list in cases:
+            objs = models.EmailHistory.get_by_user(**kwargs)
+            self.assertEqual(email_list, [obj.text for obj in objs])
 
 
 if __name__ == '__main__':
