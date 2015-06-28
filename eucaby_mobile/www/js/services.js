@@ -71,6 +71,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
 .factory('Autocomplete', ['EucabyApi', function(EucabyApi) {
 
      return {
+         // Note: You can optimize the query request: if starting substring
+         //       returns no results the appending characters to the substring
+         //       will make it less likely to return any result.
          query: function (query) {
              return EucabyApi.api(
                  {path: '/autocomplete?limit=5&query=' + query});

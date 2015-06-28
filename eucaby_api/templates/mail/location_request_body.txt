@@ -1,6 +1,6 @@
 Hi{% if recipient_name %}, {{recipient_name}}{% endif %}
 
-You received location request from {{ sender_name }}{% if message %} and a message:
+You received location request from {{ sender_name }}{% if message %} with a message:
 
 "{{ message }}"
 {% else %}.{% endif %}

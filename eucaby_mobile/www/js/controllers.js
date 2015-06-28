@@ -137,12 +137,13 @@ angular.module('eucaby.controllers',
                 'Error', 'Please provide either an email or select a friend');
             return false;
         }
+
         // Note: We use type="text" for email instead of type="email" because
         //       email type triggers ng-change expression only when email is
         //       valid. This is not what we want. ng-change should trigger
         //       every type user types in the input field. So we explicitly
         //       validate email field instead of form.email.$invalid
-        if (form.email.$dirty && !utils.validEmail(form.email)) {
+        if (form.email.$dirty && !utils.validEmail(emailValue)) {
             utils.alert('Error', 'Please provide a valid email');
             return false;
         }
@@ -201,7 +202,6 @@ angular.module('eucaby.controllers',
     $scope.selectUser = function(name){
         ctrlUtils.selectUser($scope, name);
     };
-
 
     // Autocomplete test
     $scope.autoTyping = function(){

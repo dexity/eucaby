@@ -110,6 +110,7 @@ angular.module('eucaby.utils', [])
             }).join("&");
         },
         validEmail: function(value){
+            // Checks if value is a valid email address
             // See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
             var EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
             return EMAIL_REGEXP.test(value);
