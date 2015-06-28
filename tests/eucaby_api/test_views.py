@@ -1624,17 +1624,18 @@ class TestAutocompleteView(test_base.TestCase):
         ec_query = dict(data=['alaska', 'arizona', 'arkansas'])
         ec_query_limit = dict(data=['alaska', 'arizona'])
         cases = (
+            ('query=', 200, ec_no_data),
             ('query=aaa', 200, ec_no_data),  # Query has no data
             ('query=a', 200, ec_query),  # Query has data
             ('query=a&limit=2', 200, ec_query_limit))  # Query with limit
 
-        for params, status_code, data in cases:
+        for params, status_code, data_ in cases:
             resp = self.client.get(
                 '/autocomplete?' + params,
                 headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
             data = json.loads(resp.data)
             self.assertEqual(status_code, resp.status_code)
-            self.assertEqual(data, data)
+            self.assertEqual(data_, data)
 
         # Default limit is 5
         resp = self.client.get(

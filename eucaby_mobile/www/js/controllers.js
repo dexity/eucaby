@@ -137,7 +137,12 @@ angular.module('eucaby.controllers',
                 'Error', 'Please provide either an email or select a friend');
             return false;
         }
-        if (form.email.$dirty && form.email.$invalid) {
+        // Note: We use type="text" for email instead of type="email" because
+        //       email type triggers ng-change expression only when email is
+        //       valid. This is not what we want. ng-change should trigger
+        //       every type user types in the input field. So we explicitly
+        //       validate email field instead of form.email.$invalid
+        if (form.email.$dirty && !utils.validEmail(form.email)) {
             utils.alert('Error', 'Please provide a valid email');
             return false;
         }
@@ -188,8 +193,8 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('RequestCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request',
-    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request) {
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request', 'Autocomplete',
+    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request, Autocomplete) {
 
 
     $scope.form = {};
@@ -200,17 +205,15 @@ angular.module('eucaby.controllers',
 
     // Autocomplete test
     $scope.autoTyping = function(){
-        Request.get('123').then(function(data){
-            console.debug('Hello');
+        Autocomplete.query($scope.form.email).then(function(data){
+            $scope.autoItems = data.data;
         });
-        $scope.autoItems = [1, 2, 3, 4, 5];
     };
+
     $scope.autoComplete = function(item){
         $scope.autoItems = [];
         $scope.form.email = item;
     };
-
-
 
     $scope.$on('sendRequest', function(event){
         // Send request action

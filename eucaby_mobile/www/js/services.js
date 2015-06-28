@@ -66,4 +66,14 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
                                   data: data});
         }
     };
-}]);
+}])
+
+.factory('Autocomplete', ['EucabyApi', function(EucabyApi) {
+
+     return {
+         query: function (query) {
+             return EucabyApi.api(
+                 {path: '/autocomplete?limit=5&query=' + query});
+         }
+     };
+ }]);

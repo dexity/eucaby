@@ -269,6 +269,8 @@ class TestEmailHistory(test_base.TestCase):
         cases = (
             (dict(user_id=None), []),  # Unknow user
             (dict(user_id=self.user.id), all_list),  # Get by user
+            # Empty query
+            (dict(user_id=self.user.id, query=''), []),
             # Query with empty result
             (dict(user_id=self.user.id, query='d'), []),
             # Query with result, no limit

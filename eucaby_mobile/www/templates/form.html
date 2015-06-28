@@ -5,8 +5,9 @@
     </label>
     <div class="item item-divider">Enter email address</div>
     <label class="item item-input">
-      <input type="email" placeholder="Email" name="email"
-             ng-model="form.email" ng-change="autoTyping()" autocomplete="off">
+      <input type="text" placeholder="Email" name="email"
+             ng-model="form.email" ng-change="autoTyping()" autocomplete="off"
+             ng-model-options="{ debounce: 1000 }">
     </label>
     <div class="list autocomplete">
         <a class="item" ng-repeat="item in autoItems" ng-click="autoComplete(item)">

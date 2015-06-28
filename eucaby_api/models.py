@@ -325,6 +325,8 @@ class EmailHistory(db.Model):
     @classmethod
     def get_by_user(cls, user_id, query=None, limit=None):
         """Returns email history by username."""
+        if query == '':  # Empty query
+            return []
         objs = cls.query.filter_by(user_id=user_id)
         if query:
             query = query.lower().replace('%', '')

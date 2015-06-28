@@ -109,6 +109,11 @@ angular.module('eucaby.utils', [])
                 return [prop, params[prop]].map(encodeURIComponent).join("=");
             }).join("&");
         },
+        validEmail: function(value){
+            // See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
+            var EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+            return EMAIL_REGEXP.test(value);
+        },
         alert: function(title, text){
             // Convenience function for ionic alert popup
             $ionicPopup.alert({title: title, template: text});
