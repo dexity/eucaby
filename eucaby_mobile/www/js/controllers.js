@@ -9,10 +9,10 @@ angular.module('eucaby.controllers',
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
-    $rootScope.setNoMessages = function(){
-        push.checkMessages(false);
-    };
-    $rootScope.hasMessages = push.checkMessages();
+//    $rootScope.setNoMessages = function(){
+//        push.checkMessages(false);
+//    };
+//    $rootScope.hasMessages = push.checkMessages();
 
     $scope.showSideMenu = function(){
         return $scope.showHeader();
@@ -196,7 +196,6 @@ angular.module('eucaby.controllers',
 .controller('RequestCtrl',
     ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request', 'Autocomplete',
     function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request, Autocomplete) {
-
 
     $scope.form = {};
     $scope.selectUser = function(name){

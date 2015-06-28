@@ -5,6 +5,9 @@ angular.module('eucaby.utils', [])
 // Default location: San Francisco
 .constant('LATLNG', [37.7833, -122.4167])
 .constant('MAX_RECENT_CONTACTS', 3)
+// See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
+.constant('EMAIL_REGEXP',
+          /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i)
 
 .factory('map', ['$q', '$ionicLoading', 'utils', 'LATLNG',
     function($q, $ionicLoading, utils, LATLNG){
@@ -77,8 +80,10 @@ angular.module('eucaby.utils', [])
 }])
 
 .factory('utils',
-    ['$rootScope', '$ionicPopup', '$ionicLoading', 'MAX_RECENT_CONTACTS',
-     function($rootScope, $ionicPopup, $ionicLoading, MAX_RECENT_CONTACTS){
+    ['$rootScope', '$ionicPopup', '$ionicLoading', 'storageManager',
+     'MAX_RECENT_CONTACTS', 'EMAIL_REGEXP',
+     function($rootScope, $ionicPopup, $ionicLoading, storageManager,
+              MAX_RECENT_CONTACTS, EMAIL_REGEXP){
     return {
         activityParams: function(form){
             // Creates parameters for activity request
@@ -106,18 +111,26 @@ angular.module('eucaby.utils', [])
                 return '';
             }
             return Object.keys(params).map(function(prop) {
-                return [prop, params[prop]].map(encodeURIComponent).join("=");
-            }).join("&");
+                return [prop, params[prop]].map(encodeURIComponent).join('=');
+            }).join('&');
         },
         validEmail: function(value){
             // Checks if value is a valid email address
-            // See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
-            var EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
             return EMAIL_REGEXP.test(value);
         },
         alert: function(title, text){
             // Convenience function for ionic alert popup
             $ionicPopup.alert({title: title, template: text});
+        },
+        confirm: function(title, text, okText, cancelText, okCallback){
+            var opts = {title: title, template: text, okText: okText,
+                        cancelText: cancelText};
+            $ionicPopup.confirm(opts).then(
+                function(res) {
+                    if (res){
+                        okCallback();
+                    }
+            });
         },
         toast: function(text){
             $ionicLoading.show({
@@ -172,8 +185,10 @@ angular.module('eucaby.utils', [])
         manageRecent: function(form, label){
             // Manages recent contacts
             // It it guaranteed that the most current contact will be on the top
-            $rootScope.recentContacts = $rootScope.recentContacts || [];
-            $rootScope.recentFriends = $rootScope.recentFriends || {};
+            $rootScope.recentContacts = ($rootScope.recentContacts ||
+                storageManager.getRecentContacts() || []);
+            $rootScope.recentFriends = ($rootScope.recentFriends ||
+                storageManager.getRecentFriends() || {});
 
             // Contact can only be either email or user
             var model = 'email';
@@ -189,6 +204,7 @@ angular.module('eucaby.utils', [])
                 text = label;
             }
             var indexOf = function(contacts, field, value){
+                // Util for finding index of the matching value in array
                 for (var i = 0; i < contacts.length; i++){
                     if (contacts[i][field] === value){
                         return i;
@@ -227,6 +243,9 @@ angular.module('eucaby.utils', [])
                     $rootScope.recentFriends[removedContact.value]);
                 delete $rootScope.recentFriends[removedContact.value];
             }
+            // Save recent contacts and friends to local storage
+            storageManager.setRecentContacts($rootScope.recentContacts);
+            storageManager.setRecentFriends($rootScope.recentFriends);
         }
     };
 }])
@@ -303,6 +322,8 @@ angular.module('eucaby.utils', [])
     var FB_TOKEN = 'fbtoken';
     var DEVICE_STATUS = 'device_registered';
     var NEW_MESSAGES = 'incoming_messages';
+    var RECENT_CONTACTS = 'recent_contacts';
+    var RECENT_FRIENDS = 'recent_friends';
 
     return {
         getStorage: function(){
@@ -336,6 +357,18 @@ angular.module('eucaby.utils', [])
         hasNewMessages: function(){
             storage.getItem(NEW_MESSAGES) === 'true';
         },
+        setRecentContacts: function(obj){
+            this.setObject(RECENT_CONTACTS, obj);
+        },
+        getRecentContacts: function(){
+            return this.getObject(RECENT_CONTACTS);
+        },
+        setRecentFriends: function(obj){
+            this.setObject(RECENT_FRIENDS, obj);
+        },
+        getRecentFriends: function(){
+            return this.getObject(RECENT_FRIENDS);
+        },
         clearAll: function(){
             storage.removeItem(ACCESS_TOKEN);
             storage.removeItem(REFRESH_TOKEN);
@@ -343,6 +376,14 @@ angular.module('eucaby.utils', [])
             delete storage.fbtoken;
             storage.removeItem(DEVICE_STATUS);
             storage.removeItem(NEW_MESSAGES);
+            storage.removeItem(RECENT_CONTACTS);
+            storage.removeItem(RECENT_FRIENDS);
+        },
+        setObject: function(key, obj){
+            storage.setItem(key, JSON.stringify(obj));
+        },
+        getObject: function(key){
+            JSON.parse(storage.getItem(key));
         }
     };
  });

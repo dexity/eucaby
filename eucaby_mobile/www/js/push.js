@@ -16,14 +16,14 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
                 storageManager.setDeviceStatus(true);
             });  // Silently fail if device registration fails
     };
-    var checkMessages = function(status){
-        // Checks if new incoming messages have arrived
-        if (status !== undefined){
-            storageManager.setNewMessages(status);
-            $rootScope.hasMessages = status;
-        }
-        return storageManager.hasNewMessages();
-    };
+//    var checkMessages = function(status){
+//        // Checks if new incoming messages have arrived
+//        if (status !== undefined){
+//            storageManager.setNewMessages(status);
+//            $rootScope.hasMessages = status;
+//        }
+//        return storageManager.hasNewMessages();
+//    };
     var initAndroid = function() {
         // Init push notifications for Android
         var config = {
@@ -47,7 +47,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
               break;
 
             case 'message':
-              checkMessages(true);
+//              checkMessages(true);
               break;
 
             case 'error':
@@ -86,7 +86,10 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
         $rootScope.$on('$cordovaPush:notificationReceived',
                        function(event, notification) {
-            checkMessages(true);
+
+            console.debug(event, notification);
+            utils.confirm('New request', 'world', 'Show', 'Later');
+//            checkMessages(true);
         });
 
         /*
@@ -100,7 +103,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
     };
 
     return {
-        checkMessages: checkMessages,
+//        checkMessages: checkMessages,
         initNotifications: function(){
             console.log('Initialize notifications');
             // Register device and set up notifications to receive messages
