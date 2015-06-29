@@ -104,7 +104,8 @@ angular.module('eucaby.controllers',
         // Loads friends
         return Friends.all().then(function(data){
             $rootScope.friends = data.data;
-            utils.syncFriendsWithRecent();
+            utils.syncFriendsWithRecent(
+                $rootScope.recentFriends, $rootScope.friends);
         }, function(data){
             utils.alert('Error', 'Error loading friends');
             console.error(data);
@@ -458,7 +459,9 @@ angular.module('eucaby.controllers',
             modal.hide();
             utils.toast(status);
             // Update recent contacts
-            utils.manageRecent($scope.form, $scope.selectedName);
+            utils.manageRecent(
+                $rootScope.recentContacts, $rootScope.recentFriends,
+                $rootScope.friends, $scope.form, $scope.selectedName);
             $scope.form = {};  // Clear form
             return function(data){};
         },
