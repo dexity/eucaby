@@ -33,15 +33,24 @@ angular.module('eucaby.utils', [])
                 });
             return map;
         },
-        createMarker: function(map, lat, lng, title){
+        createMarker: function(map, lat, lng, number, is_web){
             var position = new google.maps.LatLng(lat, lng);
             map.setCenter(position);
+            var markerOpts = {
+                position: position,
+                map: map
+            };
+            if (number !== undefined){
+                var point_x = number * 35 + 1;
+                var point_y = is_web ? 91 : 0;
+                markerOpts.icon = {
+                    url: 'img/markers.png',
+                    size: new google.maps.Size(31, 41),
+                    origin: new google.maps.Point(point_x, point_y)
+                };
+            }
             // Creates marker
-            return new google.maps.Marker({
-                position:  	position,
-                title:      title,
-                map:        map
-            });
+            return new google.maps.Marker(markerOpts);
         },
         clearMarkers: function(markers) {
             // Clears markers from the map
@@ -63,8 +72,7 @@ angular.module('eucaby.utils', [])
             $ionicLoading.show();
             self.currentLocation(function (lat, lng) {
                 var map = self.createMap(mapId, lat, lng, {zoom: 16});
-                var marker = self.createMarker(
-                    map, lat, lng, 'Current location');
+                var marker = self.createMarker(map, lat, lng);
                 $ionicLoading.hide();
                 deferred.resolve(
                     {map: map, marker: marker, lat: lat, lng: lng});

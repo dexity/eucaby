@@ -22,7 +22,7 @@
             {{ item.message }}
         </div>
     </div>
-    <div ng-show="item.is_web" class="note-area">
+    <div ng-show="item.is_web" class="note-area" ng-cloak>
         <b>Note:</b> Location sent from a browser might not be accurate
     </div>
     <div ng-show="item.request">

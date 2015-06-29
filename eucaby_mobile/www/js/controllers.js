@@ -74,7 +74,7 @@ angular.module('eucaby.controllers',
                 $scope.map, 'zoom_changed', function() {
                 $rootScope.currentZoom = $scope.map.getZoom();
             });
-            $scope.marker = map.createMarker($scope.map, lat, lng, 'Hello');
+            $scope.marker = map.createMarker($scope.map, lat, lng);
             $ionicLoading.hide();
         },
         function(data){
@@ -381,7 +381,7 @@ angular.module('eucaby.controllers',
             $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
             var loc = $scope.item.location;
             $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng, '');
+            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng);
         });
     }
 ])
@@ -403,7 +403,8 @@ angular.module('eucaby.controllers',
                 }
                 if ($scope.map){
                     $scope.markers.push(
-                        map.createMarker($scope.map, loc.lat, loc.lng, ''));
+                        map.createMarker(
+                            $scope.map, loc.lat, loc.lng, i, item.is_web));
                 }
             }
         };

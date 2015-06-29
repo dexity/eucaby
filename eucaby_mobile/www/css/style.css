@@ -152,6 +152,34 @@ hr.separator {
     border-right: 0px;
 }
 
+.number-label,
+.number-label-web {
+    float: left;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    padding: 7px;
+    color: #fff;
+    text-align: center;
+    font-size: 20px;
+    margin-left: -8px;
+    margin-right: 10px;
+}
+
+.number-label {
+    background-color: #0a9ec7;
+}
+
+.number-label-web {
+    background-color: #e6b400;
+}
+
+/* AngularJS adjustments */
+
+[ng\:cloak], [ng-cloak], .ng-cloak {
+    display: none !important;
+}
+
 /* Ionic adjustments */
 
 .tab-title {

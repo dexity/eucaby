@@ -31,7 +31,7 @@
         </div>
     </form>
 
-    <div ng-show="item.showBrowserWarning" class="note-area">
+    <div ng-show="item.showBrowserWarning" class="note-area" ng-cloak>
         <b>Note:</b> Location sent from a browser might not be accurate
     </div>
     <div ng-show="item.notifications">
@@ -39,6 +39,9 @@
             <div class="item item-divider">Locations</div>
             <ion-item ng-repeat="notif in item.notifications" ng-cloak>
                 <div class="detail-time">{{ notif.created_date | localize }}</div>
+                <div ng-class="{'number-label': !notif.is_web, 'number-label-web': notif.is_web}">
+                    {{ $index + 1 }}
+                </div>
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
                         Location received from <br>
