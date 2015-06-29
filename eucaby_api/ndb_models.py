@@ -28,7 +28,7 @@ class LocationMessage(polymodel.PolyModel):
 
     """Base model for messages."""
 
-    uuid = ndb.StringProperty(required=True, indexed=True)
+    uuid = ndb.StringProperty(required=True, indexed=True, default='')
     session = ndb.StructuredProperty(Session, required=True)
     message = ndb.StringProperty()
     sender_username = ndb.StringProperty(required=True, indexed=True)
