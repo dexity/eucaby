@@ -182,13 +182,45 @@ angular.module('eucaby.utils', [])
             }
             return items;
         },
+        indexOfField: function(array, field, value){
+            // Util for finding index of the matching value in array by field
+            for (var i = 0; i < array.length; i++){
+                if (array[i][field] === value){
+                    return i;
+                }
+            }
+            return -1;
+        },
+        moveRecentToFriends: function(contact){
+            // If contact is in recent friends return it back to
+            // friends array
+            if ($rootScope.recentFriends.hasOwnProperty(contact)) {
+                $rootScope.friends.unshift(
+                    $rootScope.recentFriends[contact]);
+                delete $rootScope.recentFriends[contact];
+            }
+        },
+        moveFriendToRecent: function(value){
+            // Remove from friends list for recent friend contact
+            var idx = this.indexOfField($rootScope.friends, 'username', value);
+            if (idx >= 0){
+                // Remove from friends list
+                var contact = $rootScope.friends.splice(idx, 1)[0];
+                $rootScope.recentFriends[value] = contact;
+            }
+        },
+        syncFriendsWithRecent: function(){
+            for (var value in $rootScope.recentFriends){
+                if ($rootScope.recentFriends.hasOwnProperty(value)){
+                    this.moveFriendToRecent(value);
+                }
+            }
+        },
         manageRecent: function(form, label){
-            // Manages recent contacts
-            // It it guaranteed that the most current contact will be on the top
-            $rootScope.recentContacts = ($rootScope.recentContacts ||
-                storageManager.getRecentContacts() || []);
-            $rootScope.recentFriends = ($rootScope.recentFriends ||
-                storageManager.getRecentFriends() || {});
+            // Manages recent contacts and friends
+            // It is guaranteed that the most current contact will be on the top
+            // Note: $rootScope.recentContacts and $rootScope.recentFriends
+            //       and $rootScope.friends should be set at the time
 
             // Contact can only be either email or user
             var model = 'email';
@@ -203,16 +235,7 @@ angular.module('eucaby.utils', [])
                 value = form.username;
                 text = label;
             }
-            var indexOf = function(contacts, field, value){
-                // Util for finding index of the matching value in array
-                for (var i = 0; i < contacts.length; i++){
-                    if (contacts[i][field] === value){
-                        return i;
-                    }
-                }
-                return -1;
-            };
-            var idx = indexOf($rootScope.recentContacts, 'value', value);
+            var idx = this.indexOfField($rootScope.recentContacts, 'value', value);
             // Move the existing contact to the top  (avoid duplicate contacts)
             if (idx >= 0){
                 $rootScope.recentContacts.splice(idx, 1);
@@ -225,23 +248,12 @@ angular.module('eucaby.utils', [])
             if ($rootScope.recentContacts.length > MAX_RECENT_CONTACTS){
                 removedContact = $rootScope.recentContacts.pop();
             }
-            // Remove from friends list for recent friend contact
             // Friends should be either in friends or recentFriends
             if (model === 'username') {
-                idx = indexOf($rootScope.friends, 'username', value);
-                if (idx >= 0){
-                    // Remove from friends list
-                    var contact = $rootScope.friends.splice(idx, 1)[0];
-                    $rootScope.recentFriends[value] = contact;
-                }
+                this.moveFriendToRecent(value);
             }
-            // If removed contact is in recent friends return it back to
-            // friends array
-            if (removedContact &&
-                $rootScope.recentFriends.hasOwnProperty(removedContact.value)) {
-                $rootScope.friends.unshift(
-                    $rootScope.recentFriends[removedContact.value]);
-                delete $rootScope.recentFriends[removedContact.value];
+            if (removedContact){
+                this.moveRecentToFriends(removedContact.value);
             }
             // Save recent contacts and friends to local storage
             storageManager.setRecentContacts($rootScope.recentContacts);
@@ -383,7 +395,7 @@ angular.module('eucaby.utils', [])
             storage.setItem(key, JSON.stringify(obj));
         },
         getObject: function(key){
-            JSON.parse(storage.getItem(key));
+            return JSON.parse(storage.getItem(key));
         }
     };
  });

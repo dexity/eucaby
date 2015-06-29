@@ -4,11 +4,16 @@ angular.module('eucaby.controllers',
                ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
 .controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate', 'EucabyApi', 'push',
-    function($scope, $rootScope, $state, $ionicSideMenuDelegate, EucabyApi, push) {
+    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
+      'storageManager', 'EucabyApi', 'push',
+    function($scope, $rootScope, $state, $ionicSideMenuDelegate,
+             storageManager, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
+    $rootScope.recentContacts = storageManager.getRecentContacts() || [];
+    $rootScope.recentFriends = storageManager.getRecentFriends() || {};
+
 //    $rootScope.setNoMessages = function(){
 //        push.checkMessages(false);
 //    };
@@ -99,6 +104,7 @@ angular.module('eucaby.controllers',
         // Loads friends
         return Friends.all().then(function(data){
             $rootScope.friends = data.data;
+            utils.syncFriendsWithRecent();
         }, function(data){
             utils.alert('Error', 'Error loading friends');
             console.error(data);
