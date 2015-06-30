@@ -44,7 +44,7 @@ angular.module('eucaby.controllers',
     $scope.facebookLogin = function(){
 
         $ionicLoading.show();
-        EucabyApi.login().then(function () {
+        EucabyApi.login().then(function() {
                 $location.path('/app/tab/map');
                 push.initNotifications();
             }, function(data) {
@@ -387,10 +387,10 @@ angular.module('eucaby.controllers',
 ])
 
 .controller('RequestDetailCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', '$http', '$stateParams', 'map',
-     'utils', 'Request', 'Notification',
-    function($scope, $rootScope, $ionicLoading, $ionicHistory, $http, $stateParams, map, utils,
-             Request, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', '$http',
+     '$stateParams', 'map', 'utils', 'ctrlUtils', 'Request', 'Notification',
+    function($scope, $rootScope, $ionicLoading, $ionicHistory, $http,
+             $stateParams, map, utils, ctrlUtils, Request, Notification) {
 
         var stateName = $ionicHistory.currentView().stateName;
         var showBrowserWarning = false;
@@ -433,10 +433,8 @@ angular.module('eucaby.controllers',
                 // Reload request
                 Request.get($stateParams.id).then(requestCallback);
                 utils.toast('Location submitted');
-            }, function(data){
-                $ionicLoading.hide();
-                utils.alert('Error', data.message || 'Failed to send request');
-            });
+                $scope.form = {};
+            }, ctrlUtils.messageError('Failed to send request'));
         };
 
         Request.get($stateParams.id).then(requestCallback);

@@ -85,7 +85,7 @@ ACTIVITY_ARGS = [
                       required=True, help=INVALID_ACTIVITY_TYPE),
     reqparse.Argument(name='offset', type=positive_int, default=0,
                       help=INVALID_INT),
-    reqparse.Argument(name='limit', type=positive_int, default=50,
+    reqparse.Argument(name='limit', type=positive_int, default=200,
                       help=INVALID_INT)
 ]
 

@@ -30,6 +30,7 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
         login: function(force){
             var deferred = $q.defer();
             var accessToken = storageManager.getAccessToken();
+            var fb_user_id;
             if (accessToken && !force) {
                 deferred.resolve(accessToken);
             } else {
@@ -42,12 +43,13 @@ angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
                 var ecLoginSuccess = function(data) {
                     // Success callback for Eucaby authentication
                     storageManager.saveAuth(data);
+                    storageManager.setCurrentUsername(fb_user_id);
                     deferred.resolve(data);
                 };
 
                 var fbProfileSuccess = function(data){
                     // Success callback for Facebook user profile
-                    var fb_user_id = data.data.id;
+                    fb_user_id = data.data.id;
                     var fb_access_token = storageManager.getFbToken();
                     var params = {
                         service: 'facebook', grant_type: 'password',

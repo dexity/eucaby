@@ -160,6 +160,7 @@ angular.module('eucaby.utils', [])
         formatMessages: function(data, formatter){
             // Formats location or request message
             var items = [];
+            var currentUsername = storageManager.getCurrentUsername();
             for (var i=0; i < data.length; i++){
                 var item = data[i];
                 var form = formatter(item);
@@ -173,8 +174,11 @@ angular.module('eucaby.utils', [])
                     }
                 } else if (item.type === 'request') {
                     icon = 'ion-ios-bolt-outline';
-                    if (item.session.complete) {
+                    // It doesn't make send location to your own request
+                    if (item.sender.username !== currentUsername){
                         url = form.request_url;
+                    }
+                    if (item.session.complete) {
                         icon = 'ion-ios-bolt';
                     }
                 }
@@ -339,9 +343,9 @@ angular.module('eucaby.utils', [])
     var storage = window.localStorage;
     var ACCESS_TOKEN = 'ec_access_token';
     var REFRESH_TOKEN = 'ec_refresh_token';
+    var USERNAME = 'ec_current_username';
     var FB_TOKEN = 'fbtoken';
     var DEVICE_STATUS = 'device_registered';
-    var NEW_MESSAGES = 'incoming_messages';
     var RECENT_CONTACTS = 'recent_contacts';
     var RECENT_FRIENDS = 'recent_friends';
 
@@ -365,17 +369,17 @@ angular.module('eucaby.utils', [])
         getAccessToken: function(){
             return storage.getItem(ACCESS_TOKEN);
         },
+        setCurrentUsername: function(username){
+            storage.setItem(USERNAME, username);
+        },
+        getCurrentUsername: function(){
+            return storage.getItem(USERNAME);
+        },
         getDeviceStatus: function(){
             return storage.getItem(DEVICE_STATUS) === 'true';
         },
         setDeviceStatus: function(value){
             storage.setItem(DEVICE_STATUS, value);
-        },
-        setNewMessages: function(value){
-            storage.setItem(NEW_MESSAGES, value);
-        },
-        hasNewMessages: function(){
-            storage.getItem(NEW_MESSAGES) === 'true';
         },
         setRecentContacts: function(obj){
             this.setObject(RECENT_CONTACTS, obj);
@@ -392,10 +396,10 @@ angular.module('eucaby.utils', [])
         clearAll: function(){
             storage.removeItem(ACCESS_TOKEN);
             storage.removeItem(REFRESH_TOKEN);
+            storage.removeItem(USERNAME);
             storage.removeItem(FB_TOKEN);
             delete storage.fbtoken;
             storage.removeItem(DEVICE_STATUS);
-            storage.removeItem(NEW_MESSAGES);
             storage.removeItem(RECENT_CONTACTS);
             storage.removeItem(RECENT_FRIENDS);
         },
