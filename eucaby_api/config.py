@@ -79,8 +79,7 @@ class Development(Config):
     """Development configuration."""
     APP_ID = DEV_APP_ID
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+gaerdbms:///eucaby?instance=eucaby-dev:eucaby2&'
-        'charset=utf8&use_unicode=0')
+        'mysql://root@/eucaby?unix_socket=/cloudsql/eucaby-dev:eucaby2')
     EUCABY_URL = 'http://eucaby-dev.appspot.com'
     DEBUG = False
 
@@ -90,8 +89,7 @@ class Production(Config):
     """Production configuration."""
     APP_ID = PRD_APP_ID
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+gaerdbms:///eucaby?instance=eucaby-prd:eucaby&'
-        'charset=utf8&use_unicode=0')
+        'mysql://root@/eucaby?unix_socket=/cloudsql/eucaby-prd:eucaby')
     EUCABY_URL = 'http://eucaby-prd.appspot.com'
     DEBUG = False
     CORS_ENABLED = False
