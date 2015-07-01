@@ -1,4 +1,10 @@
 <ion-view title="Request">
+    <ion-nav-buttons side="secondary">
+      <button class="button button-positive header-button"
+          ng-click="sendLocation()">
+          Send Location <i class="icon ion-android-send"></i>
+      </button>
+    </ion-nav-buttons>
   <ion-content>
     <div id="locmap" ng-if="item.notifications"></div>
     <div class="card" ng-cloak>
@@ -20,14 +26,13 @@
             {{ item.message }}
         </div>
     </div>
-    <form ng-hide="isOutgoing" ng-submit="sendLocation()">
+    <form ng-hide="isOutgoing">
         <input type="hidden" ng-model="form.token">
         <div class="padding">
             <label class="item item-input message">
               <input type="text" placeholder="Optional message" name="message"
                      ng-model="form.message">
             </label>
-            <button class="button button-block button-positive" type="submit">Send Location</button>
         </div>
     </form>
 

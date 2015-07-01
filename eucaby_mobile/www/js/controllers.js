@@ -4,9 +4,9 @@ angular.module('eucaby.controllers',
                ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
 .controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
+    ['$scope', '$rootScope', '$state', '$ionicHistory', '$ionicSideMenuDelegate',
       'storageManager', 'EucabyApi', 'push',
-    function($scope, $rootScope, $state, $ionicSideMenuDelegate,
+    function($scope, $rootScope, $state, $ionicHistory, $ionicSideMenuDelegate,
              storageManager, EucabyApi, push) {
 
     $rootScope.currentZoom = 13;
@@ -64,8 +64,10 @@ angular.module('eucaby.controllers',
              $http, $ionicModal, $ionicLoading, map, utils, Friends) {
 
     // Center on me action
-    $scope.centerOnMe = function() {
-        $ionicLoading.show();
+    $scope.centerOnMe = function(hideLoading) {
+        if (!hideLoading){
+            $ionicLoading.show();
+        }
 
         map.currentLocation(function(lat, lng){
             $scope.map = map.createMap('map', lat, lng,
@@ -85,7 +87,7 @@ angular.module('eucaby.controllers',
         });
     };
 
-    $scope.centerOnMe();
+    $scope.centerOnMe(true);
     $scope.markers = [];
     $rootScope.friends = [];
 
@@ -156,22 +158,6 @@ angular.module('eucaby.controllers',
         }
         return true;
     };
-
-    /*
-    // Socket.io
-    socket.on('connect', function(){
-        console.log("Connected");
-    });
-
-    socket.on('message', function(message) {
-        var msg = JSON.parse(message);
-        clearOverlays($scope.markers);
-        var marker = markerFactory(
-            $scope.map, msg.location.lat, msg.location.lng,
-            msg.session.receiver_email);
-        $scope.markers.push(marker);
-    });
-    */
 }])
 
 .controller('NotificationCtrl',
@@ -185,6 +171,7 @@ angular.module('eucaby.controllers',
 
     $scope.$on('sendLocation', function(event){
         // Send location action
+        // Note: We you here signal because form is triggered outside controller
         // Warning: This is a hack to access child scope directly
         //          messageForm in ng-included template.
         if (!$scope.isFormValid($scope.$$childHead.messageForm)){
@@ -424,7 +411,8 @@ angular.module('eucaby.controllers',
         };
         $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
         $scope.form = {};
-        $scope.sendLocation = function(){
+        $scope.sendLocation = function(event) {
+            // Send request action
             $ionicLoading.show();
             Notification.post($scope.form, $rootScope.currentLatLng.lat,
                               $rootScope.currentLatLng.lng)
@@ -441,7 +429,9 @@ angular.module('eucaby.controllers',
     }
 ])
 
-.factory('ctrlUtils', ['$ionicLoading', 'utils', function($ionicLoading, utils) {
+.factory('ctrlUtils',
+    ['$rootScope', '$ionicLoading', 'utils',
+    function($rootScope, $ionicLoading, utils) {
     return {
         selectUser: function ($scope, name) {
             // Hack for deselected radio button. This will avoid creating
