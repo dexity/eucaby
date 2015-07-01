@@ -88,9 +88,9 @@ angular.module('eucaby.utils', [])
 }])
 
 .factory('utils',
-    ['$ionicPopup', '$ionicLoading', 'storageManager',
+    ['$ionicPopup', '$ionicLoading', '$ionicHistory', 'storageManager',
      'MAX_RECENT_CONTACTS', 'EMAIL_REGEXP',
-     function($ionicPopup, $ionicLoading, storageManager,
+     function($ionicPopup, $ionicLoading, $ionicHistory, storageManager,
               MAX_RECENT_CONTACTS, EMAIL_REGEXP){
     return {
         activityParams: function(form){
@@ -174,11 +174,14 @@ angular.module('eucaby.utils', [])
                     }
                 } else if (item.type === 'request') {
                     icon = 'ion-ios-bolt-outline';
-                    // It doesn't make send location to your own request
+                    // It doesn't make sense to send location to your own
+                    // request
                     if (item.sender.username !== currentUsername){
                         url = form.request_url;
                     }
+                    // Add link to completed request (regardless of sender)
                     if (item.session.complete) {
+                        url = form.request_url;
                         icon = 'ion-ios-bolt';
                     }
                 }
@@ -193,6 +196,13 @@ angular.module('eucaby.utils', [])
                 });
             }
             return items;
+        },
+        urlHasSubstring: function(substr){
+            var currView = $ionicHistory.currentView();
+            if (!currView){
+                return false;
+            }
+            return currView.stateName.indexOf(substr) > -1;
         },
         indexOfField: function(array, field, value){
             // Util for finding index of the matching value in array by field

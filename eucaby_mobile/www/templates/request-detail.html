@@ -1,7 +1,7 @@
 <ion-view title="Request">
     <ion-nav-buttons side="secondary">
       <button class="button button-positive header-button"
-          ng-click="sendLocation()">
+          ng-click="sendLocation()" ng-hide="isOutgoing" ng-cloak>
           Send Location <i class="icon ion-android-send"></i>
       </button>
     </ion-nav-buttons>
@@ -26,7 +26,7 @@
             {{ item.message }}
         </div>
     </div>
-    <form ng-hide="isOutgoing">
+    <form ng-hide="isOutgoing" ng-cloak>
         <input type="hidden" ng-model="form.token">
         <div class="padding">
             <label class="item item-input message">

@@ -4,15 +4,18 @@ angular.module('eucaby.controllers',
                ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
 .controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$ionicHistory', '$ionicSideMenuDelegate',
-      'storageManager', 'EucabyApi', 'push',
-    function($scope, $rootScope, $state, $ionicHistory, $ionicSideMenuDelegate,
-             storageManager, EucabyApi, push) {
+    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
+      'storageManager', 'EucabyApi', 'utils', 'push',
+    function($scope, $rootScope, $state, $ionicSideMenuDelegate,
+             storageManager, EucabyApi, utils, push) {
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
     $rootScope.recentContacts = storageManager.getRecentContacts() || [];
     $rootScope.recentFriends = storageManager.getRecentFriends() || {};
+    $scope.alignedTitle = function(){
+        return utils.urlHasSubstring('request');
+    };
 
 //    $rootScope.setNoMessages = function(){
 //        push.checkMessages(false);
@@ -76,12 +79,16 @@ angular.module('eucaby.controllers',
                 $scope.map, 'zoom_changed', function() {
                 $rootScope.currentZoom = $scope.map.getZoom();
             });
-            $scope.marker = map.createMarker($scope.map, lat, lng);
-            $ionicLoading.hide();
+            $scope.marker = map.createMarker($scope.map, lat, lng, 89);
+            if (!hideLoading) {
+                $ionicLoading.hide();
+            }
         },
         function(data){
             $scope.map = map.createMap('map');
-            $ionicLoading.hide();
+            if (!hideLoading) {
+                $ionicLoading.hide();
+            }
             utils.alert('Location Error',
                         'Unable to get location: ' + data.message);
         });
@@ -152,7 +159,7 @@ angular.module('eucaby.controllers',
         //       valid. This is not what we want. ng-change should trigger
         //       every type user types in the input field. So we explicitly
         //       validate email field instead of form.email.$invalid
-        if (form.email.$dirty && !utils.validEmail(emailValue)) {
+        if (emailValue && !utils.validEmail(emailValue)) {
             utils.alert('Error', 'Please provide a valid email');
             return false;
         }
@@ -356,11 +363,12 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('NotificationDetailCtrl',
-            ['$scope', '$ionicHistory', '$ionicLoading', '$stateParams', 'map', 'Notification',
-    function($scope, $ionicHistory, $ionicLoading, $stateParams, map, Notification) {
+            ['$scope', '$ionicLoading', '$stateParams', 'map',
+             'utils', 'Notification',
+    function($scope, $ionicLoading, $stateParams, map, utils,
+             Notification) {
 
-        var stateName = $ionicHistory.currentView().stateName;
-        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
+        $scope.isOutgoing = utils.urlHasSubstring('outgoing');
 
         // XXX: Add $ionicLoading feature
         Notification.get($stateParams.id).then(function(data){
@@ -374,12 +382,11 @@ angular.module('eucaby.controllers',
 ])
 
 .controller('RequestDetailCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', '$http',
-     '$stateParams', 'map', 'utils', 'ctrlUtils', 'Request', 'Notification',
-    function($scope, $rootScope, $ionicLoading, $ionicHistory, $http,
-             $stateParams, map, utils, ctrlUtils, Request, Notification) {
+    ['$scope', '$rootScope', '$ionicLoading', '$http',
+     '$stateParams', 'map', 'utils', 'Request', 'Notification',
+    function($scope, $rootScope, $ionicLoading, $http,
+             $stateParams, map, utils, Request, Notification) {
 
-        var stateName = $ionicHistory.currentView().stateName;
         var showBrowserWarning = false;
         var populateMarkers = function(notifs){
             for (var i = 0; i < notifs.length; i++){
@@ -409,7 +416,7 @@ angular.module('eucaby.controllers',
                 $scope.showBrowserWarning = showBrowserWarning;
             });
         };
-        $scope.isOutgoing = stateName.indexOf('outgoing') > -1;
+        $scope.isOutgoing = utils.urlHasSubstring('outgoing');
         $scope.form = {};
         $scope.sendLocation = function(event) {
             // Send request action
