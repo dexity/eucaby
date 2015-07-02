@@ -387,9 +387,9 @@ angular.module('eucaby.controllers',
 
 .controller('RequestDetailCtrl',
     ['$scope', '$rootScope', '$ionicLoading', '$http',
-     '$stateParams', 'map', 'utils', 'Request', 'Notification',
+     '$stateParams', 'map', 'utils', 'ctrlUtils', 'Request', 'Notification',
     function($scope, $rootScope, $ionicLoading, $http,
-             $stateParams, map, utils, Request, Notification) {
+             $stateParams, map, utils, ctrlUtils, Request, Notification) {
 
         var showBrowserWarning = false;
         var populateMarkers = function(notifs){
@@ -439,8 +439,19 @@ angular.module('eucaby.controllers',
         Request.get($stateParams.id).then(requestCallback);
 
         $scope.centerMarker = function(loc) {
+            // Centers map at marker's location
             $scope.map.setCenter(loc);
+        };
+        $scope.centerOnMe = function() {
+            // Centers map at the current location
+            map.currentLocation(function(lat, lng){
+                if ($scope.map){
+                    var position = new google.maps.LatLng(lat, lng);
+                    $scope.centerMarker(position);
+                }
+            });
         }
+
     }
 ])
 

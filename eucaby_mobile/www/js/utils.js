@@ -417,10 +417,10 @@ angular.module('eucaby.utils', [])
             storage.removeItem(RECENT_FRIENDS);
         },
         setObject: function(key, obj){
-            storage.setItem(key, JSON.stringify(obj));
+            storage.setItem(key, angular.toJson(obj));
         },
         getObject: function(key){
-            return JSON.parse(storage.getItem(key));
+            return angular.fromJson(storage.getItem(key));
         }
     };
  });
