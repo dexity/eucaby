@@ -51,12 +51,12 @@
                 </div>
                 <div ng-switch on="isOutgoing">
                     <div ng-switch-when="true">
-                        Location received from <br>
+                        received from <br>
                         <b>{{ notif.sender | userName }}</b>
                         <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
                     </div>
                     <div ng-switch-when="false">
-                        Location sent to <br>
+                        sent to <br>
                         <b>{{ notif.recipient | userName }}</b>
                         <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
                     </div>

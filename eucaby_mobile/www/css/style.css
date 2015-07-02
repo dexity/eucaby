@@ -43,6 +43,11 @@ input {
 .item-container .item-content {
     padding-top: 8px;
     padding-bottom: 8px;
+    padding-right: 34px;
+}
+
+.item-icon-right.item-container .item-content {
+    padding-right: 34px;
 }
 
 .activity-detail {
@@ -95,6 +100,8 @@ input {
 
 .message-text {
     color: #0c63ee;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .detail-time {

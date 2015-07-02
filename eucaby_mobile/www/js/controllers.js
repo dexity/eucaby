@@ -417,6 +417,7 @@ angular.module('eucaby.controllers',
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
                 populateMarkers($scope.item.notifications);
+                $scope.centerMarker($rootScope.currentLatLng)
                 $scope.showBrowserWarning = showBrowserWarning;
             });
         };
@@ -444,14 +445,17 @@ angular.module('eucaby.controllers',
         };
         $scope.centerOnMe = function() {
             // Centers map at the current location
+            // Note: Location is obtain again in case if user is moving.
+            //       Other option is to use stale $rootScope.currentLatLng
+            $ionicLoading.show();
             map.currentLocation(function(lat, lng){
                 if ($scope.map){
                     var position = new google.maps.LatLng(lat, lng);
                     $scope.centerMarker(position);
                 }
+                $ionicLoading.hide();
             });
         }
-
     }
 ])
 
