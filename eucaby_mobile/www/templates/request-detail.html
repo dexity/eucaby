@@ -28,8 +28,9 @@
     </div>
     <form ng-hide="isOutgoing" ng-cloak>
         <input type="hidden" ng-model="form.token">
-        <div class="padding">
-            <label class="item item-input message">
+        <div class="row">
+            <a class="button button-icon ion-pinpoint col-20 map-pinpoint" ng-click="centerOnMe()"></a>
+            <label class="item item-input message col-80">
               <input type="text" placeholder="Optional message" name="message"
                      ng-model="form.message">
             </label>
@@ -42,7 +43,8 @@
     <div ng-show="item.notifications">
         <ion-list>
             <div class="item item-divider">Locations</div>
-            <ion-item ng-repeat="notif in item.notifications" ng-cloak>
+            <ion-item ng-repeat="notif in item.notifications"
+                      ng-click="centerMarker(notif.location)" ng-cloak>
                 <div class="detail-time">{{ notif.created_date | localize }}</div>
                 <div ng-class="{'number-label': !notif.is_web, 'number-label-web': notif.is_web}">
                     {{ $index + 1 }}

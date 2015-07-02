@@ -40,7 +40,10 @@ angular.module('eucaby.utils', [])
                 position: position,
                 map: map
             };
-            if (number !== undefined){
+            if (number === -1){
+                number = 89;  // Special case of non-numbered marker
+            }
+            if (number !== undefined && number > -1){
                 var point_x = number * 35 + 1;
                 var point_y = is_web ? 91 : 0;
                 markerOpts.icon = {

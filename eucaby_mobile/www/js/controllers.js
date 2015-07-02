@@ -73,13 +73,16 @@ angular.module('eucaby.controllers',
         }
 
         map.currentLocation(function(lat, lng){
-            $scope.map = map.createMap('map', lat, lng,
-                                       {zoom: $scope.currentZoom});
-            google.maps.event.addListener(
-                $scope.map, 'zoom_changed', function() {
-                $rootScope.currentZoom = $scope.map.getZoom();
-            });
-            $scope.marker = map.createMarker($scope.map, lat, lng, 89);
+            if (!$scope.map) {
+                // Create a new map
+                $scope.map = map.createMap('map', lat, lng,
+                                           {zoom: $scope.currentZoom});
+                google.maps.event.addListener(
+                    $scope.map, 'zoom_changed', function() {
+                    $rootScope.currentZoom = $scope.map.getZoom();
+                });
+            }
+            $scope.marker = map.createMarker($scope.map, lat, lng);
             if (!hideLoading) {
                 $ionicLoading.hide();
             }
@@ -376,7 +379,8 @@ angular.module('eucaby.controllers',
             $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
             var loc = $scope.item.location;
             $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-            $scope.marker = map.createMarker($scope.map, loc.lat, loc.lng);
+            $scope.marker = map.createMarker(
+                $scope.map, loc.lat, loc.lng, -1, $scope.item.is_web);
         });
     }
 ])
@@ -433,6 +437,10 @@ angular.module('eucaby.controllers',
         };
 
         Request.get($stateParams.id).then(requestCallback);
+
+        $scope.centerMarker = function(loc) {
+            $scope.map.setCenter(loc);
+        }
     }
 ])
 

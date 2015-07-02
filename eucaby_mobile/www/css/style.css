@@ -178,6 +178,11 @@ hr.separator {
     background-color: #e6b400;
 }
 
+.map-pinpoint {
+    line-height: 42px;
+    font-size: 35px;
+}
+
 /* AngularJS adjustments */
 
 [ng\:cloak], [ng-cloak], .ng-cloak {
