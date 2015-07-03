@@ -388,6 +388,9 @@ angular.module('eucaby.utils', [])
         getCurrentUsername: function(){
             return storage.getItem(USERNAME);
         },
+        userLoggedIn: function(){
+            return this.getAccessToken() !== null;
+        },
         getDeviceStatus: function(){
             return storage.getItem(DEVICE_STATUS) === 'true';
         },

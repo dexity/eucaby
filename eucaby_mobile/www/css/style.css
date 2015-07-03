@@ -138,6 +138,7 @@ hr.separator {
 .button.header-button {
     padding-left: 15px;
     padding-right: 10px;
+    border-radius: 0px;
 }
 
 .header-button .icon {
@@ -224,6 +225,17 @@ ion-footer-bar .button-bar .button {
 
 .bar .button-bar > .button {
     line-height: 42px;
+}
+
+.bar .button {
+    font-size: 14px;
+}
+
+.bar .title + .header-button,
+.bar .buttons-right {
+    top: 0px !important;
+    right: 0px !important;
+    bottom: 0px !important;
 }
 
 ion-footer-bar.bar {

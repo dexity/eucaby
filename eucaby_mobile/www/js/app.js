@@ -2,17 +2,19 @@
 
 angular.module('eucaby',
     ['ionic', 'ngCordova', 'eucaby.controllers', 'eucaby.filters',
-     'eucaby.utils', 'eucaby.api'])
+     'eucaby.utils', 'eucaby.api', 'eucaby.push'])
 
-.run(['$rootScope', '$state', '$ionicPlatform', '$window', 'EucabyApi', 'storageManager',
-      function($rootScope, $state, $ionicPlatform, $window, EucabyApi, storageManager) {
+.run(['$rootScope', '$state', '$ionicPlatform', '$window', 'EucabyApi', 'push', 'storageManager',
+      function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push, storageManager) {
 
     EucabyApi.init();
 
     $ionicPlatform.ready(function() {
+        // Device is ready
         if(window.StatusBar) {
             window.StatusBar.styleDefault();
         }
+        push.initNotifications($rootScope);
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {

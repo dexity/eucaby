@@ -5,9 +5,9 @@ angular.module('eucaby.controllers',
 
 .controller('MainCtrl',
     ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
-      'storageManager', 'EucabyApi', 'utils', 'push',
+      'storageManager', 'EucabyApi', 'utils',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate,
-             storageManager, EucabyApi, utils, push) {
+             storageManager, EucabyApi, utils) {
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
@@ -16,24 +16,15 @@ angular.module('eucaby.controllers',
     $scope.alignedTitle = function(){
         return utils.urlHasSubstring('request');
     };
-
-//    $rootScope.setNoMessages = function(){
-//        push.checkMessages(false);
-//    };
-//    $rootScope.hasMessages = push.checkMessages();
-
     $scope.showSideMenu = function(){
         return $scope.showHeader();
     };
-
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     };
-
     $scope.showHeader = function(){
         return $state.is('app.tab.map');
     };
-
     $scope.logout = function () {
         EucabyApi.logout();
         $state.go('app.login');
@@ -41,15 +32,15 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('LoginCtrl',
-    ['$scope', '$location', '$ionicLoading', 'EucabyApi', 'push', 'utils',
-     function($scope, $location, $ionicLoading, EucabyApi, push, utils) {
+    ['$scope', '$rootScope', '$location', '$ionicLoading', 'EucabyApi', 'push', 'utils',
+     function($scope, $rootScope, $location, $ionicLoading, EucabyApi, push, utils) {
 
     $scope.facebookLogin = function(){
 
         $ionicLoading.show();
         EucabyApi.login().then(function() {
                 $location.path('/app/tab/map');
-                push.initNotifications();
+                push.initNotifications($rootScope);
             }, function(data) {
                 utils.alert('Error', 'Error during log in. ' +
                                      'Please try again in a moment.');
