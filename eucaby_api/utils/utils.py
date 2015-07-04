@@ -92,7 +92,7 @@ def zone2offset(zone):
     return zone*60
 
 
-def gcm_payload_data(name, msg_type):
+def payload_data(name, msg_type):
     """Creates payload data for GCM message."""
     title = name or 'Eucaby'
     message = 'New incoming messages'
@@ -103,7 +103,7 @@ def gcm_payload_data(name, msg_type):
 
 def apns_payload_data(name, msg_type):
     """Creates payload data for APNs message."""
-    data = gcm_payload_data(name, msg_type)
+    data = payload_data(name, msg_type)
     return dict(
         alert=u'{title}\n{message}'.format(**data), sound='default')
 

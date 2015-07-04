@@ -12,22 +12,22 @@ class UtilsTest(unittest.TestCase):
         self.app = eucaby_app.create_app()
         self.app.config.from_object('eucaby_api.config.Testing')
 
-    def test_gcm_payload_data(self):
+    def test_payload_data(self):
         """Tests GCM payload data."""
         # Empty parameters
-        data = api_utils.gcm_payload_data(None, '')
+        data = api_utils.payload_data(None, '')
         self.assertEqual(
             dict(title='Eucaby', message='New incoming messages'), data)
         # Name parameter is set
-        data = api_utils.gcm_payload_data(u'Юзер', '')
+        data = api_utils.payload_data(u'Юзер', '')
         self.assertEqual(
             dict(title=u'Юзер', message='New incoming messages'), data)
         # Message type is set
-        data = api_utils.gcm_payload_data(None, 'something')
+        data = api_utils.payload_data(None, 'something')
         self.assertEqual(
             dict(title='Eucaby', message='sent you a new something'), data)
         # Name and message are set
-        data = api_utils.gcm_payload_data(u'Юзер', 'something')
+        data = api_utils.payload_data(u'Юзер', 'something')
         self.assertEqual(
             dict(title=u'Юзер', message='sent you a new something'), data)
 

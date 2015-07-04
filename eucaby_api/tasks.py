@@ -30,7 +30,8 @@ class PushNotificationsTask(views.MethodView):
 
         flask.request.recipient_username = args['recipient_username']
         flask.request.sender_name = args['sender_name']
-        flask.request.message_type = args['type']
+        flask.request.message_type = args['message_type']
+        flask.request.message_id = args['message_id']
 
         devices = models.Device.get_by_username(
             flask.request.recipient_username, platform=platform)
@@ -56,9 +57,13 @@ class GCMNotificationsTask(PushNotificationsTask):
         logging.info('Pushing GCM notifications to %s devices',
                      len(flask.request.devices))
 
-        data = api_utils.gcm_payload_data(
+        data = api_utils.payload_data(
             flask.request.sender_name, flask.request.message_type)
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
+        # Add message data
+        data.update(dict(
+            type=flask.request.message_type, id=flask.request.message_id))
+        logging.info('GCM message payload: %s', str(data))
         try:
             resp = gcm_app.json_request(
                 registration_ids=regs.keys(), data=data, retries=7)

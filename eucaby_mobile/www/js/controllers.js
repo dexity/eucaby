@@ -291,7 +291,7 @@ angular.module('eucaby.controllers',
             description: 'received ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
             name: item.recipient.name || item.recipient.email,
-            notification_url: '#/app/tab/outgoing_notification/' + item.id,
+            notification_url: '#/app/tab/outgoing_location/' + item.id,
             request_url: '#/app/tab/outgoing_request/' + item.id
         };
     };
@@ -328,7 +328,7 @@ angular.module('eucaby.controllers',
             description: 'sent ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
             name: item.sender.name,
-            notification_url: '#/app/tab/incoming_notification/' + item.id,
+            notification_url: '#/app/tab/incoming_location/' + item.id,
             request_url: '#/app/tab/incoming_request/' + item.id
         };
     };

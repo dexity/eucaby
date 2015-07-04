@@ -82,10 +82,9 @@ class RequestLocationView(flask_restful.Resource):
         # (sender and recipient can be the same person)
         if recipient_username:
             gae_utils.send_notification(
-                recipient_username, user.name, api_args.REQUEST)
+                recipient_username, user.name, api_args.REQUEST, req.id)
 
         if recipient_email:
-            # Send email copy to sender?
             # Send email notification to recipient
             # XXX: Create mail task
             noreply_email = current_app.config['NOREPLY_EMAIL']
@@ -171,7 +170,7 @@ class NotifyLocationView(flask_restful.Resource):
         # (sender and recipient can be the same person)
         if recipient_username:
             gae_utils.send_notification(
-                recipient_username, user.name, api_args.LOCATION)
+                recipient_username, user.name, api_args.LOCATION, loc_notif.id)
 
         if recipient_email:
             # Send email notification to recipient

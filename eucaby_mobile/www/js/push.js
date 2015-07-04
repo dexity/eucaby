@@ -3,8 +3,8 @@
 angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
 .factory('push',
-    ['$cordovaPush', 'EucabyApi', 'utils', 'storageManager',
-     function($cordovaPush, EucabyApi, utils, storageManager) {
+    ['$state', '$cordovaPush', 'EucabyApi', 'utils', 'storageManager',
+     function($state, $cordovaPush, EucabyApi, utils, storageManager) {
 
     var registerDevice_ = function(deviceKey, platform){
         // Registers device or does nothing if it has already been registered
@@ -54,30 +54,34 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         registerAndroid();
 
         $scope.$on('$cordovaPush:notificationReceived',
-                       function(event, notification) {
-          console.log('Received notification: ', notification);
+                       function(event, notif) {
+          console.log('Received notification: ', notif);
 
-          switch(notification.event) {
+          switch(notif.event) {
             case 'registered':
-              registerDevice_(notification.regid, 'android');
+              registerDevice_(notif.regid, 'android');
               break;
             case 'message':
-                if (notification.foreground) {
+                var data = notif.payload;
+                if (notif.foreground) {
                     utils.confirm(
                         'New request', 'Show the new request?',
                         'Show', 'Later', function(){
-                            console.debug(notification);
+                            // XXX: Check if data.message_type is 'request' or 'location'
+                            // $state.go('app.tab.incoming_' + data.type,
+                            //          {id: data.id});
                         })
                 } else {
-                    if (notification.coldstart){
-                        console.debug('Coldstart');
+                    // $state.go('app.tab.incoming_' + data.type, {id: data.id});
+                    if (notif.coldstart){
+                        console.debug('Coldstart: ', notif);
                     } else {
-                        console.debug('Background');
+                        console.debug('Background: ', notif);
                     }
                 }
               break;
             case 'error':
-              console.error('GCM error: ' + notification.msg);
+              console.error('GCM error: ' + notif.msg);
               break;
             default:
               console.error('An unknown GCM event has occurred');
@@ -91,10 +95,10 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         registerIOS();
 
         $scope.$on('$cordovaPush:notificationReceived',
-                       function(event, notification) {
+                       function(event, notif) {
 
             // XXX: Finish
-            console.debug(event, notification);
+            console.debug(event, notif);
             utils.confirm('New request', 'world', 'Show', 'Later');
         });
     };
