@@ -241,3 +241,7 @@ ion-footer-bar .button-bar .button {
 ion-footer-bar.bar {
     padding: 0px;
 }
+
+.button-bar > .button.button-modal:last-child {
+  border-radius: 0px;
+}
