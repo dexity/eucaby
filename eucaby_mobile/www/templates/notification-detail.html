@@ -1,4 +1,10 @@
 <ion-view title="Location">
+    <ion-nav-buttons side="left">
+        <button class="button back-button buttons button-icon
+            ion-ios-arrow-left header-item" ng-class="{'hide': hasBackButton()}"
+            ui-sref="app.tab.map"> Map
+        </button>
+    </ion-nav-buttons>
   <ion-content>
     <div id="locmap"></div>
     <div class="card" ng-cloak>

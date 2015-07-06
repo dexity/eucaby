@@ -97,6 +97,26 @@ angular.module('eucaby',
             }
         }
     })
+    .state('app.tab.request', {
+        cache: false,
+        url: '/request/:id',
+        views: {
+            'tab-detail': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.location', {
+        cache: false,
+        url: '/location/:id',
+        views: {
+            'tab-detail': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
+            }
+        }
+    })
     .state('app.tab.outgoing', {
         url: '/outgoing',
         views: {

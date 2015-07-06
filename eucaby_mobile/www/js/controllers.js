@@ -5,9 +5,9 @@ angular.module('eucaby.controllers',
 
 .controller('MainCtrl',
     ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
-      'storageManager', 'EucabyApi', 'utils',
+      'storageManager', 'EucabyApi', 'utils', '$ionicHistory',
     function($scope, $rootScope, $state, $ionicSideMenuDelegate,
-             storageManager, EucabyApi, utils) {
+             storageManager, EucabyApi, utils, $ionicHistory) {
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
@@ -28,6 +28,13 @@ angular.module('eucaby.controllers',
     $scope.logout = function () {
         EucabyApi.logout();
         $state.go('app.login');
+    };
+    $rootScope.hasBackButton = function(){
+        var backView = $ionicHistory.backView();
+        if (backView && backView.backViewId !== null){
+            return true
+        }
+        return false;
     };
 }])
 
@@ -318,8 +325,8 @@ angular.module('eucaby.controllers',
 }])
 
 .controller('IncomingCtrl',
-    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
-    function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
+    ['$scope', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
+    function($scope, $ionicLoading, utils, dateUtils, Activity) {
 
     $ionicLoading.show();
     // Incoming formatter

@@ -61,23 +61,27 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             case 'registered':
               registerDevice_(notif.regid, 'android');
               break;
-            case 'message':
+              case 'message':
                 var data = notif.payload;
+                // XXX: Check if data.message_type is 'request' or 'location'
+                // XXX: Exclude case for request when sender and receiver are
+                //      the same and request has no locations. In this case
+                //      redirect to incoming list
                 if (notif.foreground) {
+                    var header = 'New ' + data.type;
+                    var body = 'Show the new ' + data.type + '?';
                     utils.confirm(
-                        'New request', 'Show the new request?',
-                        'Show', 'Later', function(){
-                            // XXX: Check if data.message_type is 'request' or 'location'
-                            // $state.go('app.tab.incoming_' + data.type,
-                            //          {id: data.id});
+                        header, body, 'Show', 'Later', function(){
+                            $state.go(
+                                'app.tab.' + data.type, {id: data.id});
                         })
                 } else {
-                    // $state.go('app.tab.incoming_' + data.type, {id: data.id});
-                    if (notif.coldstart){
-                        console.debug('Coldstart: ', notif);
-                    } else {
-                        console.debug('Background: ', notif);
-                    }
+                    $state.go('app.tab.' + data.type, {id: data.id});
+                    // Note: If you need to differentiate cold start
+                    //       (app is closed) from app in background use the
+                    //       code. Object notif will contain all necessary data.
+                    // if (notif.coldstart){ /* Coldstart */ }
+                    // else { /* Background */ }
                 }
               break;
             case 'error':

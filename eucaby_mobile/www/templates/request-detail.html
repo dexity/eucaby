@@ -1,4 +1,10 @@
 <ion-view title="Request">
+    <ion-nav-buttons side="left">
+        <button class="button back-button buttons button-icon
+            ion-ios-arrow-left header-item" ng-class="{'hide': hasBackButton()}"
+            ui-sref="app.tab.map"> Map
+        </button>
+    </ion-nav-buttons>
     <ion-nav-buttons side="secondary">
       <button class="button button-positive header-button"
           ng-click="sendLocation()" ng-hide="isOutgoing" ng-cloak>

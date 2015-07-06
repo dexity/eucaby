@@ -191,6 +191,10 @@ hr.separator {
     font-size: 35px;
 }
 
+.tab-virtual {
+    max-width: 0px;
+}
+
 /* AngularJS adjustments */
 
 [ng\:cloak], [ng-cloak], .ng-cloak {
