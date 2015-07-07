@@ -49,40 +49,59 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         });
     };
 
+    var handleMessage = function(payload, is_foreground){
+        // Handles messages both for Android and iOS
+        var objType = payload.type;
+        var showDetails = true;
+        // Handle invalid format (this shouldn't happen)
+        if (objType !== 'request' && objType !== 'location'){
+            objType = 'notification';
+            showDetails = false;
+        }
+        var redirectFunc = function(data, show){
+            if (show){
+                $state.go('app.tab.' + data.type, {id: data.id});
+            } else {
+                $state.go('app.tab.incoming');
+            }
+        };
+
+        // XXX: Exclude case for request when sender and receiver are
+        //      the same and request has no locations. In this case
+        //      redirect to incoming list
+        if (is_foreground) {
+            var header = 'New ' + objType;
+            var body = 'Show the new ' + objType + '?';
+            utils.confirm(
+                header, body, 'Show', 'Later', function(){
+                    redirectFunc(payload, showDetails);
+                })
+        } else {
+            redirectFunc(payload, showDetails);
+            /*
+            Note for Android only:
+                If you need to differentiate cold start
+                (app is closed) from app in background use the
+                code:
+                if (notif.coldstart){ // Coldstart  }
+                else { // Background }
+                Object notif will contain all necessary data!
+            */
+        }
+    };
+
     var initAndroid = function($scope) {
         // Init push notifications for Android
         registerAndroid();
 
         $scope.$on('$cordovaPush:notificationReceived',
-                       function(event, notif) {
-          console.log('Received notification: ', notif);
-
+                   function(event, notif) {
           switch(notif.event) {
             case 'registered':
               registerDevice_(notif.regid, 'android');
               break;
-              case 'message':
-                var data = notif.payload;
-                // XXX: Check if data.message_type is 'request' or 'location'
-                // XXX: Exclude case for request when sender and receiver are
-                //      the same and request has no locations. In this case
-                //      redirect to incoming list
-                if (notif.foreground) {
-                    var header = 'New ' + data.type;
-                    var body = 'Show the new ' + data.type + '?';
-                    utils.confirm(
-                        header, body, 'Show', 'Later', function(){
-                            $state.go(
-                                'app.tab.' + data.type, {id: data.id});
-                        })
-                } else {
-                    $state.go('app.tab.' + data.type, {id: data.id});
-                    // Note: If you need to differentiate cold start
-                    //       (app is closed) from app in background use the
-                    //       code. Object notif will contain all necessary data.
-                    // if (notif.coldstart){ /* Coldstart */ }
-                    // else { /* Background */ }
-                }
+            case 'message':
+              handleMessage(notif.payload, notif.foreground);
               break;
             case 'error':
               console.error('GCM error: ' + notif.msg);
@@ -99,11 +118,8 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         registerIOS();
 
         $scope.$on('$cordovaPush:notificationReceived',
-                       function(event, notif) {
-
-            // XXX: Finish
-            console.debug(event, notif);
-            utils.confirm('New request', 'world', 'Show', 'Later');
+                   function(event, notif) {
+            handleMessage(notif, notif.foreground === '1');
         });
     };
 

@@ -116,6 +116,9 @@ class APNsNotificationsTask(PushNotificationsTask):
         priority = 10
         kwargs = api_utils.apns_payload_data(
             flask.request.sender_name, flask.request.message_type)
+        # Additional payload parameters
+        kwargs['custom'] = dict(
+            type=flask.request.message_type, id=flask.request.message_id)
         payload = apns.Payload(**kwargs)
         for device in flask.request.devices:
             identifier = 1

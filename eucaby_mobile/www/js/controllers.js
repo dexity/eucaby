@@ -71,15 +71,15 @@ angular.module('eucaby.controllers',
         }
 
         map.currentLocation(function(lat, lng){
-            if (!$scope.map) {
-                // Create a new map
-                $scope.map = map.createMap('map', lat, lng,
-                                           {zoom: $scope.currentZoom});
-                google.maps.event.addListener(
-                    $scope.map, 'zoom_changed', function() {
-                    $rootScope.currentZoom = $scope.map.getZoom();
-                });
-            }
+            // Create a new map
+            // Note: There might be performance issues when creating
+            //       map for every current location click
+            $scope.map = map.createMap('map', lat, lng,
+                                       {zoom: $scope.currentZoom});
+            google.maps.event.addListener(
+                $scope.map, 'zoom_changed', function() {
+                $rootScope.currentZoom = $scope.map.getZoom();
+            });
             $scope.marker = map.createMarker($scope.map, lat, lng);
             if (!hideLoading) {
                 $ionicLoading.hide();
