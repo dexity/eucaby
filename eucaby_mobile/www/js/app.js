@@ -107,9 +107,9 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tab.location', {
+    .state('app.tab.notification', {
         cache: false,
-        url: '/location/:id',
+        url: '/notification/:id',
         views: {
             'tab-detail': {
                 templateUrl: 'templates/notification-detail.html',
@@ -126,8 +126,8 @@ angular.module('eucaby',
             }
         }
     })
-    .state('app.tab.outgoing_location', {
-        url: '/outgoing_location/:id',
+    .state('app.tab.outgoing_notification', {
+        url: '/outgoing_notification/:id',
         views: {
             'tab-outgoing': {
                 templateUrl: 'templates/notification-detail.html',
@@ -154,8 +154,8 @@ angular.module('eucaby',
         }
     })
 
-    .state('app.tab.incoming_location', {
-        url: '/incoming_location/:id',
+    .state('app.tab.incoming_notification', {
+        url: '/incoming_notification/:id',
         views: {
             'tab-incoming': {
                 templateUrl: 'templates/notification-detail.html',

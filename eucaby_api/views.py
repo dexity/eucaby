@@ -170,7 +170,8 @@ class NotifyLocationView(flask_restful.Resource):
         # (sender and recipient can be the same person)
         if recipient_username:
             gae_utils.send_notification(
-                recipient_username, user.name, api_args.LOCATION, loc_notif.id)
+                recipient_username, user.name, api_args.NOTIFICATION,
+                loc_notif.id)
 
         if recipient_email:
             # Send email notification to recipient

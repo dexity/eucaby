@@ -100,7 +100,7 @@ class NotifyLocationView(generic.View):
 
         # Send notifications to Android and iOS devices
         gae_utils.send_notification(
-            loc_req.sender_username, sender_name, api_args.LOCATION,
+            loc_req.sender_username, sender_name, api_args.NOTIFICATION,
             loc_notif.id)
 
         return http.JsonResponse(loc_notif.to_dict())

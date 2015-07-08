@@ -168,50 +168,26 @@ angular.module('eucaby.controllers',
     };
 }])
 
-.controller('NotificationCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Notification',
-    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Notification) {
+.controller('MessageCtrl',
+    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request',
+     'Notification', 'Autocomplete',
+    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
+             Notification, Autocomplete) {
 
     $scope.form = {};
     $scope.selectUser = function(name){
         ctrlUtils.selectUser($scope, name);
     };
 
-    $scope.$on('sendLocation', function(event){
-        // Send location action
-        // Note: We you here signal because form is triggered outside controller
-        // Warning: This is a hack to access child scope directly
-        //          messageForm in ng-included template.
-        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
-            return;
-        }
-
-        $ionicLoading.show();
-        Notification.post($scope.form, $rootScope.currentLatLng.lat,
-                          $rootScope.currentLatLng.lng).then(
-            ctrlUtils.messageSuccess(
-                $scope, $scope.notifyModal, 'Location submitted'),
-            ctrlUtils.messageError('Failed to send location'));
-    });
-}])
-
-.controller('RequestCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request', 'Autocomplete',
-    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request, Autocomplete) {
-
-    $scope.form = {};
-    $scope.selectUser = function(name){
-        ctrlUtils.selectUser($scope, name);
-    };
-
-    // Autocomplete test
+    // Autocomplete
     $scope.autoTyping = function(){
+        // On change input value function
         Autocomplete.query($scope.form.email).then(function(data){
             $scope.autoItems = data.data;
         });
     };
-
     $scope.autoComplete = function(item){
+        // On click autocompleted item function
         $scope.autoItems = [];
         $scope.form.email = item;
     };
@@ -222,12 +198,26 @@ angular.module('eucaby.controllers',
         if (!$scope.isFormValid($scope.$$childHead.messageForm)){
             return;
         }
-
         $ionicLoading.show();
         Request.post($scope.form).then(
             ctrlUtils.messageSuccess(
                 $scope, $scope.requestModal, 'Request submitted'),
             ctrlUtils.messageError('Failed to send request'));
+    });
+    $scope.$on('sendLocation', function(event){
+        // Send location action
+        // Note: We you here signal because form is triggered outside controller
+        // Warning: This is a hack to access child scope directly
+        //          messageForm in ng-included template.
+        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
+            return;
+        }
+        $ionicLoading.show();
+        Notification.post($scope.form, $rootScope.currentLatLng.lat,
+                          $rootScope.currentLatLng.lng).then(
+            ctrlUtils.messageSuccess(
+                $scope, $scope.notifyModal, 'Location submitted'),
+            ctrlUtils.messageError('Failed to send location'));
     });
 }])
 
@@ -298,7 +288,7 @@ angular.module('eucaby.controllers',
             description: 'received ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
             name: item.recipient.name || item.recipient.email,
-            notification_url: '#/app/tab/outgoing_location/' + item.id,
+            notification_url: '#/app/tab/outgoing_notification/' + item.id,
             request_url: '#/app/tab/outgoing_request/' + item.id
         };
     };
@@ -335,7 +325,7 @@ angular.module('eucaby.controllers',
             description: 'sent ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
             name: item.sender.name,
-            notification_url: '#/app/tab/incoming_location/' + item.id,
+            notification_url: '#/app/tab/incoming_notification/' + item.id,
             request_url: '#/app/tab/incoming_request/' + item.id
         };
     };
