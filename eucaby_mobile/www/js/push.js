@@ -51,11 +51,14 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
 
     var handleMessage = function(payload, is_foreground){
         // Handles messages both for Android and iOS
-        var objType = payload.type;
+        var typeLabel = payload.type;
         var showDetails = true;
+        if (typeLabel === 'notification'){
+            typeLabel = 'location';
+        }
         // Handle invalid format (this shouldn't happen)
-        if (objType !== 'request' && objType !== 'location'){
-            objType = 'notification';
+        if (typeLabel !== 'request' && typeLabel !== 'location'){
+            typeLabel = 'message';
             showDetails = false;
         }
         var redirectFunc = function(data, show){
@@ -70,8 +73,8 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         //      the same and request has no locations. In this case
         //      redirect to incoming list
         if (is_foreground) {
-            var header = 'New ' + objType;
-            var body = 'Show the new ' + objType + '?';
+            var header = 'New ' + typeLabel;
+            var body = 'Show the new ' + typeLabel + '?';
             utils.confirm(
                 header, body, 'Show', 'Later', function(){
                     redirectFunc(payload, showDetails);
