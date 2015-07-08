@@ -75,7 +75,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             utils.confirm(
                 header, body, 'Show', 'Later', function(){
                     redirectFunc(payload, showDetails);
-                })
+                });
         } else {
             redirectFunc(payload, showDetails);
             /*
@@ -124,13 +124,13 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
     };
 
     var platformDependent = function(
-        AndroidFunction, iOSFunction, $scope){
+        androidFunction, iOSFunction, $scope){
         // This method should be called when device is ready!
         try {
             // XXX: Fix 'device' is not defined.
             switch(device.platform){
                 case 'Android':
-                    AndroidFunction($scope);
+                    androidFunction($scope);
                     break;
                 case 'iOS':
                     iOSFunction($scope);
@@ -151,5 +151,5 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
             console.log('Registering device and notification event ...');
             platformDependent(initAndroid, initIOS, $scope);
         }
-    }
+    };
 }]);

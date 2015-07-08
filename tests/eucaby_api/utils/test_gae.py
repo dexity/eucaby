@@ -30,7 +30,8 @@ class GaeUtilsTest(test_base.TestCase):
         for param in device_params:  # Both users own both devices
             models.Device.get_or_create(self.user, *param)
         self.payload_data = dict(
-            title=u'Test Юзер', message='sent you a new location')
+            title=u'Test Юзер', message='sent you a new location',
+            type='notification', id=123)
 
     def tearDown(self):
         super(GaeUtilsTest, self).tearDown()
@@ -40,7 +41,7 @@ class GaeUtilsTest(test_base.TestCase):
         """Tests send notifications."""
         # Send notification
         gae_utils.send_notification(
-            self.user.username, u'Test Юзер', api_args.LOCATION)
+            self.user.username, u'Test Юзер', api_args.NOTIFICATION, 123)
 
         # Verify result
         tasks = self.taskq.get_filtered_tasks(queue_names='push')

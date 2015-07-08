@@ -155,7 +155,7 @@ class TestNotifyLocationView(test.TestCase):
 
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            'testuser', 'test@example.com', 'location')
+            'testuser', 'test@example.com', 'notification', notif.id)
 
     @mock.patch('eucaby.core.views.gae_utils.send_notification')
     def test_post_existing_user(self, mock_send_notif):
@@ -181,4 +181,4 @@ class TestNotifyLocationView(test.TestCase):
 
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            'testuser', 'Test2 User2', 'location')
+            'testuser', 'Test2 User2', 'notification', notif.id)

@@ -470,6 +470,10 @@ class TestRequestLocation(test_base.TestCase):
             messages, 1, recipient_email, in_list + [
                 '.com/request/' + req.uuid, ])
 
+    @classmethod
+    def _req_id(cls):
+        return ndb_models.LocationRequest.query().fetch(1)[0].id
+
     def test_general_errors(self):
         """Tests general errors."""
         # Invalid method
@@ -530,8 +534,8 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
         self.assertEqual(1, mock_send_notif.call_count)
-        mock_send_notif.assert_called_with(
-            self.user2.username, self.user.name, api_args.REQUEST)
+        mock_send_notif.assert_called_with(self.user2.username, self.user.name,
+                                           api_args.REQUEST, self._req_id())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, recipient_email, None,
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -547,8 +551,8 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
         self.assertEqual(1, mock_send_notif.call_count)
-        mock_send_notif.assert_called_with(
-            self.user.username, self.user.name, api_args.REQUEST)
+        mock_send_notif.assert_called_with(self.user.username, self.user.name,
+                                           api_args.REQUEST, self._req_id())
         self._verify_data_email(
             resp, self.user.username, self.user.name, recipient_email, 'hello',
             ['hello', u'Hi, Test Юзер', u'from Test Юзер'])
@@ -563,8 +567,8 @@ class TestRequestLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
 
         self.assertEqual(1, mock_send_notif.call_count)
-        mock_send_notif.assert_called_with(
-            self.user2.username, self.user.name, api_args.REQUEST)
+        mock_send_notif.assert_called_with(self.user2.username, self.user.name,
+                                           api_args.REQUEST, self._req_id())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
@@ -908,6 +912,10 @@ class TestNotifyLocation(test_base.TestCase):
             messages, 1, recipient_email, in_list + [
                 '.com/location/' + loc_notif.uuid, ])
 
+    @classmethod
+    def _notif_id(cls):
+        return ndb_models.LocationNotification.query().fetch(1)[0].id
+
     def test_general_errors(self):
         """Tests general errors."""
         # Invalid method
@@ -984,7 +992,8 @@ class TestNotifyLocation(test_base.TestCase):
 
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            self.user2.username, self.user.name, api_args.LOCATION)
+            self.user2.username, self.user.name, api_args.NOTIFICATION,
+            self._notif_id())
 
         # Idempotent operation: user repeats the operation
         self.client.post(
@@ -1014,7 +1023,8 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            self.user.username, self.user.name, api_args.LOCATION)
+            self.user.username, self.user.name, api_args.NOTIFICATION,
+            self._notif_id())
         session_dict = dict(complete=True)  # Request is complete
         self.assertEqual(1, ndb_models.LocationRequest.query().count())
         self._verify_data_email(
@@ -1048,7 +1058,8 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            self.user2.username, self.user.name, api_args.LOCATION)
+            self.user2.username, self.user.name, api_args.NOTIFICATION,
+            self._notif_id())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email,
             u'Привет', [u'Привет', 'Hi, Test2 User2',
@@ -1065,7 +1076,8 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            self.user.username, self.user.name, api_args.LOCATION)
+            self.user.username, self.user.name, api_args.NOTIFICATION,
+            self._notif_id())
         self._verify_data_email(
             resp, self.user.username, self.user.name, self.user.email, 'hello',
             ['hello', u'Hi, Test Юзер', u'Test Юзер sent a message'])
@@ -1081,7 +1093,8 @@ class TestNotifyLocation(test_base.TestCase):
             headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            self.user2.username, self.user.name, api_args.LOCATION)
+            self.user2.username, self.user.name, api_args.NOTIFICATION,
+            self._notif_id())
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])

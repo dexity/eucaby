@@ -32,7 +32,7 @@ angular.module('eucaby.controllers',
     $rootScope.hasBackButton = function(){
         var backView = $ionicHistory.backView();
         if (backView && backView.backViewId !== null){
-            return true
+            return true;
         }
         return false;
     };
@@ -405,7 +405,7 @@ angular.module('eucaby.controllers',
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
                 populateMarkers($scope.item.notifications);
-                $scope.centerMarker($rootScope.currentLatLng)
+                $scope.centerMarker($rootScope.currentLatLng);
                 $scope.showBrowserWarning = showBrowserWarning;
             });
         };
@@ -443,7 +443,7 @@ angular.module('eucaby.controllers',
                 }
                 $ionicLoading.hide();
             });
-        }
+        };
     }
 ])
 

@@ -97,15 +97,25 @@ def payload_data(name, msg_type):
     title = name or 'Eucaby'
     message = 'New incoming messages'
     if msg_type:
+        if msg_type == 'notification':
+            msg_type = 'location'
         message = 'sent you a new ' + msg_type
     return dict(title=title, message=message)
 
 
-def apns_payload_data(name, msg_type):
+def gcm_payload_data(name, msg_type, msg_id):
+    """Creates payload data for GCM message."""
+    data = payload_data(name, msg_type)
+    data.update(dict(type=msg_type, id=msg_id))
+    return data
+
+
+def apns_payload_data(name, msg_type, msg_id):
     """Creates payload data for APNs message."""
     data = payload_data(name, msg_type)
     return dict(
-        alert=u'{title}\n{message}'.format(**data), sound='default')
+        alert=u'{title}\n{message}'.format(**data), sound='default',
+        custom=dict(type=msg_type, id=msg_id))  # Additional payload parameters
 
 
 def create_apns_socket(app):

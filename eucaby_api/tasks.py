@@ -57,12 +57,10 @@ class GCMNotificationsTask(PushNotificationsTask):
         logging.info('Pushing GCM notifications to %s devices',
                      len(flask.request.devices))
 
-        data = api_utils.payload_data(
-            flask.request.sender_name, flask.request.message_type)
+        data = api_utils.gcm_payload_data(
+            flask.request.sender_name, flask.request.message_type,
+            flask.request.message_id)
         gcm_app = gcm.GCM(current_app.config['GCM_API_KEY'])
-        # Add message data
-        data.update(dict(
-            type=flask.request.message_type, id=flask.request.message_id))
         logging.info('GCM message payload: %s', str(data))
         try:
             resp = gcm_app.json_request(
@@ -115,10 +113,8 @@ class APNsNotificationsTask(PushNotificationsTask):
         expiry = time.time() + 3600
         priority = 10
         kwargs = api_utils.apns_payload_data(
-            flask.request.sender_name, flask.request.message_type)
-        # Additional payload parameters
-        kwargs['custom'] = dict(
-            type=flask.request.message_type, id=flask.request.message_id)
+            flask.request.sender_name, flask.request.message_type,
+            flask.request.message_id)
         payload = apns.Payload(**kwargs)
         for device in flask.request.devices:
             identifier = 1

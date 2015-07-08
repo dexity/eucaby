@@ -29,12 +29,18 @@ class TestPushNotifications(test_base.TestCase):
 
     def _assert_general_errors(self, url):
         kwargs = dict(queue_name='push', url=url)
-        cases = [
+        cases = (
             (None, 'Missing recipient_username parameter'),
-            (dict(recipient_username='unknown'), 'No android devices found'),
-            (dict(recipient_username=self.user.username, type='wrong'),
-             'Message type can be either location or request')
-        ]
+            (dict(recipient_username=self.user.username,),
+             'Message type can be either notification or request'),
+            (dict(recipient_username=self.user.username, message_type='wrong'),
+             'Message type can be either notification or request'),
+            (dict(recipient_username=self.user.username,
+                  message_type=api_args.NOTIFICATION),
+             'Missing message_id parameter'),
+            (dict(recipient_username='unknown',
+                  message_type=api_args.NOTIFICATION, message_id=123),
+             'No android devices found'))
         for i in range(len(cases)):
             case = cases[i]
             qkwargs = kwargs.copy()
@@ -46,7 +52,7 @@ class TestPushNotifications(test_base.TestCase):
             resp = test_utils.execute_queue_task(self.client, tasks[i])
             # The failed task should not be retried so return 200 code
             self.assertEqual(200, resp.status_code)
-            self.assertIn(case[1], resp.data)
+            self.assertIn(case[1], resp.data)  # Assert data substring
 
 
 class TestGCMNotifications(TestPushNotifications):
@@ -93,14 +99,14 @@ class TestGCMNotifications(TestPushNotifications):
         """Tests http error codes."""
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
-        cases = [
+        cases = (
             (400, 'The request could not be parsed as JSON'),
             (401, 'There was an error authenticating the sender account'),
             (500, 'GCM service error: 500'),
-            (503, 'GCM service is unavailable')
-        ]
+            (503, 'GCM service is unavailable'))
         for case in cases:
             urlopen_mock.side_effect = urllib2.HTTPError(
                 mock.Mock(), case[0], '', mock.Mock(), mock.Mock())
@@ -115,7 +121,8 @@ class TestGCMNotifications(TestPushNotifications):
         # Mock time.sleep function so that you don't have to wait for retries
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(error='Unavailable')]
         gcm_resp = _gcm_response(success=1, failure=1, results=results)
@@ -134,7 +141,8 @@ class TestGCMNotifications(TestPushNotifications):
         """Tests InvalidRegistration error message."""
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(error='InvalidRegistration')]
         gcm_resp = _gcm_response(success=1, failure=1, results=results)
@@ -151,7 +159,8 @@ class TestGCMNotifications(TestPushNotifications):
         """Tests NotRegistered error message."""
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22', registration_id='55'),
                    dict(error='NotRegistered')]
@@ -169,7 +178,8 @@ class TestGCMNotifications(TestPushNotifications):
         """All messages are pushed successfully."""
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         results = [dict(message_id='0:22'), dict(message_id='0:33')]
         gcm_resp = _gcm_response(success=2, results=results)
@@ -183,7 +193,8 @@ class TestGCMNotifications(TestPushNotifications):
         self.assertEqual(
             'https://android.googleapis.com/gcm/send', req.get_full_url())
         expected_data = dict(
-            data=dict(message='New incoming messages', title='Eucaby'),
+            data=dict(message='sent you a new location', title='Eucaby',
+                      type=api_args.NOTIFICATION, id=123),
             registration_ids=['12', '23'])
         self.assertEqual(expected_data, json.loads(req.data))
         self.assertEqual(['Content-type', 'Authorization'], req.headers.keys())
@@ -198,7 +209,8 @@ class TestGCMNotifications(TestPushNotifications):
         """Response has canonical ids."""
         taskqueue.add(
             queue_name='push', url='/tasks/push/gcm',
-            params=dict(recipient_username=self.user.username))
+            params=dict(recipient_username=self.user.username,
+                        message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
         # Newly created device
         models.Device.get_or_create(self.user, '44', api_args.ANDROID)
@@ -250,15 +262,17 @@ class TestAPNsNotifications(TestPushNotifications):
         mock_create_socket.return_value = apns_socket
         taskqueue.add(
             queue_name='push', url='/tasks/push/apns',
-            params=dict(recipient_username=self.user.username,
-                        sender_name='Name', type=api_args.LOCATION))
+            params=dict(
+                recipient_username=self.user.username, sender_name='Name',
+                message_type=api_args.NOTIFICATION, message_id=123))
         tasks = self.taskq.get_filtered_tasks(queue_names='push')
 
         resp = test_utils.execute_queue_task(self.client, tasks[0])
         self.assertEqual(200, resp.status_code)
 
         mock_payload.assert_called_with(
-            sound='default', alert='Name\nsent you a new location')
+            sound='default', alert='Name\nsent you a new location',
+            custom=dict(type=api_args.NOTIFICATION, id=123))
         self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
         mock_send_notif = apns_socket.gateway_server.send_notification_multiple
         self.assertEqual(1, mock_send_notif.call_count)

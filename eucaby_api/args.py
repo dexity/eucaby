@@ -11,6 +11,13 @@ LATLNG_REGEX_PATTERN = '^{p},{p}$'.format(p=POINT_REGEX_PATTERN)
 EMAIL_REGEX = re.compile(EMAIL_REGEX_PATTERN, flags=re.IGNORECASE)
 LATLNG_REGEX = re.compile(LATLNG_REGEX_PATTERN)
 
+OUTGOING = 'outgoing'
+INCOMING = 'incoming'
+REQUEST = 'request'
+NOTIFICATION = 'notification'
+LOCATION = 'location'
+ANDROID = 'android'
+IOS = 'ios'
 MISSING_PARAM = 'Missing {} parameter'
 DEFAULT_ERROR = 'Something went wrong'
 INVALID_EMAIL = 'Invalid email'
@@ -20,16 +27,10 @@ MISSING_EMAIL_USERNAME_REQ = (
     'Missing token, email or username parameters')
 INVALID_ACTIVITY_TYPE = ('Activity type can be either outgoing, incoming, '
                          'request or notification')
-INVALID_MESSAGE = 'Message type can be either location or request'
+INVALID_MESSAGE = 'Message type can be either {} or {}'.format(
+    NOTIFICATION, REQUEST)
 INVALID_PLATFORM = 'Platform can be either android or ios'
 INVALID_INT = 'Integer type is expected'
-OUTGOING = 'outgoing'
-INCOMING = 'incoming'
-REQUEST = 'request'
-NOTIFICATION = 'notification'
-LOCATION = 'location'
-ANDROID = 'android'
-IOS = 'ios'
 ACTIVITY_CHOICES = [OUTGOING, INCOMING, REQUEST, NOTIFICATION]
 PLATFORM_CHOICES = [ANDROID, IOS]
 MESSAGE_CHOICES = [REQUEST, NOTIFICATION]
@@ -105,8 +106,9 @@ PUSH_TASK_ARGS = [
                       help=MISSING_PARAM.format('recipient_username')),
     reqparse.Argument(name='sender_name', type=unicode),
     reqparse.Argument(name='message_type', type=str, choices=MESSAGE_CHOICES,
-                      help=INVALID_MESSAGE),
-    reqparse.Argument(name='message_id', type=positive_int)
+                      help=INVALID_MESSAGE, required=True),
+    reqparse.Argument(name='message_id', type=positive_int, required=True,
+                      help=MISSING_PARAM.format('message_id'))
 ]
 
 AUTO_ARGS = [
