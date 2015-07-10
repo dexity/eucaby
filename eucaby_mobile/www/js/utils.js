@@ -41,7 +41,7 @@ angular.module('eucaby.utils', [])
                 map: map
             };
             if (number === -1){
-                number = 89;  // Special case of non-numbered marker
+                number = 88;  // Special case of starred marker
             }
             if (number !== undefined && number > -1){
                 var point_x = number * 35 + 1;
@@ -170,12 +170,15 @@ angular.module('eucaby.utils', [])
                 var url = '';
                 var icon = '';
                 if (item.type === 'notification') {
+                    // Note: url be set because notification has location
                     icon = 'ion-ios-location-outline';
                     url = form.notification_url;
                     if (item.session.complete) {
                         icon = 'ion-ios-location';
                     }
                 } else if (item.type === 'request') {
+                    // Note: url will be set if session is complete or when
+                    // sender is not the current user
                     icon = 'ion-ios-bolt-outline';
                     // It doesn't make sense to send location to your own
                     // request

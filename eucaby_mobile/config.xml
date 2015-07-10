@@ -30,6 +30,12 @@
   <feature name="InAppBrowser">
     <param name="ios-package" value="CDVInAppBrowser"/>
   </feature>
+  <allow-navigation href="*://*.eucaby.com/*" />
+  <allow-navigation href="*://*.appspot.com/*" />
+  <allow-navigation href="*://*.euca.by/*" />
+  <allow-navigation href="*://*.googleapis.com/*" />
+  <allow-navigation href="*://*.gstatic.com/*" />
+  <allow-navigation href="*://*.localhost:*/*" />
   <platform name="android">
     <icon src="resources/android/icon/drawable-ldpi-icon.png" density="ldpi"/>
     <icon src="resources/android/icon/drawable-mdpi-icon.png" density="mdpi"/>
