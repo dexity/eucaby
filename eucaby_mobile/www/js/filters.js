@@ -1,6 +1,8 @@
 'use strict';
 
-angular.module('eucaby.filters', ['eucaby.utils'])
+angular.module('eucaby.filters', [
+    'eucaby.utils'
+])
 
 .filter('capitalize', function() {
     return function(input, all) {

@@ -1,11 +1,24 @@
 'use strict';
 
-angular.module('eucaby',
-    ['ionic', 'ngCordova', 'eucaby.controllers', 'eucaby.filters',
-     'eucaby.utils', 'eucaby.api', 'eucaby.push'])
-
-.run(['$rootScope', '$state', '$ionicPlatform', '$window', 'EucabyApi', 'push', 'storageManager',
-      function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push, storageManager) {
+angular.module('eucaby', [
+    'ionic',
+    'ngCordova',
+    'eucaby.controllers',
+    'eucaby.filters',
+    'eucaby.utils',
+    'eucaby.api',
+    'eucaby.push'
+])
+.run([
+    '$rootScope',
+    '$state',
+    '$ionicPlatform',
+    '$window',
+    'EucabyApi',
+    'push',
+    'storageManager',
+function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push,
+         storageManager) {
 
     EucabyApi.init();
 
@@ -38,7 +51,11 @@ angular.module('eucaby',
     duration: 30000    // 30 seconds
 })
 
-.config(function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
+.config([
+    '$stateProvider',
+    '$urlRouterProvider',
+    '$ionicConfigProvider',
+function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
 
     $ionicConfigProvider.tabs.position('bottom');
 
@@ -175,7 +192,4 @@ angular.module('eucaby',
 
   $urlRouterProvider.otherwise('/app/tab/map');
 
-});
-
-
-
+}]);

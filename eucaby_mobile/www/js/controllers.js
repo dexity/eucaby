@@ -1,20 +1,29 @@
 'use strict';
 
-angular.module('eucaby.controllers',
-               ['eucaby.services', 'eucaby.utils', 'eucaby.api', 'eucaby.push'])
-
-.controller('MainCtrl',
-    ['$scope', '$rootScope', '$state', '$ionicSideMenuDelegate',
-      'storageManager', 'EucabyApi', 'utils', '$ionicHistory',
-    function($scope, $rootScope, $state, $ionicSideMenuDelegate,
-             storageManager, EucabyApi, utils, $ionicHistory) {
+angular.module('eucaby.controllers', [
+    'eucaby.services',
+    'eucaby.utils',
+    'eucaby.api',
+    'eucaby.push'
+])
+.controller('MainCtrl', [
+    '$scope',
+    '$rootScope',
+    '$state',
+    '$ionicSideMenuDelegate',
+    'storageManager',
+    'EucabyApi',
+    'utils',
+    'utilsIonic',
+function($scope, $rootScope, $state, $ionicSideMenuDelegate, storageManager,
+         EucabyApi, utils, utilsIonic) {
 
     $rootScope.currentZoom = 13;
     $rootScope.contactsHistory = {};
     $rootScope.recentContacts = storageManager.getRecentContacts() || [];
     $rootScope.recentFriends = storageManager.getRecentFriends() || {};
     $scope.alignedTitle = function(){
-        return utils.urlHasSubstring('request');
+        return utilsIonic.urlHasSubstring('request');
     };
     $scope.showSideMenu = function(){
         return $scope.showHeader();
@@ -30,17 +39,21 @@ angular.module('eucaby.controllers',
         $state.go('app.login');
     };
     $rootScope.hasBackButton = function(){
-        var backView = $ionicHistory.backView();
-        if (backView && backView.backViewId !== null){
-            return true;
-        }
-        return false;
+        return utilsIonic.hasBackButton();
     };
 }])
 
-.controller('LoginCtrl',
-    ['$scope', '$rootScope', '$location', '$ionicLoading', 'EucabyApi', 'push', 'utils',
-     function($scope, $rootScope, $location, $ionicLoading, EucabyApi, push, utils) {
+.controller('LoginCtrl', [
+    '$scope',
+    '$rootScope',
+    '$location',
+    '$ionicLoading',
+    'EucabyApi',
+    'push',
+    'utils',
+    'utilsIonic',
+function($scope, $rootScope, $location, $ionicLoading, EucabyApi, push, utils,
+         utilsIonic) {
 
     $scope.facebookLogin = function(){
 
@@ -49,7 +62,7 @@ angular.module('eucaby.controllers',
                 $location.path('/app/tab/map');
                 push.initNotifications($rootScope);
             }, function(data) {
-                utils.alert('Error', 'Error during log in. ' +
+                utilsIonic.alert('Error', 'Error during log in. ' +
                                      'Please try again in a moment.');
                 console.error(data);
             })
@@ -59,10 +72,19 @@ angular.module('eucaby.controllers',
     };
 }])
 
-.controller('MapCtrl', ['$scope', '$rootScope',
-    '$http', '$ionicModal', '$ionicLoading', 'map', 'utils', 'Friends',
-    function($scope, $rootScope,
-             $http, $ionicModal, $ionicLoading, map, utils, Friends) {
+.controller('MapCtrl', [
+    '$scope',
+    '$rootScope',
+    '$http',
+    '$ionicModal',
+    '$ionicLoading',
+    'map',
+    'utils',
+    'utilsIonic',
+    'mapIonic',
+    'Friends',
+function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
+         utilsIonic, mapIonic, Friends) {
 
     // Center on me action
     $scope.centerOnMe = function(hideLoading) {
@@ -90,7 +112,7 @@ angular.module('eucaby.controllers',
             if (!hideLoading) {
                 $ionicLoading.hide();
             }
-            utils.alert('Location Error',
+            utilsIonic.alert('Location Error',
                         'Unable to get location: ' + data.message);
         });
     };
@@ -117,7 +139,7 @@ angular.module('eucaby.controllers',
             utils.syncFriendsWithRecent(
                 $rootScope.recentFriends, $rootScope.friends);
         }, function(data){
-            utils.alert('Error', 'Error loading friends');
+            utilsIonic.alert('Error', 'Error loading friends');
             console.error(data);
         });
     };
@@ -137,7 +159,7 @@ angular.module('eucaby.controllers',
         }
 
         if ($scope.notifyModal === modal) {
-            map.getCurrentLocation('notifymap').then(function(data) {
+            mapIonic.getCurrentLocation('notifymap').then(function(data) {
                 $scope.map = data.map;
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
@@ -150,7 +172,7 @@ angular.module('eucaby.controllers',
         var emailValue = form.email.$viewValue;
         var userValue = form.user.$viewValue;
         if ((!emailValue && !userValue) || (emailValue && userValue)){
-            utils.alert(
+            utilsIonic.alert(
                 'Error', 'Please provide either an email or select a friend');
             return false;
         }
@@ -161,18 +183,24 @@ angular.module('eucaby.controllers',
         //       every type user types in the input field. So we explicitly
         //       validate email field instead of form.email.$invalid
         if (emailValue && !utils.validEmail(emailValue)) {
-            utils.alert('Error', 'Please provide a valid email');
+            utilsIonic.alert('Error', 'Please provide a valid email');
             return false;
         }
         return true;
     };
 }])
 
-.controller('MessageCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', 'utils', 'ctrlUtils', 'Request',
-     'Notification', 'Autocomplete',
-    function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
-             Notification, Autocomplete) {
+.controller('MessageCtrl', [
+    '$scope',
+    '$rootScope',
+    '$ionicLoading',
+    'utils',
+    'ctrlUtils',
+    'Request',
+    'Notification',
+    'Autocomplete',
+function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
+         Notification, Autocomplete) {
 
     $scope.form = {};
     $scope.selectUser = function(name){
@@ -221,9 +249,14 @@ angular.module('eucaby.controllers',
     });
 }])
 
-.controller('ProfileCtrl',
-    ['$scope', '$ionicLoading', 'utils', 'dateUtils', 'User',
-    function($scope, $ionicLoading, utils, dateUtils, User) {
+.controller('ProfileCtrl', [
+    '$scope',
+    '$ionicLoading',
+    'utils',
+    'dateUtils',
+    'utilsIonic',
+    'User',
+function($scope, $ionicLoading, utils, dateUtils, utilsIonic, User) {
 
     $ionicLoading.show();
     User.profile().then(function(data){
@@ -231,16 +264,20 @@ angular.module('eucaby.controllers',
         $scope.profile.date_joined = dateUtils.ts2hd(
             Date.parse(data.data.date_joined), true);
     }, function(data){
-        utils.alert('Failed to load user profile');
+        utilsIonic.alert('Failed to load user profile');
         console.error(data);
     }).finally(function(){
         $ionicLoading.hide();
     });
 }])
 
-.controller('SettingsCtrl',
-    ['$scope', '$ionicLoading', 'utils', 'Settings',
-     function($scope, $ionicLoading, utils, Settings) {
+.controller('SettingsCtrl', [
+    '$scope',
+    '$ionicLoading',
+    'utils',
+    'utilsIonic',
+    'Settings',
+function($scope, $ionicLoading, utils, utilsIonic, Settings) {
 
     $scope.emailSubscription = { checked: false };
 
@@ -257,7 +294,7 @@ angular.module('eucaby.controllers',
     Settings.get().then(function(data){
         setEmailSubscription(data);
     }, function(data){
-        utils.alert('Failed to load settings');
+        utilsIonic.alert('Failed to load settings');
     }).finally(function(){
         $ionicLoading.hide();
     });
@@ -268,7 +305,7 @@ angular.module('eucaby.controllers',
         Settings.post(postData).then(function(data){
             setEmailSubscription(data);
         }, function(data){
-            utils.alert('Failed to update settings');
+            utilsIonic.alert('Failed to update settings');
         }).finally(function(){
             $ionicLoading.hide();
         });
@@ -277,9 +314,16 @@ angular.module('eucaby.controllers',
 
 }])
 
-.controller('OutgoingCtrl',
-    ['$scope', '$stateParams', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
-    function($scope, $stateParams, $ionicLoading, utils, dateUtils, Activity) {
+.controller('OutgoingCtrl', [
+    '$scope',
+    '$stateParams',
+    '$ionicLoading',
+    'utils',
+    'dateUtils',
+    'utilsIonic',
+    'Activity',
+function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
+         Activity) {
 
     $ionicLoading.show();
     // Outgoing formatter
@@ -298,7 +342,7 @@ angular.module('eucaby.controllers',
             $scope.messages = utils.formatMessages(data.data, formatter);
             $scope.viewTitle = 'Outgoing';
         }, function(data){
-            utils.alert('Error', 'Error loading data');
+            utilsIonic.alert('Error', 'Error loading data');
             console.error(data);
         });
     };
@@ -314,9 +358,14 @@ angular.module('eucaby.controllers',
     };
 }])
 
-.controller('IncomingCtrl',
-    ['$scope', '$ionicLoading', 'utils', 'dateUtils', 'Activity',
-    function($scope, $ionicLoading, utils, dateUtils, Activity) {
+.controller('IncomingCtrl', [
+    '$scope',
+    '$ionicLoading',
+    'utils',
+    'dateUtils',
+    'utilsIonic',
+    'Activity',
+function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
 
     $ionicLoading.show();
     // Incoming formatter
@@ -335,7 +384,7 @@ angular.module('eucaby.controllers',
             $scope.messages = utils.formatMessages(data.data, formatter);
             $scope.viewTitle = 'Incoming';
         }, function (data) {
-            utils.alert('Error', 'Error loading data');
+            utilsIonic.alert('Error', 'Error loading data');
             console.error(data);
         }).finally(function () {
             $ionicLoading.hide();
@@ -353,13 +402,18 @@ angular.module('eucaby.controllers',
     };
 }])
 
-.controller('NotificationDetailCtrl',
-            ['$scope', '$ionicLoading', '$stateParams', 'map',
-             'utils', 'Notification',
-    function($scope, $ionicLoading, $stateParams, map, utils,
-             Notification) {
+.controller('NotificationDetailCtrl', [
+    '$scope',
+    '$ionicLoading',
+    '$stateParams',
+    'map',
+    'utils',
+    'utilsIonic',
+    'Notification',
+function($scope, $ionicLoading, $stateParams, map, utils, utilsIonic,
+         Notification) {
 
-        $scope.isOutgoing = utils.urlHasSubstring('outgoing');
+        $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
 
         // XXX: Add $ionicLoading feature
         Notification.get($stateParams.id).then(function(data){
@@ -373,11 +427,21 @@ angular.module('eucaby.controllers',
     }
 ])
 
-.controller('RequestDetailCtrl',
-    ['$scope', '$rootScope', '$ionicLoading', '$http',
-     '$stateParams', 'map', 'utils', 'ctrlUtils', 'Request', 'Notification',
-    function($scope, $rootScope, $ionicLoading, $http,
-             $stateParams, map, utils, ctrlUtils, Request, Notification) {
+.controller('RequestDetailCtrl', [
+    '$scope',
+    '$rootScope',
+    '$ionicLoading',
+    '$http',
+    '$stateParams',
+    'map',
+    'utils',
+    'mapIonic',
+    'utilsIonic',
+    'ctrlUtils',
+    'Request',
+    'Notification',
+function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
+         mapIonic, utilsIonic, ctrlUtils, Request, Notification) {
 
         var showBrowserWarning = false;
         var populateMarkers = function(notifs){
@@ -400,7 +464,7 @@ angular.module('eucaby.controllers',
             $scope.markers = [];
             $scope.form.token = $scope.item.session.token;
             // Load map
-            map.getCurrentLocation('locmap').then(function(data) {
+            mapIonic.getCurrentLocation('locmap').then(function(data) {
                 $scope.map = data.map;
                 $scope.marker = data.marker;
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
@@ -409,7 +473,7 @@ angular.module('eucaby.controllers',
                 $scope.showBrowserWarning = showBrowserWarning;
             });
         };
-        $scope.isOutgoing = utils.urlHasSubstring('outgoing');
+        $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
         $scope.form = {};
         $scope.sendLocation = function(event) {
             // Send request action
@@ -420,7 +484,7 @@ angular.module('eucaby.controllers',
                 $ionicLoading.hide();
                 // Reload request
                 Request.get($stateParams.id).then(requestCallback);
-                utils.toast('Location submitted');
+                utilsIonic.toast('Location submitted');
                 $scope.form = {};
             }, ctrlUtils.messageError('Failed to send request'));
         };
@@ -447,9 +511,12 @@ angular.module('eucaby.controllers',
     }
 ])
 
-.factory('ctrlUtils',
-    ['$rootScope', '$ionicLoading', 'utils',
-    function($rootScope, $ionicLoading, utils) {
+.factory('ctrlUtils', [
+    '$rootScope',
+    '$ionicLoading',
+    'utils',
+    'utilsIonic',
+function($rootScope, $ionicLoading, utils, utilsIonic) {
     return {
         selectUser: function ($scope, name) {
             // Hack for deselected radio button. This will avoid creating
@@ -464,7 +531,7 @@ angular.module('eucaby.controllers',
         messageSuccess: function($scope, modal, status){
             $ionicLoading.hide();
             modal.hide();
-            utils.toast(status);
+            utilsIonic.toast(status);
             // Update recent contacts
             utils.manageRecent(
                 $rootScope.recentContacts, $rootScope.recentFriends,
@@ -475,7 +542,7 @@ angular.module('eucaby.controllers',
         messageError: function(default_error) {
             return function(data){
                 $ionicLoading.hide();
-                utils.alert('Error ', data.message || default_error);
+                utilsIonic.alert('Error ', data.message || default_error);
             };
         }
     };

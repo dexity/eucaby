@@ -1,10 +1,19 @@
 'use strict';
 
-angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
+angular.module('eucaby.push', [
+    'ionic',
+    'eucaby.api',
+    'eucaby.utils'
+])
 
-.factory('push',
-    ['$state', '$cordovaPush', 'EucabyApi', 'utils', 'storageManager',
-     function($state, $cordovaPush, EucabyApi, utils, storageManager) {
+.factory('push', [
+    '$state',
+    '$cordovaPush',
+    'EucabyApi',
+    'utils',
+    'utilsIonic',
+    'storageManager',
+function($state, $cordovaPush, EucabyApi, utils, utilsIonic, storageManager) {
 
     var registerDevice_ = function(deviceKey, platform){
         // Registers device or does nothing if it has already been registered
@@ -75,7 +84,7 @@ angular.module('eucaby.push', ['ionic','eucaby.api', 'eucaby.utils'])
         if (is_foreground) {
             var header = 'New ' + typeLabel;
             var body = 'Show the new ' + typeLabel + '?';
-            utils.confirm(
+            utilsIonic.confirm(
                 header, body, 'Show', 'Later', function(){
                     redirectFunc(payload, showDetails);
                 });

@@ -6,13 +6,20 @@ Module to perform the following operations:
 	- Manage access token and related parameters
  */
 
-angular.module('eucaby.api', ['openfb', 'eucaby.utils'])
-
+angular.module('eucaby.api', [
+    'openfb',
+    'eucaby.utils'
+])
 .constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 //.constant('ENDPOINT', 'http://localhost:8888')
-
-.factory('EucabyApi', ['$http', '$q', 'OpenFB', 'utils', 'storageManager', 'ENDPOINT',
-         function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
+.factory('EucabyApi', [
+    '$http',
+    '$q',
+    'OpenFB',
+    'utils',
+    'storageManager',
+    'ENDPOINT',
+function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
 
     var runningInCordova = false;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';

@@ -2,15 +2,18 @@
 
 angular.module('eucaby.utils', [])
 
-// Default location: San Francisco
-.constant('LATLNG', [37.7833, -122.4167])
+.constant('LATLNG', [37.7833, -122.4167])  // Default location: San Francisco
+
 .constant('MAX_RECENT_CONTACTS', 3)
 // See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
 .constant('EMAIL_REGEXP',
           /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i)
 
-.factory('map', ['$q', '$ionicLoading', 'utils', 'LATLNG',
-    function($q, $ionicLoading, utils, LATLNG){
+.factory('map', [
+    '$q',
+    'utils',
+    'LATLNG',
+function($q, utils, LATLNG) {
     return {
         createMap: function(id, lat, lng, config){
             // Creates map
@@ -23,7 +26,8 @@ angular.module('eucaby.utils', [])
                 zoom: (config && config.zoom) || 13,
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             };
-            var map = new google.maps.Map(document.getElementById(id), mapOptions);
+            var map = new google.maps.Map(
+                document.getElementById(id), mapOptions);
 
             // Stop the side bar from dragging when mousedown/tapdown on the map
             google.maps.event.addDomListener(
@@ -62,39 +66,20 @@ angular.module('eucaby.utils', [])
                     markers[i].setMap(null);
                 }
             }
-            markers = [];
         },
         currentLocation: function(success, error){
             navigator.geolocation.getCurrentPosition(function(pos) {
                 success(pos.coords.latitude, pos.coords.longitude);
             }, error);
-        },
-        getCurrentLocation: function(mapId) {
-            var self = this;
-            var deferred = $q.defer();
-            $ionicLoading.show();
-            self.currentLocation(function (lat, lng) {
-                var map = self.createMap(mapId, lat, lng, {zoom: 16});
-                var marker = self.createMarker(map, lat, lng);
-                $ionicLoading.hide();
-                deferred.resolve(
-                    {map: map, marker: marker, lat: lat, lng: lng});
-            }, function(data) {
-                $ionicLoading.hide();
-                utils.alert('Error', 'Failed to find the current location.');
-                console.error(data);
-                deferred.reject(data);
-            });
-            return deferred.promise;
         }
     };
 }])
 
-.factory('utils',
-    ['$ionicPopup', '$ionicLoading', '$ionicHistory', 'storageManager',
-     'MAX_RECENT_CONTACTS', 'EMAIL_REGEXP',
-     function($ionicPopup, $ionicLoading, $ionicHistory, storageManager,
-              MAX_RECENT_CONTACTS, EMAIL_REGEXP){
+.factory('utils', [
+    'storageManager',
+    'MAX_RECENT_CONTACTS',
+    'EMAIL_REGEXP',
+function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
     return {
         activityParams: function(form){
             // Creates parameters for activity request
@@ -128,24 +113,6 @@ angular.module('eucaby.utils', [])
         validEmail: function(value){
             // Checks if value is a valid email address
             return EMAIL_REGEXP.test(value);
-        },
-        alert: function(title, text){
-            // Convenience function for ionic alert popup
-            $ionicPopup.alert({title: title, template: text});
-        },
-        confirm: function(title, text, okText, cancelText, okCallback){
-            var opts = {title: title, template: text, okText: okText,
-                        cancelText: cancelText};
-            $ionicPopup.confirm(opts).then(
-                function(res) {
-                    if (res){
-                        okCallback();
-                    }
-            });
-        },
-        toast: function(text){
-            $ionicLoading.show({
-                template: text, noBackdrop: true, duration: 2000});
         },
         sortByKey: function(array, key) {
             // Sort array of objects by key
@@ -202,13 +169,6 @@ angular.module('eucaby.utils', [])
                 });
             }
             return items;
-        },
-        urlHasSubstring: function(substr){
-            var currView = $ionicHistory.currentView();
-            if (!currView){
-                return false;
-            }
-            return currView.stateName.indexOf(substr) > -1;
         },
         indexOfField: function(array, field, value){
             // Util for finding index of the matching value in array by field
@@ -353,6 +313,76 @@ angular.module('eucaby.utils', [])
         }
     };
  })
+
+.factory('mapIonic', [
+    '$q',
+    '$ionicLoading',
+    'map',
+    'utils',
+    'utilsIonic',
+function($q, $ionicLoading, map, utils, utilsIonic) {
+    return {
+        getCurrentLocation: function(mapId) {
+            var deferred = $q.defer();
+            $ionicLoading.show();
+            self.currentLocation(function (lat, lng) {
+                var map_ = map.createMap(mapId, lat, lng, {zoom: 16});
+                var marker = map.createMarker(map_, lat, lng);
+                $ionicLoading.hide();
+                deferred.resolve(
+                    {map: map_, marker: marker, lat: lat, lng: lng});
+            }, function(data) {
+                $ionicLoading.hide();
+                utilsIonic.alert(
+                    'Error', 'Failed to find the current location.');
+                console.error(data);
+                deferred.reject(data);
+            });
+            return deferred.promise;
+        }
+    }
+}])
+
+.factory('utilsIonic', [
+    '$ionicPopup',
+    '$ionicLoading',
+    '$ionicHistory',
+function($ionicPopup, $ionicLoading, $ionicHistory) {
+    return {
+        alert: function(title, text){
+            // Convenience function for ionic alert popup
+            $ionicPopup.alert({title: title, template: text});
+        },
+        confirm: function(title, text, okText, cancelText, okCallback){
+            var opts = {title: title, template: text, okText: okText,
+                        cancelText: cancelText};
+            $ionicPopup.confirm(opts).then(
+                function(res) {
+                    if (res){
+                        okCallback();
+                    }
+            });
+        },
+        toast: function(text){
+            $ionicLoading.show({
+                template: text, noBackdrop: true, duration: 2000});
+        },
+        urlHasSubstring: function(substr){
+            var currView = $ionicHistory.currentView();
+            if (!currView){
+                return false;
+            }
+            return currView.stateName.indexOf(substr) > -1;
+        },
+        hasBackButton: function(){
+            var backView = $ionicHistory.backView();
+            if (backView && backView.backViewId !== null){
+                return true;
+            }
+            return false;
+        }
+    }
+}])
 
 .factory('storageManager', function(){
 

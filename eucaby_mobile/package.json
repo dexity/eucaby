@@ -15,9 +15,13 @@
     "shelljs": "^0.3.0"
   },
   "cordovaPlugins": [
-    "org.apache.cordova.inappbrowser",
-    "org.apache.cordova.splashscreen",
-    "cordova-plugin-inappbrowser"
+    "com.phonegap.plugins.PushPlugin",
+    "cordova-plugin-crosswalk-webview",
+    "cordova-plugin-device",
+    "cordova-plugin-inappbrowser",
+    "cordova-plugin-whitelist",
+    "org.apache.cordova.geolocation",
+    "org.apache.cordova.splashscreen"
   ],
   "cordovaPlatforms": [
     "ios",

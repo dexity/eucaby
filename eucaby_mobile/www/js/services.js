@@ -1,8 +1,13 @@
 'use strict';
 
-angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
+angular.module('eucaby.services', [
+    'eucaby.api',
+    'eucaby.utils'
+])
 
-.factory('User', ['EucabyApi', function(EucabyApi) {
+.factory('User', [
+    'EucabyApi',
+function(EucabyApi) {
 
     return {
         profile: function(){
@@ -10,7 +15,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-.factory('Settings', ['EucabyApi', function(EucabyApi) {
+.factory('Settings', [
+    'EucabyApi',
+function(EucabyApi) {
 
     return {
         get: function(){
@@ -22,7 +29,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-.factory('Friends', ['EucabyApi', function(EucabyApi) {
+.factory('Friends', [
+    'EucabyApi',
+ function(EucabyApi) {
 
     return {
         all: function(){
@@ -30,7 +39,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-.factory('Activity', ['EucabyApi', function(EucabyApi) {
+.factory('Activity', [
+    'EucabyApi',
+function(EucabyApi) {
     return {
         outgoing: function(){
             return EucabyApi.api({path: '/history', params: {type: 'outgoing'}});
@@ -40,7 +51,10 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-.factory('Notification', ['EucabyApi', 'utils', function(EucabyApi, utils) {
+.factory('Notification', [
+    'EucabyApi',
+    'utils',
+function(EucabyApi, utils) {
 
     return {
         get: function(id){
@@ -54,7 +68,10 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
         }
     };
 }])
-.factory('Request', ['EucabyApi', 'utils', function(EucabyApi, utils) {
+.factory('Request', [
+    'EucabyApi',
+    'utils',
+function(EucabyApi, utils) {
 
     return {
         get: function(id){
@@ -68,7 +85,9 @@ angular.module('eucaby.services', ['eucaby.api', 'eucaby.utils'])
     };
 }])
 
-.factory('Autocomplete', ['EucabyApi', function(EucabyApi) {
+.factory('Autocomplete', [
+    'EucabyApi',
+function(EucabyApi) {
 
      return {
          // Note: You can optimize the query request: if starting substring

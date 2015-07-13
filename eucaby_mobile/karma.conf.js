@@ -6,6 +6,12 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
     files: [
       'www/lib/ionic/js/angular/angular.js',
+      'www/lib/ionic/js/angular/angular-animate.js',
+      'www/lib/ionic/js/angular/angular-resource.js',
+      'www/lib/ionic/js/angular/angular-sanitize.js',
+      'www/lib/ionic/js/angular-ui/angular-ui-router.js',
+      'www/lib/ionic/js/ionic.js',
+      'www/lib/ionic/js/ionic-angular.js',
       'www/lib/openfb-angular.js',
       'www/js/*.js',
       '../tests/eucaby_mobile/lib/*.js',
