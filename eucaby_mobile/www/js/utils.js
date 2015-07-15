@@ -161,9 +161,9 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
                 items.push({
                     item: item,
                     complete: item.session.complete,
-                    name: form.name,
-                    description: form.description,
-                    message: item.message,
+                    name: form.name || '',
+                    description: form.description || '',
+                    message: item.message || '',
                     url: url,
                     icon: icon
                 });
@@ -198,6 +198,7 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
             }
         },
         syncFriendsWithRecent: function(recentFriends, friends){
+            // Sync friends with recent contacts. Used when friends are loaded
             for (var username in recentFriends){
                 if (recentFriends.hasOwnProperty(username)){
                     this.moveFriendToRecent(recentFriends, friends, username);

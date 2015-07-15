@@ -179,6 +179,131 @@ describe('utils tests', function(){
             expect(utils.validEmail(invalidEmails[i])).toBeFalsy();
         }
     });
+
+    it('should sort array by key', function () {
+        // Empty array
+        expect(utils.sortByKey([], 'name')).toEqual([]);
+        // Array of strings doesn't get altered
+        expect(utils.sortByKey(['b', 'a'], 'name')).toEqual(['b', 'a']);
+        // Array item has no key
+        expect(utils.sortByKey([{x: 'b'}, {x: 'a'}], 'name'))
+            .toEqual([{x: 'b'}, {x: 'a'}]);
+        // Array is sorted by key
+        expect(utils.sortByKey([{name: 'b'}, {name: 'A'}], 'name')).toEqual(
+            [{name: 'A'}, {name: 'b'}]);
+        // Sort is not natural
+        expect(utils.sortByKey([{name: '10'}, {name: '2'}], 'name')).toEqual(
+            [{name: '10'}, {name: '2'}]);
+    });
+
+    it('should format messages', inject(function(_storageManager_){
+        var storageManager = _storageManager_;
+        var formatter = function(item) {
+            return {
+                description: item.name,
+                name: item.name,
+                notification_url: '#/notification/' + item.id,
+                request_url: '#/request/' + item.id
+            }
+        };
+        var data = [{
+            id: 1, type: 'notification', session: {complete: false},
+            name: 'test1', message: null
+        }, {
+            id: 2, type: 'notification', session: {complete: true},
+            name: 'test2', message: 'msg2'
+        }, {
+            id: 3, type: 'request', session: {complete: false},
+            sender: {username: 'user1'}, name: 'test3', message: 'msg3'
+        }, {
+            id: 4, type: 'request', session: {complete: true},
+            sender: {username: 'user2'}, name: 'test4', message: null
+        }];
+        var expectedRes = [{
+            item: data[0], complete: false, name: 'test1', description: 'test1',
+            message: '', url: '#/notification/1',
+            icon: 'ion-ios-location-outline'
+        }, {
+            item: data[1], complete: true, name: 'test2', description: 'test2',
+            message: 'msg2', url: '#/notification/2',
+            icon: 'ion-ios-location'
+        }, {
+            // Note: url is empty because request is not complete and request
+            //       user is the current user
+            item: data[2], complete: false, name: 'test3', description: 'test3',
+            message: 'msg3', url: '', icon: 'ion-ios-bolt-outline'
+        }, {
+            item: data[3], complete: true, name: 'test4', description: 'test4',
+            message: '', url: '#/request/4', icon: 'ion-ios-bolt'
+        }];
+        // user1 is the logged in user
+        spyOn(storageManager, 'getCurrentUsername').and.returnValue('user1');
+
+        // Stub formatter
+        var res = utils.formatMessages(data, function(item){return {}});
+        expect(res).toEqual(jasmine.arrayContaining([{
+            item: data[2], complete: false, name: '', description: '',
+            message: 'msg3', url: '', icon: 'ion-ios-bolt-outline'
+        }]));
+        storageManager.getCurrentUsername.calls.reset();
+
+        // Valid formatter
+        var res = utils.formatMessages(data, formatter);
+        expect(storageManager.getCurrentUsername).toHaveBeenCalled();
+        expect(res).toEqual(expectedRes);
+    }));
+
+    it('should find index of the field', function(){
+        // Empty array
+        expect(utils.indexOfField([], 'name', 'a')).toEqual(-1);
+        // Array has no object with name field
+        expect(utils.indexOfField([{x: 'a'}], 'name', 'a')).toEqual(-1);
+        // Array has object with name field and it has matching value
+        expect(utils.indexOfField([{name: 'b'}], 'name', 'a')).toEqual(-1);
+        // Array has object with matching value and it returns the first match
+        expect(utils.indexOfField([{name: 'b'}, {name: 'a'}, {name: 'a'}],
+                                  'name', 'a')).toEqual(1);
+    });
+
+    it('should move recent contact to friends', function(){
+        var recentFriends = {
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}
+        };
+        var friends = [
+            {name: 'User X', username: 'userx'}];
+        var recentFriends1 = angular.copy(recentFriends);
+        var friends1 = angular.copy(friends);
+
+        var cases = [
+            'user3',  // Friend is in recent but username is not
+            'userx'   // Friend is not in recent
+        ];
+        for (var i = 0; i < cases.length; i++) {
+            // No change
+            utils.moveRecentToFriends(recentFriends1, friends1, cases[i]);
+            expect(recentFriends1).toEqual(recentFriends);
+            expect(friends1).toEqual(friends);
+        }
+        // Friend and username are in recent
+        utils.moveRecentToFriends(recentFriends1, friends1, 'user2');
+        // user2 will be removed from recent and prepended to friends list
+        expect(recentFriends1).toEqual({
+            user1: {name: 'User 1', username: 'user1'}
+        });
+        expect(friends1).toEqual([
+            {name: 'User 2', username: 'user2'},
+            {name: 'User X', username: 'userx'}
+        ]);
+    });
+
+    it('should move friend to recent contact', function(){
+
+    });
+
+    it('should sync friend with recent contacts', function(){
+
+    });
 });
 
 describe('date utils tests', function(){
