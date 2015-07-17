@@ -190,6 +190,7 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
         },
         moveFriendToRecent: function(recentFriends, friends, username){
             // Remove from friends list for recent friend contact
+            // This function is opposite to moveRecentToFriends
             var idx = this.indexOfField(
                 friends, 'username', username);
             if (idx >= 0){
@@ -229,9 +230,11 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
                 recentContacts.splice(idx, 1);
             }
             // Append a new recent contact
-            recentContacts.unshift(
-                {label: text, value: value, model: model, name: name}
-            );
+            if (form && !angular.equals(form, {})){
+                recentContacts.unshift(
+                    {label: text, value: value, model: model, name: name}
+                );
+            }
             // Remove extra contacts
             if (recentContacts.length > MAX_RECENT_CONTACTS){
                 removedContact = recentContacts.pop();

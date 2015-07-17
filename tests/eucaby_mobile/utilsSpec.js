@@ -275,10 +275,8 @@ describe('utils tests', function(){
         var recentFriends1 = angular.copy(recentFriends);
         var friends1 = angular.copy(friends);
 
-        var cases = [
-            'user3',  // Friend is in recent but username is not
-            'userx'   // Friend is not in recent
-        ];
+        // Friend is not in recent
+        var cases = ['user3', 'userx'];
         for (var i = 0; i < cases.length; i++) {
             // No change
             utils.moveRecentToFriends(recentFriends1, friends1, cases[i]);
@@ -298,11 +296,144 @@ describe('utils tests', function(){
     });
 
     it('should move friend to recent contact', function(){
+        var recentFriends = {
+            user1: {name: 'User 1', username: 'user1'}
+        };
+        var friends = [
+            {name: 'User X', username: 'userx'},
+            {name: 'User 2', username: 'user2'}];
+        var recentFriends1 = angular.copy(recentFriends);
+        var friends1 = angular.copy(friends);
 
+        // Friend is not in friends
+        var cases = ['user3', 'user1'];
+        for (var i = 0; i < cases.length; i++) {
+            // No change
+            utils.moveFriendToRecent(recentFriends1, friends1, cases[i]);
+            expect(recentFriends1).toEqual(recentFriends);
+            expect(friends1).toEqual(friends);
+        }
+        // Friend and username are in friends
+        utils.moveFriendToRecent(recentFriends1, friends1, 'user2');
+        // user2 will be removed from friends list and added to recent
+        expect(recentFriends1).toEqual({
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}
+        });
+        expect(friends1).toEqual([
+            {name: 'User X', username: 'userx'}
+        ]);
     });
 
     it('should sync friend with recent contacts', function(){
+        var recentFriends1 = {
+            user1: {name: 'User 1', username: 'user1'}
+        };
+        var friends1 = [
+            {name: 'User X', username: 'userx'}];
+        var recentFriends2 = {
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}
+        };
+        var friends2 = [
+            {name: 'User X', username: 'userx'},
+            {name: 'User 2', username: 'user2'}];
+        // user2 should be removed from friends because it's duplicate of
+        // recent friends
+        var expectedRecentFriends2 = {
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}
+        };
+        var expectedFriends2 = [
+            {name: 'User X', username: 'userx'}];
+        var cases = [
+            // Empty recent friends and friends
+            [{}, [], {}, []],
+            // Recent friends has no common friends with friends
+            [recentFriends1, friends1, recentFriends1, friends1],
+            // Recent friends has common friends with friends
+            [recentFriends2, friends2, expectedRecentFriends2, expectedFriends2]
+        ];
+        for (var i = 0; i< cases.length; i++){
+            var c = cases[i];
+            utils.syncFriendsWithRecent(c[0], c[1]);
+            expect(c[0]).toEqual(c[2]);
+            expect(c[1]).toEqual(c[3]);
+        }
+    });
 
+    it('should manage recent contacts', function(){
+        var recentContacts = [],
+            recentFriends = {}, recentFriendsCopy,
+            friends = [], friendsCopy,
+            form = {};
+        // Case 1: Empty parameters
+        utils.manageRecent(recentContacts, recentFriends, friends, form, '');
+        expect(recentContacts).toEqual([]);
+        expect(recentFriends).toEqual({});
+        expect(friends).toEqual([]);
+
+        // Case 2: Email form
+        form = {email: 'some@email'};
+        utils.manageRecent(
+            recentContacts, recentFriends, friends, form, 'some label');
+        expect(recentContacts).toEqual([
+           {label: 'some@email', value: 'some@email', model: 'email',
+            name: 'email'}]);
+        expect(recentFriends).toEqual({});
+        expect(friends).toEqual([]);
+
+        // Case 3: Username form
+        form = {username: 'user3'}
+        recentFriends = {
+            user1: {name: 'User 1', username: 'user1'}};
+        friends = [
+            {name: 'User X', username: 'userx'}];
+        recentFriendsCopy = angular.copy(recentFriends);
+        friendsCopy = angular.copy(friends);
+        utils.manageRecent(
+            recentContacts, recentFriends, friends, form, 'some label');
+        expect(recentContacts).toEqual([
+           {label: 'some label', value: 'user3', model: 'username',
+            name: 'user'},
+           {label: 'some@email', value: 'some@email', model: 'email',
+            name: 'email'}]);
+        expect(recentFriends).toEqual(recentFriendsCopy);
+        expect(friends).toEqual(friendsCopy);
+
+        // Case 4: Username matches friend
+        form = {username: 'user2'};
+        recentFriends = {
+            user1: {name: 'User 1', username: 'user1'}};
+        friends = [
+            {name: 'User X', username: 'userx'},
+            {name: 'User 2', username: 'user2'}];
+        utils.manageRecent(
+            recentContacts, recentFriends, friends, form, 'some label');
+        expect(recentContacts).toEqual([
+           {label: 'some label', value: 'user2', model: 'username',
+            name: 'user'},
+           {label: 'some label', value: 'user3', model: 'username',
+            name: 'user'},
+           {label: 'some@email', value: 'some@email', model: 'email',
+            name: 'email'}]);
+        expect(recentFriends).toEqual({
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}});
+        expect(friends).toEqual([
+            {name: 'User X', username: 'userx'}]);
+
+        // Case 5: Recent contacts have at most 3 items (other items are popped)
+        form = {username: 'user1'};
+        utils.manageRecent(
+            recentContacts, {}, [], form, 'label 1');
+        expect(recentContacts).toEqual([
+           {label: 'label 1', value: 'user1', model: 'username',
+            name: 'user'},
+           {label: 'some label', value: 'user2', model: 'username',
+            name: 'user'},
+           {label: 'some label', value: 'user3', model: 'username',
+            name: 'user'}]);
     });
 });
 
