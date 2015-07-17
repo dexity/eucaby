@@ -439,6 +439,56 @@ describe('utils tests', function(){
 
 describe('date utils tests', function(){
 
+    var dateUtils,
+        $window,
+        ts1 = 1437116367000,    // July 17, 2015
+        ts2 = 1436944091000,    // July 15, 2015
+        ts3 = 1404976091000;    // July 10, 2014
+
+    beforeEach(module('eucaby.utils'));
+    beforeEach(inject(function(_dateUtils_, _$window_) {
+        dateUtils = _dateUtils_;
+        $window = _$window_;
+    }));
+
+    it('should return time list with days, hours and minutes', function(){
+        // Invalid timestamps
+        var cases = [null, '', 0, undefined];
+        for (var i = 0; i < cases.length; i++){
+            expect(dateUtils.timeList(cases[i])).toEqual(null);
+        }
+        expect(dateUtils.timeList(ts1)).toEqual([16633, 6, 59]);
+    });
+
+    it('should determine if show year', function(){
+        expect(dateUtils.showYear(ts1, ts2)).toBeFalsy();  // Same year
+        expect(dateUtils.showYear(ts1, ts3)).toBeTruthy();  // Different year
+    });
+
+    it('should convert timestamp to human date', function(){
+        // Do not show year
+        expect(dateUtils.ts2hd(ts1)).toEqual('Jul 16, 2015 11:59 pm');
+        // Show year
+        expect(dateUtils.ts2hd(ts1, false)).toEqual('Jul 16, 11:59 pm');
+    });
+
+    it('should convert timestamp to human format', function(){
+        // Both timestamps are set and ts1 > ts2
+        expect(dateUtils.ts2h(ts1, ts2)).toEqual('');
+        // Both timestamps are set
+        expect(dateUtils.ts2h(ts2, ts1)).toEqual('1 d 23 hr ago');
+        expect(dateUtils.ts2h(ts3, ts1)).toEqual('Jul 10, 2014 12:08 am');
+        // Both timestamps are set do not show full date
+        expect(dateUtils.ts2h(ts2, ts1, false)).toEqual('1 d 23 hr');
+        expect(dateUtils.ts2h(ts3, ts1, false))
+            .toEqual('Jul 10, 2014 12:08 am');
+        // One timestamps
+        var ts1date = new Date(ts1);
+        spyOn($window, 'Date').and.callFake(function(){
+            return ts1date;
+        });
+        expect(dateUtils.ts2h(ts2)).toEqual('1 d 23 hr ago');
+    });
 });
 
 describe('map ionic tests', function(){

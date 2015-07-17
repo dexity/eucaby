@@ -13,6 +13,7 @@ module.exports = function(config) {
       'www/lib/ionic/js/ionic.js',
       'www/lib/ionic/js/ionic-angular.js',
       'www/lib/openfb-angular.js',
+      'www/lib/moment.js',
       'www/js/*.js',
       '../tests/eucaby_mobile/lib/*.js',
       '../tests/eucaby_mobile/**/*Spec.js'

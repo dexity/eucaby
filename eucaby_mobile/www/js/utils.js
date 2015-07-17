@@ -258,6 +258,10 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
     return {
         timeList: function(ts){
             // Converts timestamp to list: [day, hour, minute]
+            // Note: timestamp is in milliseconds (not seconds)
+            if (!ts){
+                return null;
+            }
             ts = ts/1000;   // Timestamp in seconds
             var d = Math.floor(ts/(60*60*24));
             var h = Math.floor(ts/(60*60)) - d*24;
