@@ -654,6 +654,131 @@ describe('utils ionic tests', function(){
 });
 
 describe('storage manager tests', function(){
+    var storageManager,
+        storage,
+        $window;
 
+    beforeEach(module('eucaby.utils'));
+    beforeEach(inject(function(_storageManager_, _$window_){
+        storageManager = _storageManager_;
+        $window = _$window_;
+    }));
+    beforeEach(function(){
+        storage = {};
+        // LocalStorage mock.
+        spyOn($window.localStorage, 'getItem').and.callFake(function(key) {
+            return storage[key];
+        });
+        Object.defineProperty(sessionStorage, 'setItem', { writable: true });
+        spyOn($window.localStorage, 'setItem').and.callFake(function(key, value) {
+            storage[key] = value;
+        });
+        spyOn($window.localStorage, 'removeItem').and.callFake(function(key, value) {
+            delete storage[key];
+        });
+    });
+
+    it('should should get storage', function(){
+        expect(storageManager.getStorage()).toEqual($window.localStorage);
+    });
+
+    it('should manage access and refresh tokens', function(){
+        // No data passed
+        expect(storageManager.saveAuth).toThrowError(TypeError);
+        expect(storageManager.getRefreshToken()).toBeUndefined();
+        expect(storageManager.getAccessToken()).toBeUndefined();
+        expect(storageManager.getFbToken()).toBeUndefined();
+        expect(storageManager.userLoggedIn()).toBeFalsy();
+
+        // Access and refresh tokens are passed
+        storageManager.saveAuth(
+            {access_token: 'access', refresh_token: 'refresh'});
+        expect(storage).toEqual(
+            {ec_access_token: 'access', ec_refresh_token: 'refresh'});
+        expect(storageManager.getAccessToken()).toEqual('access');
+        expect(storageManager.getRefreshToken()).toEqual('refresh');
+        expect(storageManager.userLoggedIn()).toBeTruthy();
+        // fbtoken is set internally by OpenFB
+        $window.localStorage.fbtoken = 'sometoken';
+        expect(storageManager.getFbToken()).toEqual('sometoken');
+        delete $window.localStorage.fbtoken;
+    });
+
+    it('should manage username', function(){
+        // There is not username originally
+        expect(storageManager.getCurrentUsername()).toBeUndefined();
+        storageManager.setCurrentUsername('someuser');
+        expect(storageManager.getCurrentUsername()).toEqual('someuser');
+        expect(storage).toEqual({ ec_current_username: 'someuser'});
+    });
+
+    it('should manage device status', function(){
+        expect(storageManager.getDeviceStatus()).toBeFalsy();
+        // Invalid status: true should be a string, not a boolean
+        storageManager.setDeviceStatus(true);
+        expect(storageManager.getDeviceStatus()).toBeFalsy();
+        // True status
+        storageManager.setDeviceStatus('true');
+        expect(storageManager.getDeviceStatus()).toBeTruthy();
+        expect(storage).toEqual({ec_device_registered: 'true'});
+    });
+
+    it('should manage recent contacts and friends', function(){
+        // No recent contacts and friends
+        expect(storageManager.getRecentContacts()).toBeUndefined();
+        expect(storageManager.getRecentFriends()).toBeUndefined();
+
+        // Set recent contacts
+        storageManager.setRecentContacts([{hello: 'world'}]);
+        expect(storageManager.getRecentContacts()).toEqual([{hello: 'world'}]);
+        expect(storage).toEqual({ec_recent_contacts: '[{"hello":"world"}]'});
+        storageManager.setRecentContacts([{hello: 'indeed'}]);
+        expect(storageManager.getRecentContacts()).toEqual([{hello: 'indeed'}]);
+
+        // Set recent friends
+        storage = {};
+        storageManager.setRecentFriends({user1: {user: 'user1'}});
+        expect(storageManager.getRecentFriends()).toEqual(
+            {user1: {user: 'user1'}});
+        expect(storage).toEqual(
+            {ec_recent_friends: '{"user1":{"user":"user1"}}'});
+        storageManager.setRecentFriends({user2: {user: 'user2'}});
+        expect(storageManager.getRecentFriends()).toEqual(
+            {user2: {user: 'user2'}});
+    });
+
+    it('should clear all storage', function(){
+        // Empty storage should not throw exception
+        storageManager.clearAll();
+
+        // Populate storage
+		storageManager.saveAuth(
+            {access_token: 'access', refresh_token: 'refresh'});
+        storageManager.setCurrentUsername('someuser');
+        storageManager.setDeviceStatus('true');
+        storageManager.setRecentContacts([{hello: 'world'}]);
+        storageManager.setRecentFriends({user1: {user: 'user1'}});
+        // Storage is not empty
+        expect(storage.ec_recent_contacts).toEqual('[{"hello":"world"}]');
+
+        // Clear storage
+        storageManager.clearAll();
+        expect(storage).toEqual({});
+    });
+
+    it('should manage object', function(){
+        // Empty object
+        expect(storageManager.getObject('hello')).toBeUndefined();
+        // Array
+        storageManager.setObject('hello', [1, '2', {a: 'b'}]);
+        expect(storageManager.getObject('hello')).toEqual([1, '2', {a: 'b'}]);
+        expect(storage).toEqual({hello: '[1,"2",{"a":"b"}]'});
+        // Object
+        storage = {};
+        storageManager.setObject('hello', {a: 'b', x: [1, '2']});
+        expect(storageManager.getObject('hello')).toEqual(
+            {a: 'b', x: [1, '2']});
+        expect(storage).toEqual({hello: '{"a":"b","x":[1,"2"]}'});
+    });
 });
 

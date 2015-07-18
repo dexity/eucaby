@@ -348,7 +348,7 @@ function($q, $ionicLoading, map, utils, utilsIonic) {
             });
             return deferred.promise;
         }
-    }
+    };
 }])
 
 .factory('utilsIonic', [
@@ -389,19 +389,19 @@ function($ionicPopup, $ionicLoading, $ionicHistory) {
             }
             return false;
         }
-    }
+    };
 }])
 
-.factory('storageManager', function(){
+.factory('storageManager', ['$window', function($window){
 
-    var storage = window.localStorage;
+    var storage = $window.localStorage;
     var ACCESS_TOKEN = 'ec_access_token';
     var REFRESH_TOKEN = 'ec_refresh_token';
     var USERNAME = 'ec_current_username';
     var FB_TOKEN = 'fbtoken';
-    var DEVICE_STATUS = 'device_registered';
-    var RECENT_CONTACTS = 'recent_contacts';
-    var RECENT_FRIENDS = 'recent_friends';
+    var DEVICE_STATUS = 'ec_device_registered';
+    var RECENT_CONTACTS = 'ec_recent_contacts';
+    var RECENT_FRIENDS = 'ec_recent_friends';
 
     return {
         getStorage: function(){
@@ -430,7 +430,7 @@ function($ionicPopup, $ionicLoading, $ionicHistory) {
             return storage.getItem(USERNAME);
         },
         userLoggedIn: function(){
-            return this.getAccessToken() !== null;
+            return !!this.getAccessToken();
         },
         getDeviceStatus: function(){
             return storage.getItem(DEVICE_STATUS) === 'true';
@@ -467,4 +467,4 @@ function($ionicPopup, $ionicLoading, $ionicHistory) {
             return angular.fromJson(storage.getItem(key));
         }
     };
- });
+ }]);
