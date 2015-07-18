@@ -333,7 +333,7 @@ function($q, $ionicLoading, map, utils, utilsIonic) {
         getCurrentLocation: function(mapId) {
             var deferred = $q.defer();
             $ionicLoading.show();
-            self.currentLocation(function (lat, lng) {
+            map.currentLocation(function (lat, lng) {
                 var map_ = map.createMap(mapId, lat, lng, {zoom: 16});
                 var marker = map.createMarker(map_, lat, lng);
                 $ionicLoading.hide();

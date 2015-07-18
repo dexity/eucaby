@@ -492,16 +492,165 @@ describe('date utils tests', function(){
 });
 
 describe('map ionic tests', function(){
+    var mapIonic,
+        utilsIonic,
+        map,
+        $ionicLoading,
+        $scope,
+        locMock,
+        successHandler,
+        errorHandler;
 
+    beforeEach(module('ionic'));
+    beforeEach(module('eucaby.utils'));
+    beforeEach(inject(function(
+        _$rootScope_, _mapIonic_, _utilsIonic_, _map_, _$ionicLoading_) {
+        $scope = _$rootScope_.$new();
+        mapIonic = _mapIonic_;
+        utilsIonic = _utilsIonic_;
+        map = _map_;
+        $ionicLoading = _$ionicLoading_;
+    }));
+    beforeEach(function(){
+        locMock = spyOn(map, 'currentLocation');
+        successHandler = jasmine.createSpy();
+        errorHandler = jasmine.createSpy();
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(utilsIonic, 'alert');
+        spyOn(map, 'createMap').and.returnValue('mapObj');
+        spyOn(map, 'createMarker').and.returnValue('markerObj');
+    });
+
+    it('should get current location with success', function() {
+        locMock.and.callFake(function () {
+            arguments[0](1.2, 3.4);
+        });
+
+        var location = mapIonic.getCurrentLocation('map-id');
+        expect(map.createMap).toHaveBeenCalledWith(
+            'map-id', 1.2, 3.4, {zoom: 16});
+        expect(map.createMarker).toHaveBeenCalledWith('mapObj', 1.2, 3.4);
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        location.then(successHandler, errorHandler);
+        $scope.$apply();
+        expect(successHandler).toHaveBeenCalledWith(
+            {map: 'mapObj', marker: 'markerObj', lat: 1.2, lng: 3.4});
+        expect(errorHandler.calls.any()).toBeFalsy();
+    });
+
+    it('should get current location with error', function(){
+        locMock.and.callFake(function(){
+            arguments[1]({error: 'Some error'});
+        });
+
+        var location = mapIonic.getCurrentLocation('map-id');
+        expect(map.createMap.calls.any()).toBeFalsy();
+        expect(map.createMarker.calls.any()).toBeFalsy();
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        location.then(successHandler, errorHandler);
+        $scope.$apply();
+        expect(errorHandler).toHaveBeenCalledWith({error: 'Some error'});
+        expect(utilsIonic.alert).toHaveBeenCalledWith(
+            'Error', 'Failed to find the current location.');
+        expect(successHandler.calls.any()).toBeFalsy();
+    });
 });
 
 describe('utils ionic tests', function(){
+    var utilsIonic,
+        $ionicPopup,
+        $ionicLoading,
+        $ionicHistory,
+        $q,
+        $scope,
+        deferred;
 
     beforeEach(module('ionic'));
-//    beforeEach(inject(function(_$ionicPopup_){
-//        $ionicPopup = _$ionicPopup_;
-//    }));
+    beforeEach(module('eucaby.utils'));
+    beforeEach(inject(function(_$q_, _$rootScope_, _utilsIonic_, _$ionicPopup_,
+                               _$ionicLoading_, _$ionicHistory_){
+        $q = _$q_;
+        $scope = _$rootScope_.$new();
+        deferred = $q.defer();
+        utilsIonic = _utilsIonic_;
+        $ionicPopup = _$ionicPopup_;
+        $ionicLoading = _$ionicLoading_;
+        $ionicHistory = _$ionicHistory_;
+    }));
+    beforeEach(function(){
+        spyOn($ionicPopup, 'alert');
+        // Mock confirm function and return promise
+        spyOn($ionicPopup, 'confirm').and.returnValue(deferred.promise);
+        spyOn($ionicLoading, 'show');
+    });
 
+    it('should alert', function(){
+        utilsIonic.alert('Hello', 'world');
+        expect($ionicPopup.alert).toHaveBeenCalledWith(
+            {title: 'Hello', template: 'world'});
+    });
+
+    it('should confirm', function(){
+        var callback = jasmine.createSpy();
+        deferred.resolve('result');  // We consider success call
+        utilsIonic.confirm('Hello', 'world', 'Ok', 'Cancel', callback);
+        $scope.$apply();  // Run asynchronous call
+        expect($ionicPopup.confirm).toHaveBeenCalledWith(
+            {title: 'Hello', template: 'world', okText: 'Ok',
+             cancelText: 'Cancel'});
+        expect(callback).toHaveBeenCalled();
+    });
+
+    it('should toast', function(){
+        utilsIonic.toast('Hello');
+        expect($ionicLoading.show).toHaveBeenCalledWith(
+            {template: 'Hello', noBackdrop: true, duration: 2000});
+    });
+
+    it('should return if url has substring', function(){
+        // Current view is null
+        var viewMock = spyOn($ionicHistory, 'currentView');
+        viewMock.and.returnValue(null);
+        expect(utilsIonic.urlHasSubstring('request')).toBeFalsy();
+        expect($ionicHistory.currentView).toHaveBeenCalled();
+
+        // Current view has url with match
+        viewMock.and.returnValue({
+            stateName: '/app/notification'
+        });
+        $ionicHistory.currentView.calls.reset();
+        expect(utilsIonic.urlHasSubstring('request')).toBeFalsy();
+        expect($ionicHistory.currentView).toHaveBeenCalled();
+
+        // Current view has matching url
+        viewMock.and.returnValue({
+            stateName: '/app/request'
+        });
+        $ionicHistory.currentView.calls.reset();
+        expect(utilsIonic.urlHasSubstring('request')).toBeTruthy();
+        expect($ionicHistory.currentView).toHaveBeenCalled();
+    });
+
+    it('should return if history has back button', function(){
+        var viewMock = spyOn($ionicHistory, 'backView');
+        // No back view
+        viewMock.and.returnValue(null);
+        expect(utilsIonic.hasBackButton()).toBeFalsy();
+        expect($ionicHistory.backView).toHaveBeenCalled();
+        // Back view has no id
+        $ionicHistory.backView.calls.reset();
+        viewMock.and.returnValue({backViewId: null});
+        expect(utilsIonic.hasBackButton()).toBeFalsy();
+        expect($ionicHistory.backView).toHaveBeenCalled();
+        // Back view exists
+        $ionicHistory.backView.calls.reset();
+        viewMock.and.returnValue({backViewId: '001'});
+        expect(utilsIonic.hasBackButton()).toBeTruthy();
+        expect($ionicHistory.backView).toHaveBeenCalled();
+    });
 });
 
 describe('storage manager tests', function(){
