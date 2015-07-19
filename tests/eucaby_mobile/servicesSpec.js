@@ -1,9 +1,20 @@
 'use strict';
 
 describe('services tests', function(){
-    var $scope, $window, $httpBackend, $q, EucabyApi;
-    var successHandler, errorHandler;
-    var storage = {};
+    var $scope,
+        $window,
+        $httpBackend,
+        $q,
+        EucabyApi,
+        Friends,
+        User,
+        Activity,
+        Notification,
+        Request,
+        Settings,
+        successHandler,
+        errorHandler,
+        storage;
     var defaultStorage = {
         ec_access_token: 'some_access_token',
         ec_refresh_token: 'some_refresh_token'
@@ -14,6 +25,17 @@ describe('services tests', function(){
             {name: 'UserA', username: '123'},
             {name: 'UserB', username: '456'}
         ]};
+    var PROFILE = {
+        data: {
+            name: 'UserA',
+            username: 'user1'
+        }
+    };
+    var SETTINGS = {
+        data: {
+            email_subscription: true
+        }
+    };
     var ACTIVITY_LIST = {
         data: [
             {recipient: 'UserA', sender: 'UserB', type: 'request'},
@@ -39,13 +61,20 @@ describe('services tests', function(){
 
     beforeEach(module('eucaby.services'));
     beforeEach(module('eucaby.api'));
-    beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_,
-                               _EucabyApi_){
-        $scope = $rootScope.$new();
+    beforeEach(inject(function(
+        _$rootScope_, _$window_, _$httpBackend_, _$q_, _EucabyApi_, _Friends_,
+        _User_, _Activity_, _Notification_, _Request_, _Settings_){
+        $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
         $q = _$q_;
         EucabyApi = _EucabyApi_;
+        Friends = _Friends_;
+        User = _User_;
+        Activity = _Activity_;
+        Notification = _Notification_;
+        Request = _Request_;
+        Settings = _Settings_;
         EucabyApi.init($window.localStorage);
     }));
     beforeEach(function() {
@@ -56,112 +85,157 @@ describe('services tests', function(){
         });
         successHandler = jasmine.createSpy('success');
         errorHandler = jasmine.createSpy('error');
+        storage = defaultStorage;
     });
 
-    it('should return friends list', inject(function(_Friends_){
-        storage = defaultStorage;
-        $httpBackend.whenGET(ENDPOINT + '/friends').respond(FRIENDS_LIST);
-        $httpBackend.expectGET(ENDPOINT + '/friends')
-            .respond(200, FRIENDS_LIST);
-        _Friends_.all().then(successHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(successHandler).toHaveBeenCalledWith(FRIENDS_LIST);
-        expect(EucabyApi.api).toHaveBeenCalledWith({path: '/friends'});
-    }));
-
-    it('should return error for friends list', inject(function(_Friends_){
-        storage = defaultStorage;
-        $httpBackend.whenGET(ENDPOINT + '/friends').respond(500, 'Some error');
-        $httpBackend.expectGET(ENDPOINT + '/friends')
-            .respond(500, 'Some error');
-        _Friends_.all().then(null, errorHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(errorHandler).toHaveBeenCalledWith('Some error');
-        expect(EucabyApi.api).toHaveBeenCalledWith({path: '/friends'});
-    }));
-
-    it('should return outgoing and incoming activity lists',
-       inject(function(_Activity_){
-        var types = ['outgoing', 'incoming'];
-        storage = defaultStorage;
-        for (var i=0; i<types.length; i++){
-            var _type = types[i];
-            $httpBackend.whenGET(ENDPOINT + '/history?type=' + _type)
-                .respond(ACTIVITY_LIST);
-            $httpBackend.expectGET(ENDPOINT + '/history?type=' + _type)
-                .respond(ACTIVITY_LIST);
-            // Activity.outgoing(), Activity.incoming()
-            _Activity_[_type]().then(successHandler);
-            $scope.$digest();
-            $httpBackend.flush();
-            expect(successHandler).toHaveBeenCalledWith(ACTIVITY_LIST);
-            expect(EucabyApi.api).toHaveBeenCalledWith(
-                {path: '/history', params: {type: _type}});
+    var cases = [
+        {
+            // User profile
+            it: 'should get user profile',
+            url: ENDPOINT + '/me',
+            response: PROFILE,
+            apiCall: function () {
+                return User.profile();
+            },
+            apiParams: {path: '/me'}
+        }, {
+            // GET Settings
+            it: 'should get user settings',
+            url: ENDPOINT + '/settings',
+            response: SETTINGS,
+            apiCall: function () {
+                return Settings.get();
+            },
+            apiParams: {path: '/settings'}
+        }, {
+            // POST Settings
+            it: 'should post user settings',
+            url: ENDPOINT + '/settings',
+            response: SETTINGS,
+            apiCall: function () {
+                return Settings.post({email_subscription: false});
+            },
+            apiParams: {
+                method: 'POST', path: '/settings',
+                data: {email_subscription: false}
+            }
+        }, {
+            // Outgoing list
+            it: 'should return outgoing list',
+            url: ENDPOINT + '/history?type=outgoing',
+            response: ACTIVITY_LIST,
+            apiCall: function () {
+                return Activity.outgoing();
+            },
+            apiParams: {path: '/history', params: {type: 'outgoing'}}
+        }, {
+            // Incoming list
+            it: 'should return incoming list',
+            url: ENDPOINT + '/history?type=incoming',
+            response: ACTIVITY_LIST,
+            apiCall: function () {
+                return Activity.incoming();
+            },
+            apiParams: {path: '/history', params: {type: 'incoming'}}
+        }, {
+            // GET Notification
+            it: 'should get notification details',
+            url: ENDPOINT + '/location/notification/123',
+            response: NOTIFICATION_GET,
+            apiCall: function () {
+                return Notification.get('123');
+            },
+            apiParams: {path: '/location/notification/123'}
+        }, {
+            // POST Notification
+            it: 'should post notification',
+            url: ENDPOINT + '/location/notification',
+            response: NOTIFICATION_POST,
+            apiCall: function () {
+                var form = {email: 'test@example.com', message: 'test'};
+                return Notification.post(form, 1, 2);
+            },
+            apiParams: {
+                method: 'POST', path: '/location/notification',
+                data: {
+                    email: 'test@example.com', latlng: '1,2', message: 'test'
+                }
+            }
+        }, {
+            // GET Request
+            it: 'should get request details',
+            url: ENDPOINT + '/location/request/123',
+            response: REQUEST_GET,
+            apiCall: function () {
+                return Request.get('123');
+            },
+            apiParams: {path: '/location/request/123'}
+        }, {
+            // POST Request
+            it: 'should post request',
+            url: ENDPOINT + '/location/request',
+            response: REQUEST_POST,
+            apiCall: function () {
+                var form = {email: 'test@example.com', message: 'test'};
+                return Request.post(form);
+            },
+            apiParams: {
+                method: 'POST', path: '/location/request',
+                data: {
+                    email: 'test@example.com', message: 'test'
+                }
+            }
+        }, {
+            // Friends list
+            it: 'should return friends list',
+            url: ENDPOINT + '/friends',
+            response: FRIENDS_LIST,
+            apiCall: function(){
+                return Friends.all();
+            },
+            apiParams: {path: '/friends'}
         }
-    }));
+    ];
 
-    it('should get notification details', inject(function(_Notification_){
-        storage = defaultStorage;
-        var id = '123';
-        $httpBackend.whenGET(ENDPOINT + '/location/notification/' + id)
-            .respond(NOTIFICATION_GET);
-        $httpBackend.expectGET(ENDPOINT + '/location/notification/' + id)
-            .respond(NOTIFICATION_GET);
-        _Notification_.get(id).then(successHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(successHandler).toHaveBeenCalledWith(NOTIFICATION_GET);
-        expect(EucabyApi.api).toHaveBeenCalledWith(
-            {path: '/location/notification/' + id});
-    }));
+    var runTest = function(case_, respType){
+        it(case_.it, function(){
+            var method = case_.apiParams.method === 'POST' ? 'POST' : 'GET';
+            // whenGET or whenPOST
+            $httpBackend['when' + method](case_.url).respond(
+                respType.statusCode, respType.response);
+            $httpBackend['expect' + method](case_.url).respond(
+                respType.statusCode, respType.response);
+            case_.apiCall().then(successHandler, errorHandler);
+            // Note: $scope.$apply() and $scope.$digest() are more or less
+            //       equivalent. $scope.$apply() calls $rootScope.$digest()
+            //       internally
+            // http://www.sitepoint.com/understanding-angulars-apply-digest/
+            $scope.$apply();
+            $httpBackend.flush();
+            if (respType.statusCode === 200){
+                expect(successHandler).toHaveBeenCalledWith(respType.response);
+            } else {
+                expect(errorHandler).toHaveBeenCalledWith(respType.response);
+            }
+            expect(EucabyApi.api).toHaveBeenCalledWith(case_.apiParams);
+        });
+    };
 
-    it('should post notification', inject(function(_Notification_){
-        storage = defaultStorage;
-        var lat = 1, lng = 2, email = 'test@example.com';
-        var form = {email: email};
-        var data = {email: email, latlng: '1,2'};
-        $httpBackend.whenPOST(ENDPOINT + '/location/notification')
-            .respond(NOTIFICATION_POST);
-        $httpBackend.expectPOST(ENDPOINT + '/location/notification')
-            .respond(NOTIFICATION_POST);
-        _Notification_.post(form, lat, lng).then(successHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(successHandler).toHaveBeenCalledWith(NOTIFICATION_POST);
-        expect(EucabyApi.api).toHaveBeenCalledWith(
-            {method: 'POST', path: '/location/notification', data: data});
-    }));
+    // Iterate over cases
+    for (var i = 0; i < cases.length; i++){
+        var c = cases[i];
 
-    it('should get request details', inject(function(_Request_){
-        storage = defaultStorage;
-        var id = '123';
-        $httpBackend.whenGET(ENDPOINT + '/location/request/' + id)
-            .respond(REQUEST_GET);
-        $httpBackend.expectGET(ENDPOINT + '/location/request/' + id)
-            .respond(REQUEST_GET);
-        _Request_.get(id).then(successHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(successHandler).toHaveBeenCalledWith(REQUEST_GET);
-        expect(EucabyApi.api).toHaveBeenCalledWith(
-            {path: '/location/request/' + id});
-    }));
+        var respTypes = [{
+            statusCode: 200,  // Success
+            response: c.response
+        }, {
+            statusCode: 500,  // Error
+            response: 'Some error'
+        }];
 
-    it('should post request', inject(function(_Request_){
-        storage = defaultStorage;
-        var email = 'test@example.com';
-        var form = {email: email};
-        $httpBackend.whenPOST(ENDPOINT + '/location/request')
-            .respond(REQUEST_POST);
-        $httpBackend.expectPOST(ENDPOINT + '/location/request')
-            .respond(REQUEST_POST);
-        _Request_.post(form).then(successHandler);
-        $scope.$digest();
-        $httpBackend.flush();
-        expect(successHandler).toHaveBeenCalledWith(REQUEST_POST);
-        expect(EucabyApi.api).toHaveBeenCalledWith(
-            {method: 'POST', path: '/location/request', data: form});
-    }));
+        for (var j = 0; j < respTypes.length; j++){
+            runTest(c, respTypes[j]);
+        }
+    }
+
 });

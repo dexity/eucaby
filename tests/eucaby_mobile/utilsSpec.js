@@ -684,6 +684,7 @@ describe('storage manager tests', function(){
 
     it('should manage access and refresh tokens', function(){
         // No data passed
+        delete $window.localStorage.fbtoken;
         expect(storageManager.saveAuth).toThrowError(TypeError);
         expect(storageManager.getRefreshToken()).toBeUndefined();
         expect(storageManager.getAccessToken()).toBeUndefined();
@@ -701,7 +702,6 @@ describe('storage manager tests', function(){
         // fbtoken is set internally by OpenFB
         $window.localStorage.fbtoken = 'sometoken';
         expect(storageManager.getFbToken()).toEqual('sometoken');
-        delete $window.localStorage.fbtoken;
     });
 
     it('should manage username', function(){

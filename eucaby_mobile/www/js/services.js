@@ -8,7 +8,6 @@ angular.module('eucaby.services', [
 .factory('User', [
     'EucabyApi',
 function(EucabyApi) {
-
     return {
         profile: function(){
             return EucabyApi.api({path: '/me'});
@@ -18,7 +17,6 @@ function(EucabyApi) {
 .factory('Settings', [
     'EucabyApi',
 function(EucabyApi) {
-
     return {
         get: function(){
             return EucabyApi.api({path: '/settings'});
@@ -32,7 +30,6 @@ function(EucabyApi) {
 .factory('Friends', [
     'EucabyApi',
  function(EucabyApi) {
-
     return {
         all: function(){
             return EucabyApi.api({path: '/friends'});
@@ -55,7 +52,6 @@ function(EucabyApi) {
     'EucabyApi',
     'utils',
 function(EucabyApi, utils) {
-
     return {
         get: function(id){
             return EucabyApi.api({path: '/location/notification/' + id});
@@ -72,7 +68,6 @@ function(EucabyApi, utils) {
     'EucabyApi',
     'utils',
 function(EucabyApi, utils) {
-
     return {
         get: function(id){
             return EucabyApi.api({path: '/location/request/' + id});
@@ -88,7 +83,6 @@ function(EucabyApi, utils) {
 .factory('Autocomplete', [
     'EucabyApi',
 function(EucabyApi) {
-
      return {
          // Note: You can optimize the query request: if starting substring
          //       returns no results the appending characters to the substring

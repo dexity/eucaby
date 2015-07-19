@@ -174,7 +174,7 @@ describe('eucaby api tests', function(){
         expect(successHandler).toHaveBeenCalledWith(EC_AUTH);
         expect($window.localStorage.getItem('ec_access_token')).toBe('AABBCC');
         expect($window.localStorage.getItem('ec_refresh_token')).toBe('ABCABC');
-        expect($window.localStorage.fbtoken).toBe(undefined);
+        expect($window.localStorage.fbtoken).toBeUndefined();
     });
 
     it('should use stored access token when login', function(){
