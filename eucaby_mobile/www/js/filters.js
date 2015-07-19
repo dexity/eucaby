@@ -17,7 +17,7 @@ angular.module('eucaby.filters', [
 })
 
 .filter('localize', ['dateUtils', function(dateUtils){
-    return function(date_time){
-        return dateUtils.ts2h(Date.parse(date_time));
+    return function(dateTime){
+        return dateUtils.ts2h(Date.parse(dateTime));
     };
 }]);
