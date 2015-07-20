@@ -87,6 +87,10 @@ describe('services tests', function(){
         errorHandler = jasmine.createSpy('error');
         storage = defaultStorage;
     });
+    afterEach(inject(function(_$httpBackend_){
+        $httpBackend.verifyNoOutstandingExpectation();
+        $httpBackend.verifyNoOutstandingRequest();
+    }));
 
     var cases = [
         {

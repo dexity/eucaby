@@ -29,17 +29,18 @@ function($scope, $rootScope, $state, $ionicSideMenuDelegate, storageManager,
         return $scope.showHeader();
     };
     $scope.toggleRight = function(){
-        $ionicSideMenuDelegate.toggleRight(!$ionicSideMenuDelegate.isOpenRight());
+        $ionicSideMenuDelegate
+            .toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     };
     $scope.showHeader = function(){
         return $state.is('app.tab.map');
     };
+    $rootScope.hasBackButton = function(){
+        return utilsIonic.hasBackButton();
+    };
     $scope.logout = function () {
         EucabyApi.logout();
         $state.go('app.login');
-    };
-    $rootScope.hasBackButton = function(){
-        return utilsIonic.hasBackButton();
     };
 }])
 
