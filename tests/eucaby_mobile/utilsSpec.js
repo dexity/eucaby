@@ -504,12 +504,13 @@ describe('map ionic tests', function(){
     beforeEach(module('ionic'));
     beforeEach(module('eucaby.utils'));
     beforeEach(inject(function(
-        _$rootScope_, _mapIonic_, _utilsIonic_, _map_, _$ionicLoading_) {
+        _$rootScope_, _$httpBackend_, _mapIonic_, _utilsIonic_, _map_, _$ionicLoading_) {
         $scope = _$rootScope_.$new();
         mapIonic = _mapIonic_;
         utilsIonic = _utilsIonic_;
         map = _map_;
         $ionicLoading = _$ionicLoading_;
+        _$httpBackend_.whenGET(/^templates\/.*/).respond('');
     }));
     beforeEach(function(){
         locMock = spyOn(map, 'currentLocation');
@@ -570,8 +571,10 @@ describe('utils ionic tests', function(){
 
     beforeEach(module('ionic'));
     beforeEach(module('eucaby.utils'));
-    beforeEach(inject(function(_$q_, _$rootScope_, _utilsIonic_, _$ionicPopup_,
-                               _$ionicLoading_, _$ionicHistory_){
+    beforeEach(module('ngMockE2E'));
+    beforeEach(inject(function(
+        _$q_, _$rootScope_, _$httpBackend_, _utilsIonic_, _$ionicPopup_,
+        _$ionicLoading_, _$ionicHistory_){
         $q = _$q_;
         $scope = _$rootScope_.$new();
         deferred = $q.defer();
@@ -579,6 +582,7 @@ describe('utils ionic tests', function(){
         $ionicPopup = _$ionicPopup_;
         $ionicLoading = _$ionicLoading_;
         $ionicHistory = _$ionicHistory_;
+        _$httpBackend_.whenGET(/^templates\/.*/).respond('');
     }));
     beforeEach(function(){
         spyOn($ionicPopup, 'alert');
