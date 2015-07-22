@@ -18,30 +18,37 @@ angular.module('eucaby.controllers', [
 function($scope, $rootScope, $state, $ionicSideMenuDelegate, storageManager,
          EucabyApi, utils, utilsIonic) {
 
-    $rootScope.currentZoom = 13;
-    $rootScope.contactsHistory = {};
-    $rootScope.recentContacts = storageManager.getRecentContacts() || [];
-    $rootScope.recentFriends = storageManager.getRecentFriends() || {};
     $scope.alignedTitle = function(){
         return utilsIonic.urlHasSubstring('request');
     };
+
     $scope.showSideMenu = function(){
         return $scope.showHeader();
     };
+
     $scope.toggleRight = function(){
         $ionicSideMenuDelegate
             .toggleRight(!$ionicSideMenuDelegate.isOpenRight());
     };
+
     $scope.showHeader = function(){
         return $state.is('app.tab.map');
     };
+
     $rootScope.hasBackButton = function(){
         return utilsIonic.hasBackButton();
     };
+
     $scope.logout = function () {
         EucabyApi.logout();
         $state.go('app.login');
     };
+
+    // Init controller
+    $rootScope.currentZoom = 13;
+    $rootScope.contactsHistory = {};
+    $rootScope.recentContacts = storageManager.getRecentContacts() || [];
+    $rootScope.recentFriends = storageManager.getRecentFriends() || {};
 }])
 
 .controller('LoginCtrl', [
@@ -50,26 +57,25 @@ function($scope, $rootScope, $state, $ionicSideMenuDelegate, storageManager,
     '$location',
     '$ionicLoading',
     'EucabyApi',
-    'push',
+    'notifications',
     'utils',
     'utilsIonic',
-function($scope, $rootScope, $location, $ionicLoading, EucabyApi, push, utils,
-         utilsIonic) {
+function($scope, $rootScope, $location, $ionicLoading, EucabyApi,
+         notifications, utils, utilsIonic) {
 
     $scope.facebookLogin = function(){
-
         $ionicLoading.show();
         EucabyApi.login().then(function() {
                 $location.path('/app/tab/map');
-                push.initNotifications($rootScope);
+                notifications.init($rootScope);
             }, function(data) {
                 utilsIonic.alert('Error', 'Error during log in. ' +
                                      'Please try again in a moment.');
                 console.error(data);
-            })
-            .finally(function(){
-                $ionicLoading.hide();
-            });
+        })
+        .finally(function(){
+            $ionicLoading.hide();
+        });
     };
 }])
 
@@ -92,18 +98,17 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         if (!hideLoading){
             $ionicLoading.show();
         }
-
         map.currentLocation(function(lat, lng){
             // Create a new map
             // Note: There might be performance issues when creating
             //       map for every current location click
             $scope.map = map.createMap('map', lat, lng,
                                        {zoom: $scope.currentZoom});
+            $scope.marker = map.createMarker($scope.map, lat, lng);
             google.maps.event.addListener(
                 $scope.map, 'zoom_changed', function() {
                 $rootScope.currentZoom = $scope.map.getZoom();
             });
-            $scope.marker = map.createMarker($scope.map, lat, lng);
             if (!hideLoading) {
                 $ionicLoading.hide();
             }
@@ -118,20 +123,13 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         });
     };
 
-    $scope.centerOnMe(true);
-    $scope.markers = [];
-    $rootScope.friends = [];
-
-    var registerModal = function(template, modalName){
+    $scope.registerModal = function(template, modalName){
         $ionicModal.fromTemplateUrl(template, {
             scope: $scope
         }).then(function(modal) {
             $scope[modalName] = modal;
         });
     };
-
-    registerModal('templates/request.html', 'requestModal');
-    registerModal('templates/notify.html', 'notifyModal');
 
     $scope.loadFriends = function(){
         // Loads friends
@@ -189,6 +187,14 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         }
         return true;
     };
+
+    // Init controller
+    $scope.centerOnMe(true);
+    $scope.markers = [];
+    $rootScope.friends = [];
+    $scope.registerModal('templates/request.html', 'requestModal');
+    $scope.registerModal('templates/notify.html', 'notifyModal');
+
 }])
 
 .controller('MessageCtrl', [
@@ -203,7 +209,6 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
 function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
          Notification, Autocomplete) {
 
-    $scope.form = {};
     $scope.selectUser = function(name){
         ctrlUtils.selectUser($scope, name);
     };
@@ -215,6 +220,7 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
             $scope.autoItems = data.data;
         });
     };
+
     $scope.autoComplete = function(item){
         // On click autocompleted item function
         $scope.autoItems = [];
@@ -248,6 +254,9 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
                 $scope, $scope.notifyModal, 'Location submitted'),
             ctrlUtils.messageError('Failed to send location'));
     });
+
+    // Init controller
+    $scope.form = {};
 }])
 
 .controller('ProfileCtrl', [
@@ -280,8 +289,6 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, User) {
     'Settings',
 function($scope, $ionicLoading, utils, utilsIonic, Settings) {
 
-    $scope.emailSubscription = { checked: false };
-
     var setEmailSubscription = function(data){
         // Sets email subscription checkbox based from data
         var emailSub = data.data.email_subscription;
@@ -290,15 +297,6 @@ function($scope, $ionicLoading, utils, utilsIonic, Settings) {
         }
         $scope.emailSubscription.checked = emailSub;
     };
-
-    $ionicLoading.show();
-    Settings.get().then(function(data){
-        setEmailSubscription(data);
-    }, function(data){
-        utilsIonic.alert('Failed to load settings');
-    }).finally(function(){
-        $ionicLoading.hide();
-    });
 
     $scope.emailSubscriptionChange = function() {
         $ionicLoading.show();
@@ -313,6 +311,16 @@ function($scope, $ionicLoading, utils, utilsIonic, Settings) {
         console.log('Push Notification Change', $scope.emailSubscription.checked);
     };
 
+    // Init controller
+    $scope.emailSubscription = { checked: false };
+    $ionicLoading.show();
+    Settings.get().then(function(data){
+        setEmailSubscription(data);
+    }, function(data){
+        utilsIonic.alert('Failed to load settings');
+    }).finally(function(){
+        $ionicLoading.hide();
+    });
 }])
 
 .controller('OutgoingCtrl', [
@@ -326,7 +334,6 @@ function($scope, $ionicLoading, utils, utilsIonic, Settings) {
 function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
          Activity) {
 
-    $ionicLoading.show();
     // Outgoing formatter
     var formatter = function(item){
         return {
@@ -348,15 +355,17 @@ function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
         });
     };
 
-    loadItems().finally(function(){
-        $ionicLoading.hide();
-    });
-
     $scope.refresh = function(){
         loadItems().finally(function(){
             $scope.$broadcast('scroll.refreshComplete');
         });
     };
+
+    // Init controller
+    $ionicLoading.show();
+    loadItems().finally(function(){
+        $ionicLoading.hide();
+    });
 }])
 
 .controller('IncomingCtrl', [
@@ -368,7 +377,6 @@ function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
     'Activity',
 function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
 
-    $ionicLoading.show();
     // Incoming formatter
     var formatter = function(item){
         return {
@@ -392,15 +400,17 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
         });
     };
 
-    loadItems().finally(function(){
-        $ionicLoading.hide();
-    });
-
     $scope.refresh = function(){
         loadItems().finally(function(){
             $scope.$broadcast('scroll.refreshComplete');
         });
     };
+
+    // Init controller
+    $ionicLoading.show();
+    loadItems().finally(function(){
+        $ionicLoading.hide();
+    });
 }])
 
 .controller('NotificationDetailCtrl', [
@@ -414,19 +424,18 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
 function($scope, $ionicLoading, $stateParams, map, utils, utilsIonic,
          Notification) {
 
-        $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
-
-        // XXX: Add $ionicLoading feature
-        Notification.get($stateParams.id).then(function(data){
-            $scope.item = data.data;
-            $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
-            var loc = $scope.item.location;
-            $scope.map = map.createMap('locmap', loc.lat, loc.lng);
-            $scope.marker = map.createMarker(
-                $scope.map, loc.lat, loc.lng, -1, $scope.item.is_web);
-        });
-    }
-])
+    // Init controller
+    $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
+    // XXX: Add $ionicLoading feature
+    Notification.get($stateParams.id).then(function(data){
+        $scope.item = data.data;
+        $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
+        var loc = $scope.item.location;
+        $scope.map = map.createMap('locmap', loc.lat, loc.lng);
+        $scope.marker = map.createMarker(
+            $scope.map, loc.lat, loc.lng, -1, $scope.item.is_web);
+    });
+}])
 
 .controller('RequestDetailCtrl', [
     '$scope',
@@ -444,73 +453,76 @@ function($scope, $ionicLoading, $stateParams, map, utils, utilsIonic,
 function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
          mapIonic, utilsIonic, ctrlUtils, Request, Notification) {
 
-        var showBrowserWarning = false;
-        var populateMarkers = function(notifs){
-            for (var i = 0; i < notifs.length; i++){
-                var item = notifs[i];
-                var loc = item.location;
-                if (item.is_web){
-                    showBrowserWarning = true;
-                }
-                if ($scope.map){
-                    $scope.markers.push(
-                        map.createMarker(
-                            $scope.map, loc.lat, loc.lng, i, item.is_web));
-                }
+    var populateMarkers = function(notifs){
+        for (var i = 0; i < notifs.length; i++){
+            var item = notifs[i];
+            var loc = item.location;
+            if (item.is_web){
+                showBrowserWarning = true;
             }
-        };
-        var requestCallback = function(data){
-            $scope.item = data.data;
-            $scope.icon = $scope.item.session.complete ? 'ion-ios-bolt': 'ion-ios-bolt-outline';
-            $scope.markers = [];
-            $scope.form.token = $scope.item.session.token;
-            // Load map
-            mapIonic.getCurrentLocation('locmap').then(function(data) {
-                $scope.map = data.map;
-                $scope.marker = data.marker;
-                $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
-                populateMarkers($scope.item.notifications);
-                $scope.centerMarker($rootScope.currentLatLng);
-                $scope.showBrowserWarning = showBrowserWarning;
-            });
-        };
-        $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
-        $scope.form = {};
-        $scope.sendLocation = function(event) {
-            // Send request action
-            $ionicLoading.show();
-            Notification.post($scope.form, $rootScope.currentLatLng.lat,
-                              $rootScope.currentLatLng.lng)
-            .then(function(data){
-                $ionicLoading.hide();
-                // Reload request
-                Request.get($stateParams.id).then(requestCallback);
-                utilsIonic.toast('Location submitted');
-                $scope.form = {};
-            }, ctrlUtils.messageError('Failed to send request'));
-        };
+            if ($scope.map){
+                $scope.markers.push(
+                    map.createMarker(
+                        $scope.map, loc.lat, loc.lng, i, item.is_web));
+            }
+        }
+    };
 
-        Request.get($stateParams.id).then(requestCallback);
+    var requestCallback = function(data){
+        $scope.item = data.data;
+        $scope.icon = $scope.item.session.complete ? 'ion-ios-bolt': 'ion-ios-bolt-outline';
+        $scope.markers = [];
+        $scope.form.token = $scope.item.session.token;
+        // Load map
+        mapIonic.getCurrentLocation('locmap').then(function(data) {
+            $scope.map = data.map;
+            $scope.marker = data.marker;
+            $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
+            populateMarkers($scope.item.notifications);
+            $scope.centerMarker($rootScope.currentLatLng);
+            $scope.showBrowserWarning = showBrowserWarning;
+        });
+    };
 
-        $scope.centerMarker = function(loc) {
-            // Centers map at marker's location
-            $scope.map.setCenter(loc);
-        };
-        $scope.centerOnMe = function() {
-            // Centers map at the current location
-            // Note: Location is obtain again in case if user is moving.
-            //       Other option is to use stale $rootScope.currentLatLng
-            $ionicLoading.show();
-            map.currentLocation(function(lat, lng){
-                if ($scope.map){
-                    var position = new google.maps.LatLng(lat, lng);
-                    $scope.centerMarker(position);
-                }
-                $ionicLoading.hide();
-            });
-        };
-    }
-])
+    $scope.sendLocation = function(event) {
+        // Send request action
+        $ionicLoading.show();
+        Notification.post($scope.form, $rootScope.currentLatLng.lat,
+                          $rootScope.currentLatLng.lng)
+        .then(function(data){
+            $ionicLoading.hide();
+            // Reload request
+            Request.get($stateParams.id).then(requestCallback);
+            utilsIonic.toast('Location submitted');
+            $scope.form = {};
+        }, ctrlUtils.messageError('Failed to send request'));
+    };
+
+    $scope.centerMarker = function(loc) {
+        // Centers map at marker's location
+        $scope.map.setCenter(loc);
+    };
+
+    $scope.centerOnMe = function() {
+        // Centers map at the current location
+        // Note: Location is obtain again in case if user is moving.
+        //       Other option is to use stale $rootScope.currentLatLng
+        $ionicLoading.show();
+        map.currentLocation(function(lat, lng){
+            if ($scope.map){
+                var position = new google.maps.LatLng(lat, lng);
+                $scope.centerMarker(position);
+            }
+            $ionicLoading.hide();
+        });
+    };
+
+    // Init controller
+    var showBrowserWarning = false;
+    $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
+    $scope.form = {};
+    Request.get($stateParams.id).then(requestCallback);
+}])
 
 .factory('ctrlUtils', [
     '$rootScope',

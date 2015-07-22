@@ -2,7 +2,6 @@
 
 angular.module('eucaby', [
     'ionic',
-    'ngCordova',
     'eucaby.controllers',
     'eucaby.filters',
     'eucaby.utils',
@@ -15,9 +14,9 @@ angular.module('eucaby', [
     '$ionicPlatform',
     '$window',
     'EucabyApi',
-    'push',
+    'notifications',
     'storageManager',
-function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push,
+function($rootScope, $state, $ionicPlatform, $window, EucabyApi, notifications,
          storageManager) {
 
     EucabyApi.init();
@@ -27,7 +26,7 @@ function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push,
         if(window.StatusBar) {
             window.StatusBar.styleDefault();
         }
-        push.initNotifications($rootScope);
+        notifications.init($rootScope);
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
@@ -41,8 +40,6 @@ function($rootScope, $state, $ionicPlatform, $window, EucabyApi, push,
     $rootScope.$on('OAuthException', function() {
         $state.go('app.login');
     });
-
-
 }])
 
 .constant('$ionicLoadingConfig', {

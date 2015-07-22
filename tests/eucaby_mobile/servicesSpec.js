@@ -4,7 +4,6 @@ describe('services tests', function(){
     var $scope,
         $window,
         $httpBackend,
-        $q,
         EucabyApi,
         Friends,
         User,
@@ -62,12 +61,11 @@ describe('services tests', function(){
     beforeEach(module('eucaby.services'));
     beforeEach(module('eucaby.api'));
     beforeEach(inject(function(
-        _$rootScope_, _$window_, _$httpBackend_, _$q_, _EucabyApi_, _Friends_,
+        _$rootScope_, _$window_, _$httpBackend_, _EucabyApi_, _Friends_,
         _User_, _Activity_, _Notification_, _Request_, _Settings_){
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
-        $q = _$q_;
         EucabyApi = _EucabyApi_;
         Friends = _Friends_;
         User = _User_;

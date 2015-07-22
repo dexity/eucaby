@@ -2,11 +2,12 @@
 
 angular.module('eucaby.push', [
     'ionic',
+    'ngCordova',
     'eucaby.api',
     'eucaby.utils'
 ])
 
-.factory('push', [
+.factory('notifications', [
     '$state',
     '$cordovaPush',
     'EucabyApi',
@@ -158,7 +159,7 @@ function($state, $cordovaPush, EucabyApi, utils, utilsIonic, storageManager) {
      };
 
     return {
-        initNotifications: function($scope) {
+        init: function($scope) {
             // Set up push notifications to receive messages
             console.log('Registering device and notification event ...');
             platformDependent(initAndroid, initIOS, $scope);
