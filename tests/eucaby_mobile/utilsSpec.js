@@ -326,11 +326,8 @@ describe('utils tests', function(){
     });
 
     it('should sync friend with recent contacts', function(){
-        var recentFriends1 = {
-            user1: {name: 'User 1', username: 'user1'}
-        };
-        var friends1 = [
-            {name: 'User X', username: 'userx'}];
+        var recentFriends1 = {user1: {name: 'User 1', username: 'user1'}};
+        var friends1 = [{name: 'User X', username: 'userx'}];
         var recentFriends2 = {
             user1: {name: 'User 1', username: 'user1'},
             user2: {name: 'User 2', username: 'user2'}
@@ -340,19 +337,14 @@ describe('utils tests', function(){
             {name: 'User 2', username: 'user2'}];
         // user2 should be removed from friends because it's duplicate of
         // recent friends
-        var expectedRecentFriends2 = {
-            user1: {name: 'User 1', username: 'user1'},
-            user2: {name: 'User 2', username: 'user2'}
-        };
-        var expectedFriends2 = [
-            {name: 'User X', username: 'userx'}];
+        var expectedFriends2 = [{name: 'User X', username: 'userx'}];
         var cases = [
             // Empty recent friends and friends
             [{}, [], {}, []],
             // Recent friends has no common friends with friends
             [recentFriends1, friends1, recentFriends1, friends1],
             // Recent friends has common friends with friends
-            [recentFriends2, friends2, expectedRecentFriends2, expectedFriends2]
+            [recentFriends2, friends2, recentFriends2, expectedFriends2]
         ];
         for (var i = 0; i< cases.length; i++){
             var c = cases[i];

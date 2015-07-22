@@ -127,7 +127,7 @@ describe('login controller tests', function(){
     });
 
     it('should display error after failed login', function(){
-        deferred.reject('Some error');
+        deferred.reject('facebookLogin error');
         $scope.facebookLogin();
         $scope.$apply();
         expect($ionicLoading.show).toHaveBeenCalled();
@@ -144,15 +144,18 @@ describe('map controller tests', function(){
         $window,
         $ionicLoading,
         $ionicModal,
+        Friends,
         map,
         utilsIonic,
         deferred;
-    var locMock;
+    var locMock,
+        tmplMock,
+        friendsMock;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
         _$q_, _$rootScope_, _$httpBackend_, _$window_, _$ionicLoading_,
-        _$ionicModal_, _map_, _utilsIonic_){
+        _$ionicModal_, _Friends_, _map_, _utilsIonic_){
         $q = _$q_;
         $rootScope = _$rootScope_;
         $scope = _$rootScope_.$new();
@@ -160,22 +163,28 @@ describe('map controller tests', function(){
         $window = _$window_;
         $ionicLoading = _$ionicLoading_;
         $ionicModal = _$ionicModal_;
+        Friends = _Friends_;
         map = _map_;
         utilsIonic = _utilsIonic_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
         locMock = spyOn(map, 'currentLocation');
-        spyOn(map, 'createMap');
-        spyOn(map, 'createMarker');
-        spyOn($ionicModal, 'fromTemplateUrl').and.callThrough();
+        spyOn(map, 'createMap').and.returnValue('map');
+        spyOn(map, 'createMarker').and.returnValue('marker');
+        // $ionicModal.fromTemplateUrl makes 2 http requests
+        tmplMock = spyOn($ionicModal, 'fromTemplateUrl');
+        tmplMock.and.callFake(function(){
+            return deferred.promise;
+        });
+        friendsMock = spyOn(Friends, 'all');
         spyOn($ionicLoading, 'show');
         spyOn($ionicLoading, 'hide');
         spyOn(utilsIonic, 'alert');
         $window.google = {
             maps: {event: {addListener: jasmine.createSpy()}}
         };
-        $httpBackend.whenGET(/^templates\/.*/).respond('');
+        //$httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
         $controller('MapCtrl', {
@@ -195,7 +204,6 @@ describe('map controller tests', function(){
         expect(map.currentLocation).toHaveBeenCalled();
         // Register request and notification modals
         expect($ionicModal.fromTemplateUrl.calls.count()).toEqual(2);
-        $httpBackend.flush();
     });
 
     it('should center on me and set current location', function(){
@@ -204,11 +212,12 @@ describe('map controller tests', function(){
         });
         $scope.centerOnMe();
         $scope.$apply();
+        expect($scope.map).toBeDefined();
+        expect($scope.marker).toBeDefined();
         expect($ionicLoading.show).toHaveBeenCalled();
         expect($ionicLoading.hide).toHaveBeenCalled();
         expect(map.createMap).toHaveBeenCalled();
         expect(map.createMarker).toHaveBeenCalled();
-        $httpBackend.flush();
     });
 
     it('should center on me and hide loading', function(){
@@ -220,7 +229,6 @@ describe('map controller tests', function(){
         expect($ionicLoading.show.calls.any()).toBeFalsy();
         expect($ionicLoading.hide.calls.any()).toBeFalsy();
         expect($window.google.maps.event.addListener).toHaveBeenCalled();
-        $httpBackend.flush();
     });
 
     it('should center on me and show error', function(){
@@ -234,10 +242,99 @@ describe('map controller tests', function(){
         expect(map.createMap).toHaveBeenCalled();
         expect(utilsIonic.alert).toHaveBeenCalled();
         expect(map.createMarker.calls.any()).toBeFalsy();
-        $httpBackend.flush();
     });
 
+    it('should register model', function(){
+        $ionicModal.fromTemplateUrl.calls.reset();
+        deferred.resolve('some_modal');
+        $scope.registerModal('template.html', 'notification');
+        expect($ionicModal.fromTemplateUrl)
+            .toHaveBeenCalledWith('template.html', {scope: $scope});
+        $scope.$apply();
+        expect($scope.notification).toBeDefined();
+    });
 
+    it('should load friends', function(){
+        deferred = $q.defer();
+        friendsMock.and.callFake(function(){
+            return deferred.promise;
+        });
+        var recentFriends = {
+            user1: {name: 'User 1', username: 'user1'},
+            user2: {name: 'User 2', username: 'user2'}
+        };
+        var recentFriendsCopy = angular.copy(recentFriends);
+        var friends = [
+            {name: 'User X', username: 'userx'},
+            {name: 'User 2', username: 'user2'}];
+        $rootScope.recentFriends = recentFriends;
+        deferred.resolve({data: friends});
+        $scope.loadFriends();
+        $scope.$apply();
+        expect(Friends.all).toHaveBeenCalled();
+        expect($rootScope.friends)
+            .toEqual([{name: 'User X', username: 'userx'}]);
+        expect($rootScope.recentFriends).toEqual(recentFriendsCopy);
+    });
+
+    it('should load friends with error', function(){
+        deferred = $q.defer();
+        friendsMock.and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.reject('loadFriends error');
+        $scope.loadFriends();
+        $scope.$apply();
+        expect(utilsIonic.alert).toHaveBeenCalled();
+    });
+
+    it('should refresh friends', function(){
+        deferred = $q.defer();
+        spyOn($scope, 'loadFriends').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.resolve({data: []});
+        $scope.refreshFriends();
+        expect($scope.loadFriends).toHaveBeenCalled();
+        expect($ionicLoading.show).toHaveBeenCalled();
+        // expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+//    if('should register modal.shown event', function(){
+//        tmplMock.and.andCallThrough();
+//        createController();
+//        $scope.registerModal('templates/request.html', 'requestModal');
+//        $scope.requestModal.show();
+//        $rootScope.$broadcast('modal.shown');
+//    });
+
+    it('should check if form is valid', function(){
+        var form = {
+            email: {$viewValue: undefined},
+            user: {$viewValue: undefined}
+        };
+        // Empty form
+        expect(function(){
+            $scope.isFormValid({})
+        }).toThrowError(TypeError);
+        // No parameter is set
+        expect($scope.isFormValid(form)).toBeFalsy();
+        expect(utilsIonic.alert).toHaveBeenCalled();
+        // Invalid email
+        form.email.$viewValue = 'wrong';
+        expect($scope.isFormValid(form)).toBeFalsy();
+        expect(utilsIonic.alert).toHaveBeenCalled();
+        // Valid email
+        form.email.$viewValue = 'some@email';
+        expect($scope.isFormValid(form)).toBeTruthy();
+        // Both email and user are set
+        form.user.$viewValue = 'user';
+        expect($scope.isFormValid(form)).toBeFalsy();
+        expect(utilsIonic.alert).toHaveBeenCalled();
+        // User is set
+        form.email.$viewValue = undefined;
+        expect($scope.isFormValid(form)).toBeTruthy();
+    });
 });
 
 describe('message controller tests', function(){
@@ -246,32 +343,37 @@ describe('message controller tests', function(){
         $scope,
         $httpBackend,
         $ionicLoading,
-        deferred,
-        createController;
+        ctrlUtils,
+        deferred;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _ctrlUtils_){
         $q = _$q_;
         $rootScope = _$rootScope_;
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        ctrlUtils = _ctrlUtils_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
+        spyOn(ctrlUtils, 'selectUser');
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('MessageCtrl', {
-                $scope: $scope
-            })
-        }
+        $controller('MessageCtrl', {
+            $scope: $scope, ctrlUtils: ctrlUtils
+        });
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
+    });
+
+    it('should select user', function(){
+        $scope.selectUser('Test User');
+        expect(ctrlUtils.selectUser).toHaveBeenCalledWith($scope, 'Test User');
     });
 });
 
@@ -513,5 +615,30 @@ describe('controller utils tests', function(){
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
+    });
+
+    it('should select user', function(){
+        var scope = {
+            selectedUser: undefined,
+            selectedName: undefined,
+            form: {
+                username: undefined
+            }
+        };
+        // No parameters defined
+        ctrlUtils.selectUser(scope, 'Test User');
+        expect(scope.form.username).toEqual(false);
+        expect(scope.selectedUser).toEqual(false);
+        expect(scope.selectedName).toEqual('Test User');
+        // Username is selected
+        scope.form.username = 'user';
+        ctrlUtils.selectUser(scope, 'Test User');
+        expect(scope.form.username).toEqual('user');
+        expect(scope.selectedUser).toEqual('user');
+        expect(scope.selectedName).toEqual('Test User');
+        // Same username is selected again (toggle)
+        ctrlUtils.selectUser(scope, 'Test User');
+        expect(scope.form.username).toEqual(false);
+        expect(scope.selectedUser).toEqual(false);
     });
 });

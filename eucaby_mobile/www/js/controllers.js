@@ -150,22 +150,6 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         });
     };
 
-    // Modal shown event
-    $scope.$on('modal.shown', function(event, modal) {
-        // XXX: Update friends once a day
-        if (angular.equals($scope.friends, [])){
-            $scope.loadFriends();
-        }
-
-        if ($scope.notifyModal === modal) {
-            mapIonic.getCurrentLocation('notifymap').then(function(data) {
-                $scope.map = data.map;
-                $scope.marker = data.marker;
-                $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
-            });
-        }
-    });
-
     $scope.isFormValid = function(form){
         // Main form validation
         var emailValue = form.email.$viewValue;
@@ -194,7 +178,19 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
     $rootScope.friends = [];
     $scope.registerModal('templates/request.html', 'requestModal');
     $scope.registerModal('templates/notify.html', 'notifyModal');
-
+    // Modal shown event
+    $scope.$on('modal.shown', function(event, modal) {
+        if (angular.equals($scope.friends, [])){
+            $scope.loadFriends();
+        }
+        if ($scope.notifyModal === modal) {
+            mapIonic.getCurrentLocation('notifymap').then(function(data) {
+                $scope.map = data.map;
+                $scope.marker = data.marker;
+                $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
+            });
+        }
+    });
 }])
 
 .controller('MessageCtrl', [
@@ -227,6 +223,8 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
         $scope.form.email = item;
     };
 
+    // Init controller
+    $scope.form = {};
     $scope.$on('sendRequest', function(event){
         // Send request action
         // Warning: This is a hack to access child scope directly
@@ -254,9 +252,6 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
                 $scope, $scope.notifyModal, 'Location submitted'),
             ctrlUtils.messageError('Failed to send location'));
     });
-
-    // Init controller
-    $scope.form = {};
 }])
 
 .controller('ProfileCtrl', [
