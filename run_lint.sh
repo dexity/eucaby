@@ -8,4 +8,4 @@ pylint tests
 
 echo 'Running jshint'
 jshint eucaby_mobile/www/js/*
-
+# jshint tests/eucaby_mobile/*

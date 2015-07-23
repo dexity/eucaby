@@ -152,8 +152,8 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
 
     $scope.isFormValid = function(form){
         // Main form validation
-        var emailValue = form.email.$viewValue;
-        var userValue = form.user.$viewValue;
+        var emailValue = form.email;
+        var userValue = form.user;
         if ((!emailValue && !userValue) || (emailValue && userValue)){
             utilsIonic.alert(
                 'Error', 'Please provide either an email or select a friend');
@@ -227,8 +227,7 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
 
     $scope.sendRequestHandler = function(event){
         // Send request action
-        // Warning: This is a hack to access child scope directly
-        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
+        if (!$scope.isFormValid($scope.form)){
             return;
         }
         $ionicLoading.show();
@@ -241,9 +240,7 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
     $scope.sendLocationHandler = function(event){
         // Send location action
         // Note: We you here signal because form is triggered outside controller
-        // Warning: This is a hack to access child scope directly
-        //          messageForm in ng-included template.
-        if (!$scope.isFormValid($scope.$$childHead.messageForm)){
+        if (!$scope.isFormValid($scope.form)){
             return;
         }
         $ionicLoading.show();

@@ -186,7 +186,6 @@ describe('map controller tests', function(){
         $window.google = {
             maps: {event: {addListener: jasmine.createSpy()}}
         };
-        //$httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
         $controller('MapCtrl', {
@@ -303,30 +302,23 @@ describe('map controller tests', function(){
     });
 
     it('should check if form is valid', function(){
-        var form = {
-            email: {$viewValue: undefined},
-            user: {$viewValue: undefined}
-        };
+        var form;
         // Empty form
-        expect(function(){
-            $scope.isFormValid({})
-        }).toThrowError(TypeError);
-        // No parameter is set
-        expect($scope.isFormValid(form)).toBeFalsy();
+        expect($scope.isFormValid({})).toBeFalsy();
         expect(utilsIonic.alert).toHaveBeenCalled();
         // Invalid email
-        form.email.$viewValue = 'wrong';
+        form = {email: 'wrong'};
         expect($scope.isFormValid(form)).toBeFalsy();
         expect(utilsIonic.alert).toHaveBeenCalled();
         // Valid email
-        form.email.$viewValue = 'some@email';
+        form = {email: 'some@email'};
         expect($scope.isFormValid(form)).toBeTruthy();
         // Both email and user are set
-        form.user.$viewValue = 'user';
+        form = {email: 'some@email', user: 'user1'};
         expect($scope.isFormValid(form)).toBeFalsy();
         expect(utilsIonic.alert).toHaveBeenCalled();
         // User is set
-        form.email.$viewValue = undefined;
+        form = {user: 'user1'};
         expect($scope.isFormValid(form)).toBeTruthy();
     });
 
@@ -364,31 +356,53 @@ describe('map controller tests', function(){
 describe('message controller tests', function(){
     var $q,
         $rootScope,
+        $mapScope,
         $scope,
         $httpBackend,
         $ionicLoading,
+        $ionicModal,
         Autocomplete,
+        Request,
+        Notification,
         ctrlUtils,
+        utils,
         deferred;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _Autocomplete_,
-        _ctrlUtils_){
+        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _$ionicModal_,
+        _Autocomplete_, _Request_, _Notification_, _ctrlUtils_, _utils_){
         $q = _$q_;
         $rootScope = _$rootScope_;
-        $scope = _$rootScope_.$new();
+        $mapScope = $rootScope.$new();
+        $scope = $mapScope.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
         Autocomplete = _Autocomplete_;
+        Request = _Request_;
+        Notification = _Notification_;
         ctrlUtils = _ctrlUtils_;
+        utils = _utils_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
         spyOn(ctrlUtils, 'selectUser');
+        spyOn(utils, 'manageRecent');
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        $scope.requestModal = {
+            hide: jasmine.createSpy()
+        };
+        $scope.notifyModal = {
+            hide: jasmine.createSpy()
+        };
+        spyOn(ctrlUtils, 'messageSuccess').and.callThrough();
+        spyOn(ctrlUtils, 'messageError').and.callThrough();
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
+        // Hierarchy of controllers: MapCtrl <- MessageCtrl
+        $controller('MapCtrl', {$scope: $mapScope});
         $controller('MessageCtrl', {
             $scope: $scope, ctrlUtils: ctrlUtils
         });
@@ -401,6 +415,7 @@ describe('message controller tests', function(){
     it('should select user', function(){
         $scope.selectUser('Test User');
         expect(ctrlUtils.selectUser).toHaveBeenCalledWith($scope, 'Test User');
+        $httpBackend.flush();
     });
 
     it('should auto type text', function(){
@@ -414,6 +429,7 @@ describe('message controller tests', function(){
         $scope.autoTyping();
         $scope.$apply();
         expect($scope.autoItems).toEqual(['some@email1', 'some@email2']);
+        $httpBackend.flush();
     });
 
     it('should autocomplete text', function(){
@@ -421,16 +437,70 @@ describe('message controller tests', function(){
         $scope.autoComplete('test@email');
         expect($scope.autoItems).toEqual([]);
         expect($scope.form.email).toEqual('test@email');
+        $httpBackend.flush();
     });
 
-    it('should handle sendRequest event', function(){
-
-//        $scope.sendRequestHandler();
+    it('should handle sendRequest event with success', function(){
+        $scope.form = {email: 'some@email'};
+        spyOn(Request, 'post').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.resolve();
+        $scope.sendRequestHandler();
+        expect(ctrlUtils.messageSuccess).toHaveBeenCalledWith(
+            $scope, $scope.requestModal, 'Request submitted');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        $httpBackend.flush();
     });
 
-    it('should handle sendLocation event', function(){
-//        $scope.sendLocationHandler();
-    })
+    it('should handle sendRequest event with error', function(){
+        $scope.form = {email: 'some@email'};
+        spyOn(Request, 'post').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.reject({});
+        $scope.sendRequestHandler();
+        expect(Request.post).toHaveBeenCalledWith({email: 'some@email'});
+        expect(ctrlUtils.messageError).toHaveBeenCalledWith(
+            'Failed to send request');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        $httpBackend.flush();
+    });
+
+    it('should handle sendLocation event with success', function(){
+        $scope.form = {email: 'some@email'};
+        $rootScope.currentLatLng = {lat: 1.2, lng: 3.4};
+        spyOn(Notification, 'post').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.resolve();
+        $scope.sendLocationHandler();
+        expect(Notification.post).toHaveBeenCalledWith(
+            {email: 'some@email'}, 1.2, 3.4);
+        expect(ctrlUtils.messageSuccess).toHaveBeenCalledWith(
+            $scope, $scope.notifyModal, 'Location submitted');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        $httpBackend.flush();
+    });
+
+    it('should handle sendRequest event with error', function(){
+        $scope.form = {email: 'some@email'};
+        $rootScope.currentLatLng = {lat: 1.2, lng: 3.4};
+        spyOn(Notification, 'post').and.callFake(function(){
+            return deferred.promise;
+        });
+        deferred.reject({});
+        $scope.sendLocationHandler();
+        expect(ctrlUtils.messageError).toHaveBeenCalledWith(
+            'Failed to send location');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        $httpBackend.flush();
+    });
+
 });
 
 describe('profile controller tests', function(){
