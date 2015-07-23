@@ -11,6 +11,7 @@ describe('services tests', function(){
         Notification,
         Request,
         Settings,
+        Autocomplete,
         successHandler,
         errorHandler,
         storage;
@@ -23,46 +24,53 @@ describe('services tests', function(){
         data: [
             {name: 'UserA', username: '123'},
             {name: 'UserB', username: '456'}
-        ]};
-    var PROFILE = {
+        ]},
+    PROFILE = {
         data: {
             name: 'UserA',
             username: 'user1'
         }
-    };
-    var SETTINGS = {
+    },
+    SETTINGS = {
         data: {
             email_subscription: true
-        }
-    };
-    var ACTIVITY_LIST = {
+    }},
+    ACTIVITY_LIST = {
         data: [
             {recipient: 'UserA', sender: 'UserB', type: 'request'},
             {recipient: 'UserB', sender: 'UserA', type: 'notification'}
-        ]};
-    var REQUEST_POST = {
+    ]},
+    REQUEST_POST = {
         data: {
             recipient: 'UserA', sender: 'UserB', session: 'S',
-            type: 'request'}};
-    var REQUEST_GET = {
+            type: 'request'
+    }},
+    REQUEST_GET = {
         data: {
             recipient: 'UserA', sender: 'UserB', session: 'S',
-            type: 'request', notifications: ['N1', 'N2']}};
-    var NOTIFICATION_POST = {
+            type: 'request', notifications: ['N1', 'N2']
+    }},
+    NOTIFICATION_POST = {
         data: {
             recipient: 'UserA', sender: 'UserB', session: 'S',
-            type: 'notification', location: '1,2'}};
-    var NOTIFICATION_GET = {
+            type: 'notification', location: '1,2'
+    }},
+    NOTIFICATION_GET = {
         data: {
             recipient: 'UserA', sender: 'UserB', session: 'S', request: 'R',
-            type: 'notification', location: '1,2'}};
+            type: 'notification', location: '1,2'
+    }},
+    AUTOCOMPLETE = {
+        data: ['some@email1', 'some@email2']
+    };
+
     var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 
     beforeEach(module('eucaby.services'));
     beforeEach(module('eucaby.api'));
     beforeEach(inject(function(
         _$rootScope_, _$window_, _$httpBackend_, _EucabyApi_, _Friends_,
-        _User_, _Activity_, _Notification_, _Request_, _Settings_){
+        _User_, _Activity_, _Notification_, _Request_, _Settings_, _Autocomplete_){
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
@@ -73,6 +81,7 @@ describe('services tests', function(){
         Notification = _Notification_;
         Request = _Request_;
         Settings = _Settings_;
+        Autocomplete = _Autocomplete_;
         EucabyApi.init($window.localStorage);
     }));
     beforeEach(function() {
@@ -196,6 +205,15 @@ describe('services tests', function(){
                 return Friends.all();
             },
             apiParams: {path: '/friends'}
+        }, {
+            // Autocomplete query
+            it: 'should autocomplete query',
+            url: ENDPOINT + '/autocomplete?limit=5&query=some',
+            response: AUTOCOMPLETE,
+            apiCall: function(){
+                return Autocomplete.query('some');
+            },
+            apiParams: {path: '/autocomplete?limit=5&query=some'}
         }
     ];
 

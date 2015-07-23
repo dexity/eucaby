@@ -172,14 +172,8 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         return true;
     };
 
-    // Init controller
-    $scope.centerOnMe(true);
-    $scope.markers = [];
-    $rootScope.friends = [];
-    $scope.registerModal('templates/request.html', 'requestModal');
-    $scope.registerModal('templates/notify.html', 'notifyModal');
-    // Modal shown event
-    $scope.$on('modal.shown', function(event, modal) {
+    $scope.modalShownHandler = function(event, modal) {
+        // Modal shown event handler
         if (angular.equals($scope.friends, [])){
             $scope.loadFriends();
         }
@@ -190,7 +184,15 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
                 $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
             });
         }
-    });
+    };
+
+    // Init controller
+    $scope.centerOnMe(true);
+    $scope.markers = [];
+    $rootScope.friends = [];
+    $scope.registerModal('templates/request.html', 'requestModal');
+    $scope.registerModal('templates/notify.html', 'notifyModal');
+    $scope.$on('modal.shown', $scope.modalShownHandler);
 }])
 
 .controller('MessageCtrl', [
@@ -223,9 +225,7 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
         $scope.form.email = item;
     };
 
-    // Init controller
-    $scope.form = {};
-    $scope.$on('sendRequest', function(event){
+    $scope.sendRequestHandler = function(event){
         // Send request action
         // Warning: This is a hack to access child scope directly
         if (!$scope.isFormValid($scope.$$childHead.messageForm)){
@@ -236,8 +236,9 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
             ctrlUtils.messageSuccess(
                 $scope, $scope.requestModal, 'Request submitted'),
             ctrlUtils.messageError('Failed to send request'));
-    });
-    $scope.$on('sendLocation', function(event){
+    };
+
+    $scope.sendLocationHandler = function(event){
         // Send location action
         // Note: We you here signal because form is triggered outside controller
         // Warning: This is a hack to access child scope directly
@@ -251,7 +252,12 @@ function($scope, $rootScope, $ionicLoading, utils, ctrlUtils, Request,
             ctrlUtils.messageSuccess(
                 $scope, $scope.notifyModal, 'Location submitted'),
             ctrlUtils.messageError('Failed to send location'));
-    });
+    };
+
+    // Init controller
+    $scope.form = {};
+    $scope.$on('sendRequest', $scope.sendRequestHandler);
+    $scope.$on('sendLocation', $scope.sendLocationHandler);
 }])
 
 .controller('ProfileCtrl', [
