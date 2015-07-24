@@ -287,7 +287,7 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, User) {
     'Settings',
 function($scope, $ionicLoading, utils, utilsIonic, Settings) {
 
-    var setEmailSubscription = function(data){
+    $scope.setEmailSubscription = function(data){
         // Sets email subscription checkbox based from data
         var emailSub = data.data.email_subscription;
         if (emailSub === null){
@@ -300,20 +300,21 @@ function($scope, $ionicLoading, utils, utilsIonic, Settings) {
         $ionicLoading.show();
         var postData = {email_subscription: $scope.emailSubscription.checked};
         Settings.post(postData).then(function(data){
-            setEmailSubscription(data);
+            $scope.setEmailSubscription(data);
         }, function(data){
             utilsIonic.alert('Failed to update settings');
         }).finally(function(){
             $ionicLoading.hide();
         });
-        console.log('Push Notification Change', $scope.emailSubscription.checked);
+        console.log('Push Notification Change',
+                    $scope.emailSubscription.checked);
     };
 
     // Init controller
     $scope.emailSubscription = { checked: false };
     $ionicLoading.show();
     Settings.get().then(function(data){
-        setEmailSubscription(data);
+        $scope.setEmailSubscription(data);
     }, function(data){
         utilsIonic.alert('Failed to load settings');
     }).finally(function(){

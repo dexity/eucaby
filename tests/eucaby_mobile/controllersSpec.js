@@ -509,32 +509,60 @@ describe('profile controller tests', function(){
         $scope,
         $httpBackend,
         $ionicLoading,
-        deferred,
-        createController;
+        utilsIonic,
+        User,
+        deferred;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _User_,
+        _utilsIonic_){
         $q = _$q_;
         $rootScope = _$rootScope_;
-        $scope = _$rootScope_.$new();
+        $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        User = _User_;
+        utilsIonic = _utilsIonic_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
+        spyOn(utilsIonic, 'alert');
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(User, 'profile').and.callFake(function(){
+            return deferred.promise;
+        });
+        var tsDate = new Date(1437338776000);  // July 19, 2015
+        jasmine.clock().mockDate(tsDate);  // Mock current date with tsDate
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('ProfileCtrl', {
-                $scope: $scope
-            })
-        }
+        $controller('ProfileCtrl', {$scope: $scope})
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
+    });
+
+    it('should load profile when success', function(){
+        var data = {data: {name: 'UserA', username: 'user1',
+            date_joined: '2015-07-17T22:43:19+00:00'}};
+        deferred.resolve(data);
+        $scope.$apply();
+        expect($scope.profile).toEqual({name: 'UserA', username: 'user1',
+            date_joined: 'Jul 17, 2015 3:43 pm'});
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should show error when loading profile', function(){
+        deferred.reject('Profile error');
+        $scope.$apply();
+        expect(utilsIonic.alert)
+            .toHaveBeenCalledWith('Failed to load user profile');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
     });
 });
 
@@ -544,32 +572,96 @@ describe('settings controller tests', function(){
         $scope,
         $httpBackend,
         $ionicLoading,
+        Settings,
+        utilsIonic,
         deferred,
-        createController;
+        deferredPost;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _Settings_,
+        _utilsIonic_){
         $q = _$q_;
         $rootScope = _$rootScope_;
-        $scope = _$rootScope_.$new();
+        $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        Settings = _Settings_;
+        utilsIonic = _utilsIonic_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
+        deferredPost = $q.defer();
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(Settings, 'get').and.callFake(function(){
+            return deferred.promise;
+        });
+        spyOn(Settings, 'post').and.callFake(function(){
+            return deferredPost.promise;
+        });
+        spyOn(utilsIonic, 'alert');
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('SettingsCtrl', {
-                $scope: $scope
-            })
-        }
+        $controller('SettingsCtrl', {$scope: $scope});
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
+    });
+
+    it('should init settings controller with success', function(){
+        // Success
+        deferred.resolve({data: {email_subscription: true}});
+        $scope.$apply();
+        expect($scope.emailSubscription.checked).toEqual(true);
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should init settings controller with error', function(){
+        deferred.reject('Settings get error');
+        $scope.$apply();
+        expect($scope.emailSubscription.checked).toEqual(false);
+        expect(utilsIonic.alert)
+            .toHaveBeenCalledWith('Failed to load settings');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should set email subscription', function(){
+        // Parameter is not set, default is true
+        var data = {data: {email_subscription: null}};
+        $scope.setEmailSubscription(data);
+        expect($scope.emailSubscription.checked).toEqual(true);
+        // Parameter is true
+        data = {data: {email_subscription: false}};
+        $scope.setEmailSubscription(data);
+        expect($scope.emailSubscription.checked).toEqual(false);
+    });
+
+    it('should email subscription change with success', function(){
+        var data = {data: {email_subscription: true}};
+        deferredPost.resolve(data);
+        $scope.emailSubscriptionChange();
+        $scope.$apply();
+        expect(Settings.post).toHaveBeenCalledWith({email_subscription: false});
+        expect($scope.emailSubscription.checked).toEqual(true);
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should email subscription change with error', function(){
+        deferredPost.reject('Settings post error');
+        $scope.emailSubscriptionChange();
+        $scope.$apply();
+        expect(Settings.post).toHaveBeenCalledWith({email_subscription: false});
+        expect($scope.emailSubscription.checked).toEqual(false);
+        expect(utilsIonic.alert)
+            .toHaveBeenCalledWith('Failed to update settings');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
     });
 });
 
