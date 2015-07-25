@@ -665,73 +665,155 @@ describe('settings controller tests', function(){
     });
 });
 
-describe('outgoing controller tests', function(){
+describe('messages list controller tests', function(){
     var $q,
+        $state,
         $rootScope,
         $scope,
         $httpBackend,
         $ionicLoading,
-        deferred,
+        Activity,
+        utilsIonic,
+        deferredInc,
+        deferredOut,
         createController;
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$state_, _$rootScope_, _$httpBackend_, _$ionicLoading_,
+        _Activity_, _utilsIonic_){
         $q = _$q_;
+        $state = _$state_;
         $rootScope = _$rootScope_;
-        $scope = _$rootScope_.$new();
+        $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        Activity = _Activity_;
+        utilsIonic = _utilsIonic_;
     }));
     beforeEach(function() {
-        deferred = $q.defer();
+        deferredInc = $q.defer();
+        deferredOut = $q.defer();
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(utilsIonic, 'alert');
+        spyOn(Activity, 'incoming').and.callFake(function(){
+            return deferredInc.promise;
+        });
+        spyOn(Activity, 'outgoing').and.callFake(function(){
+            return deferredOut.promise;
+        });
+        jasmine.clock().mockDate(new Date(1437338776000));  // July 19, 2015
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
         createController = function(){
-            return $controller('OutgoingCtrl', {
-                $scope: $scope
-            })
-        }
+            return $controller('MessagesListCtrl', {$scope: $scope});
+        };
+        createController();
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
     });
-});
 
-describe('incoming controller tests', function(){
-    var $q,
-        $rootScope,
-        $scope,
-        $httpBackend,
-        $ionicLoading,
-        deferred,
-        createController;
+    it('should init messages list controller', inject(function(){
+        deferredInc.reject('Messages list error');
+        $scope.$apply();
+        expect($scope.type).toEqual('incoming');
+        expect(Activity.incoming).toHaveBeenCalled();
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
 
-    beforeEach(module('eucaby.controllers'));
-    beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
-        $q = _$q_;
-        $rootScope = _$rootScope_;
-        $scope = _$rootScope_.$new();
-        $httpBackend = _$httpBackend_;
-        $ionicLoading = _$ionicLoading_;
+        spyOn($state, 'is').and.returnValue(true);
+        createController();
+        expect($scope.type).toEqual('outgoing');
+        expect(Activity.outgoing).toHaveBeenCalled();
     }));
-    beforeEach(function() {
-        deferred = $q.defer();
-        $httpBackend.whenGET(/^templates\/.*/).respond('');
+
+    it('should define outgoing formatter', function(){
+        var item = {
+            id: 123,
+            created_date: '2015-07-17T22:43:19+00:00',
+            recipient: {name: 'UserA', email: 'some@email'}
+        },
+        res = {
+            description: 'received 1 d 22 hr ago',
+            name: 'UserA',
+            notification_url: '#/app/tab/outgoing_notification/123',
+            request_url: '#/app/tab/outgoing_request/123'
+        };
+        expect($scope.outgoingFormatter(item)).toEqual(res);
     });
-    beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('IncomingCtrl', {
-                $scope: $scope
-            })
-        }
-    }));
-    afterEach(function(){
-        $httpBackend.verifyNoOutstandingExpectation();
-        $httpBackend.verifyNoOutstandingRequest();
+
+    it('should define incoming formatter', function(){
+        var item = {
+            id: 123,
+            created_date: '2015-07-17T22:43:19+00:00',
+            sender: {name: 'UserB'}
+        },
+        res = {
+            description: 'sent 1 d 22 hr ago',
+            name: 'UserB',
+            notification_url: '#/app/tab/incoming_notification/123',
+            request_url: '#/app/tab/incoming_request/123'
+        };
+        expect($scope.incomingFormatter(item)).toEqual(res);
+    });
+
+    it('should load incoming or outgoing messages with success', function(){
+        // Outgoing messages (very similar to incoming messages)
+        var data = {
+            data: [
+                {id: 123, type: 'notification', session: {complete: true},
+                    recipient: {name: 'UserA'}, message: 'Some message',
+                    created_date: '2015-07-17T22:43:19+00:00'}
+            ]
+        };
+        var messages = [
+            {item: data.data[0], complete: true, name: 'UserA',
+                description: 'received 1 d 22 hr ago', message: 'Some message',
+                url: '#/app/tab/outgoing_notification/123',
+                icon: 'ion-ios-location'}
+        ];
+        $scope.type = 'outgoing';
+        $scope.loadItems();
+        deferredOut.resolve(data);
+        $scope.$apply();
+        expect($scope.messages).toEqual(messages);
+        expect($scope.viewTitle).toEqual('Outgoing');
+        expect(Activity.outgoing).toHaveBeenCalled();
+
+        // Incoming messages
+        Activity.incoming.calls.reset();
+        $scope.type = 'incoming';
+        $scope.loadItems();
+        expect(Activity.incoming).toHaveBeenCalled();
+    });
+
+    it('should load incoming or outgoing messages with error', function() {
+        // Outgoing messages
+        $scope.type = 'outgoing';
+        deferredOut.reject('Outgoing error');
+        $scope.loadItems();
+        $scope.$apply();
+        expect(Activity.outgoing).toHaveBeenCalled();
+        expect(utilsIonic.alert)
+            .toHaveBeenCalledWith('Error', 'Error loading data');
+    });
+
+    it('should refresh messages and broadcast event', function(){
+        var deferred = $q.defer();
+        spyOn($scope, 'loadItems').and.callFake(function(){
+            return deferred.promise;
+        });
+        spyOn($scope, '$broadcast');
+        deferred.resolve();
+        $scope.refresh();
+        $scope.$apply();
+        expect($scope.loadItems).toHaveBeenCalled();
+        expect($scope.$broadcast)
+            .toHaveBeenCalledWith('scroll.refreshComplete');
     });
 });
 

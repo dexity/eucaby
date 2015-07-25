@@ -4,7 +4,8 @@ angular.module('eucaby.controllers', [
     'eucaby.services',
     'eucaby.utils',
     'eucaby.api',
-    'eucaby.push'
+    'eucaby.push',
+    'eucaby.filters'
 ])
 .controller('MainCtrl', [
     '$scope',
@@ -322,19 +323,25 @@ function($scope, $ionicLoading, utils, utilsIonic, Settings) {
     });
 }])
 
-.controller('OutgoingCtrl', [
+.controller('MessagesListCtrl', [
     '$scope',
-    '$stateParams',
+    '$state',
     '$ionicLoading',
     'utils',
     'dateUtils',
     'utilsIonic',
     'Activity',
-function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
-         Activity) {
+    'capitalizeFilter',
+function($scope, $state, $ionicLoading, utils, dateUtils, utilsIonic,
+         Activity, capitalizeFilter) {
+    // Set type
+    if ($state.is('app.tab.outgoing')){
+        $scope.type = 'outgoing';
+    } else {
+        $scope.type = 'incoming';  // Default type
+    }
 
-    // Outgoing formatter
-    var formatter = function(item){
+    $scope.outgoingFormatter = function(item){
         return {
             description: 'received ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
@@ -343,41 +350,8 @@ function($scope, $stateParams, $ionicLoading, utils, dateUtils, utilsIonic,
             request_url: '#/app/tab/outgoing_request/' + item.id
         };
     };
-    var loadItems = function(){
-        // Load outgoing items
-        return Activity.outgoing().then(function(data){
-            $scope.messages = utils.formatMessages(data.data, formatter);
-            $scope.viewTitle = 'Outgoing';
-        }, function(data){
-            utilsIonic.alert('Error', 'Error loading data');
-            console.error(data);
-        });
-    };
 
-    $scope.refresh = function(){
-        loadItems().finally(function(){
-            $scope.$broadcast('scroll.refreshComplete');
-        });
-    };
-
-    // Init controller
-    $ionicLoading.show();
-    loadItems().finally(function(){
-        $ionicLoading.hide();
-    });
-}])
-
-.controller('IncomingCtrl', [
-    '$scope',
-    '$ionicLoading',
-    'utils',
-    'dateUtils',
-    'utilsIonic',
-    'Activity',
-function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
-
-    // Incoming formatter
-    var formatter = function(item){
+    $scope.incomingFormatter = function(item){
         return {
             description: 'sent ' + dateUtils.ts2h(
                 Date.parse(item.created_date)),
@@ -386,28 +360,27 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, Activity) {
             request_url: '#/app/tab/incoming_request/' + item.id
         };
     };
-    var loadItems = function() {
-        // Load incoming items
-        return Activity.incoming().then(function (data) {
-            $scope.messages = utils.formatMessages(data.data, formatter);
-            $scope.viewTitle = 'Incoming';
-        }, function (data) {
+
+    $scope.loadItems = function(){
+        return Activity[$scope.type]().then(function(data){
+            $scope.messages = utils.formatMessages(
+                data.data, $scope[$scope.type + 'Formatter']);
+            $scope.viewTitle = capitalizeFilter($scope.type);
+        }, function(data){
             utilsIonic.alert('Error', 'Error loading data');
             console.error(data);
-        }).finally(function () {
-            $ionicLoading.hide();
         });
     };
 
     $scope.refresh = function(){
-        loadItems().finally(function(){
+        $scope.loadItems().finally(function(){
             $scope.$broadcast('scroll.refreshComplete');
         });
     };
 
     // Init controller
     $ionicLoading.show();
-    loadItems().finally(function(){
+    $scope.loadItems().finally(function(){
         $ionicLoading.hide();
     });
 }])

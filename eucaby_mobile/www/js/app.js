@@ -136,7 +136,16 @@ function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
         views: {
             'tab-outgoing': {
                 templateUrl: 'templates/messages.html',
-                controller: 'OutgoingCtrl'
+                controller: 'MessagesListCtrl'
+            }
+        }
+    })
+    .state('app.tab.incoming', {
+        url: '/incoming',
+        views: {
+            'tab-incoming': {
+                templateUrl: 'templates/messages.html',
+                controller: 'MessagesListCtrl'
             }
         }
     })
@@ -158,16 +167,6 @@ function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
             }
         }
     })
-    .state('app.tab.incoming', {
-        url: '/incoming',
-        views: {
-            'tab-incoming': {
-                templateUrl: 'templates/messages.html',
-                controller: 'IncomingCtrl'
-            }
-        }
-    })
-
     .state('app.tab.incoming_notification', {
         url: '/incoming_notification/:id',
         views: {
