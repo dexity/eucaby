@@ -492,6 +492,8 @@ describe('map ionic tests', function(){
         locMock,
         successHandler,
         errorHandler;
+    var mapMock = jasmine.createSpy(),
+        markerMock = jasmine.createSpy();
 
     beforeEach(module('ionic'));
     beforeEach(module('eucaby.utils'));
@@ -511,8 +513,8 @@ describe('map ionic tests', function(){
         spyOn($ionicLoading, 'show');
         spyOn($ionicLoading, 'hide');
         spyOn(utilsIonic, 'alert');
-        spyOn(map, 'createMap').and.returnValue('mapObj');
-        spyOn(map, 'createMarker').and.returnValue('markerObj');
+        spyOn(map, 'createMap').and.returnValue(mapMock);
+        spyOn(map, 'createMarker').and.returnValue(markerMock);
     });
 
     it('should get current location with success', function() {
@@ -523,13 +525,13 @@ describe('map ionic tests', function(){
         var location = mapIonic.getCurrentLocation('map-id');
         expect(map.createMap).toHaveBeenCalledWith(
             'map-id', 1.2, 3.4, {zoom: 16});
-        expect(map.createMarker).toHaveBeenCalledWith('mapObj', 1.2, 3.4);
+        expect(map.createMarker).toHaveBeenCalledWith(mapMock, 1.2, 3.4);
         expect($ionicLoading.show).toHaveBeenCalled();
         expect($ionicLoading.hide).toHaveBeenCalled();
         location.then(successHandler, errorHandler);
         $scope.$apply();
         expect(successHandler).toHaveBeenCalledWith(
-            {map: 'mapObj', marker: 'markerObj', lat: 1.2, lng: 3.4});
+            {map: mapMock, marker: markerMock, lat: 1.2, lng: 3.4});
         expect(errorHandler.calls.any()).toBeFalsy();
     });
 

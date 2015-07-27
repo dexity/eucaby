@@ -398,7 +398,6 @@ function($scope, $ionicLoading, $stateParams, map, utils, utilsIonic,
 
     // Init controller
     $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
-    // XXX: Add $ionicLoading feature
     Notification.get($stateParams.id).then(function(data){
         $scope.item = data.data;
         $scope.icon = $scope.item.session.complete ? 'ion-ios-location': 'ion-ios-location-outline';
@@ -425,12 +424,14 @@ function($scope, $ionicLoading, $stateParams, map, utils, utilsIonic,
 function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
          mapIonic, utilsIonic, ctrlUtils, Request, Notification) {
 
-    var populateMarkers = function(notifs){
+    $scope.populateMarkers = function(notifs){
+        $scope.showBrowserWarning = false;
+        $scope.markers = [];
         for (var i = 0; i < notifs.length; i++){
             var item = notifs[i];
             var loc = item.location;
             if (item.is_web){
-                showBrowserWarning = true;
+                $scope.showBrowserWarning = true;
             }
             if ($scope.map){
                 $scope.markers.push(
@@ -440,20 +441,39 @@ function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
         }
     };
 
-    var requestCallback = function(data){
+    $scope.locationHandler = function(data){
+        // Note: data location can be different from notification locations
+        //       or be either one of them
+        $scope.map = data.map;
+        $scope.marker = data.marker;
+        $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
+        $scope.populateMarkers($scope.item.notifications);
+        $scope.centerMarker($rootScope.currentLatLng);
+        if (!$scope.marker && $scope.markers.length > 0){
+            $scope.marker = $scope.markers[0];
+        }
+    };
+
+    $scope.requestHandler = function(data){
         $scope.item = data.data;
         $scope.icon = $scope.item.session.complete ? 'ion-ios-bolt': 'ion-ios-bolt-outline';
-        $scope.markers = [];
         $scope.form.token = $scope.item.session.token;
         // Load map
-        mapIonic.getCurrentLocation('locmap').then(function(data) {
-            $scope.map = data.map;
-            $scope.marker = data.marker;
-            $rootScope.currentLatLng = {lat: data.lat, lng: data.lng};
-            populateMarkers($scope.item.notifications);
-            $scope.centerMarker($rootScope.currentLatLng);
-            $scope.showBrowserWarning = showBrowserWarning;
-        });
+        if ($scope.isOutgoing &&
+            !angular.equals($scope.item.notifications, [])){
+            // Set location from the first notification.
+            angular.element(document).ready(function() {
+                // For some reason the DOM doesn't load on time
+                // Note: This happens because of ng-if statement
+                var loc = $scope.item.notifications[0].location;
+                $scope.locationHandler({
+                    map: map.createMap('locmap', loc.lat, loc.lng,
+                                       {zoom: $rootScope.currentZoom || 15}),
+                    marker: null, lat: loc.lat, lng: loc.lng});
+            });
+        } else {
+            mapIonic.getCurrentLocation('locmap').then($scope.locationHandler);
+        }
     };
 
     $scope.sendLocation = function(event) {
@@ -464,10 +484,10 @@ function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
         .then(function(data){
             $ionicLoading.hide();
             // Reload request
-            Request.get($stateParams.id).then(requestCallback);
+            Request.get($stateParams.id).then($scope.requestHandler);
             utilsIonic.toast('Location submitted');
             $scope.form = {};
-        }, ctrlUtils.messageError('Failed to send request'));
+        }, ctrlUtils.messageError('Failed to send location'));
     };
 
     $scope.centerMarker = function(loc) {
@@ -486,14 +506,15 @@ function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
                 $scope.centerMarker(position);
             }
             $ionicLoading.hide();
+        }, function(){
+            $ionicLoading.hide();
         });
     };
 
     // Init controller
-    var showBrowserWarning = false;
-    $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
     $scope.form = {};
-    Request.get($stateParams.id).then(requestCallback);
+    $scope.isOutgoing = utilsIonic.urlHasSubstring('outgoing');
+    Request.get($stateParams.id).then($scope.requestHandler);
 }])
 
 .factory('ctrlUtils', [
@@ -526,6 +547,7 @@ function($rootScope, $ionicLoading, utils, utilsIonic) {
         },
         messageError: function(default_error) {
             return function(data){
+                console.debug(data);
                 $ionicLoading.hide();
                 utilsIonic.alert('Error ', data.message || default_error);
             };

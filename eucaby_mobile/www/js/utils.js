@@ -304,6 +304,9 @@ function(storageManager, MAX_RECENT_CONTACTS, EMAIL_REGEXP){
                 return self.ts2hd(ts0, sy);
             }
             var tl = self.timeList(dt);
+            if (!tl){
+                return '';
+            }
             // Compose string
             if (tl[0] !== 0) {
                 ht = tl[0] + ' d ' + tl[1] + ' hr';

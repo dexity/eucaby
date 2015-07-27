@@ -152,6 +152,8 @@ describe('map controller tests', function(){
     var locMock,
         tmplMock,
         friendsMock;
+    var mapMock = jasmine.createSpy(),
+        markerMock = jasmine.createSpy();
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
@@ -172,8 +174,8 @@ describe('map controller tests', function(){
     beforeEach(function() {
         deferred = $q.defer();
         locMock = spyOn(map, 'currentLocation');
-        spyOn(map, 'createMap').and.returnValue('map');
-        spyOn(map, 'createMarker').and.returnValue('marker');
+        spyOn(map, 'createMap').and.returnValue(mapMock);
+        spyOn(map, 'createMarker').and.returnValue(markerMock);
         // $ionicModal.fromTemplateUrl makes 2 http requests
         tmplMock = spyOn($ionicModal, 'fromTemplateUrl');
         tmplMock.and.callFake(function(){
@@ -197,7 +199,7 @@ describe('map controller tests', function(){
         $httpBackend.verifyNoOutstandingRequest();
     });
 
-    it('should init map controller', function(){
+    it('should init', function(){
         // Note: Functions created in controller cannot be mocked
         //       so we test functions call by methods which they use inside
         expect($scope.markers).toEqual([]);
@@ -823,69 +825,302 @@ describe('notification detail controller tests', function(){
         $scope,
         $httpBackend,
         $ionicLoading,
-        deferred,
-        createController;
+        map,
+        Notification,
+        deferred;
+    var mapMock = jasmine.createSpy(),
+        markerMock = jasmine.createSpy();
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _map_,
+        _Notification_){
         $q = _$q_;
         $rootScope = _$rootScope_;
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        map = _map_;
+        Notification = _Notification_;
     }));
     beforeEach(function() {
         deferred = $q.defer();
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(map, 'createMap').and.returnValue(mapMock);
+        spyOn(map, 'createMarker').and.returnValue(markerMock);
+        spyOn(Notification, 'get').and.callFake(function(){
+            return deferred.promise;
+        });
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('NotificationDetailCtrl', {
-                $scope: $scope
-            })
-        }
+        $controller('NotificationDetailCtrl', {$scope: $scope});
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
     });
-});
 
+    it('should get notification', function(){
+        var data = {
+            data: {
+                session: {complete: true},
+                location: {lat: 1.2, lng: 3.4},
+                is_web: false
+            }
+        };
+        deferred.resolve(data);
+        $scope.$apply();
+        expect($ionicLoading.show.calls.any()).toBeFalsy();
+        expect($ionicLoading.hide.calls.any()).toBeFalsy();
+        expect($scope.isOutgoing).toBeDefined();
+        expect($scope.map).toEqual(mapMock);
+        expect($scope.marker).toEqual(markerMock);
+        expect($scope.item).toEqual(data.data);
+        expect($scope.icon).toEqual('ion-ios-location');
+        expect(map.createMap).toHaveBeenCalledWith('locmap', 1.2, 3.4);
+        expect(map.createMarker)
+            .toHaveBeenCalledWith($scope.map, 1.2, 3.4, -1, false);
+    });
+});
 
 describe('request detail controller tests', function(){
     var $q,
+        $window,
         $rootScope,
         $scope,
         $httpBackend,
         $ionicLoading,
-        deferred,
-        createController;
+        map,
+        Request,
+        Notification,
+        utilsIonic,
+        mapIonic,
+        deferredNotifPost,
+        deferredReqGet,
+        deferredLoc,
+        reqData;
+    var mapMock = jasmine.createSpyObj('map', ['setCenter']),
+        markerMock = jasmine.createSpy('markerMock'),
+        locMock = jasmine.createSpy('location');
 
     beforeEach(module('eucaby.controllers'));
     beforeEach(inject(function(
-        _$q_, _$rootScope_, _$httpBackend_, _$ionicLoading_){
+        _$q_, _$window_, _$rootScope_, _$httpBackend_, _$ionicLoading_, _map_,
+        _Request_, _Notification_, _utilsIonic_, _mapIonic_){
         $q = _$q_;
+        $window = _$window_;
         $rootScope = _$rootScope_;
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $ionicLoading = _$ionicLoading_;
+        map = _map_;
+        Request = _Request_;
+        Notification = _Notification_;
+        utilsIonic = _utilsIonic_;
+        mapIonic = _mapIonic_;
     }));
     beforeEach(function() {
-        deferred = $q.defer();
+        deferredNotifPost = $q.defer();
+        deferredReqGet = $q.defer();
+        deferredLoc = $q.defer();
+        // Mock for angular ready
+        spyOn(angular, 'element').and.callFake(function(){
+            return {
+                ready: function(){
+                    arguments[0]();
+                }
+            }
+        });
+        spyOn($ionicLoading, 'show');
+        spyOn($ionicLoading, 'hide');
+        spyOn(utilsIonic, 'urlHasSubstring').and.returnValue(true);
+        spyOn(map, 'createMap').and.returnValue(mapMock);
+        spyOn(map, 'createMarker').and.returnValue(markerMock);
+        spyOn(Notification, 'post').and.callFake(function(){
+            return deferredNotifPost.promise;
+        });
+        spyOn(Request, 'get').and.callFake(function(){
+            return deferredReqGet.promise;
+        });
+        spyOn(mapIonic, 'getCurrentLocation').and.callFake(function(){
+            return deferredLoc.promise;
+        });
+        reqData = {
+            data: {
+                session: {complete: true, token: 'ABC'},
+                notifications: [{
+                        location: {lat: 1.2, lng: 3.4},
+                        is_web: true}]
+        }};
         $httpBackend.whenGET(/^templates\/.*/).respond('');
     });
     beforeEach(inject(function($controller){
-        createController = function(){
-            return $controller('RequestDetailCtrl', {
-                $scope: $scope
-            })
-        }
+        $controller('RequestDetailCtrl', {$scope: $scope});
     }));
     afterEach(function(){
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
     });
+
+    it('should init', function(){
+        $rootScope.currentZoom = 5;
+        deferredReqGet.resolve(reqData);
+        $scope.$apply();
+        expect($scope.map).toEqual(mapMock);
+        expect($scope.marker).toEqual(markerMock);
+        expect($scope.item).toEqual(reqData.data);
+        expect($scope.icon).toEqual('ion-ios-bolt');
+        expect($scope.form).toEqual({token: 'ABC'});
+        expect($rootScope.currentLatLng).toEqual({lat: 1.2, lng: 3.4});
+        expect($scope.isOutgoing).toEqual(true);
+        expect($scope.showBrowserWarning).toEqual(true);
+        expect(Request.get).toHaveBeenCalled();
+        expect(map.createMap)
+            .toHaveBeenCalledWith('locmap', 1.2, 3.4, {zoom: 5});
+        expect(map.createMarker)
+            .toHaveBeenCalledWith(mapMock, 1.2, 3.4, 0, true);
+    });
+
+    it('should populate markers', function(){
+        // Only non-web notifications
+        $scope.map = mapMock;
+        var notifs = [
+            {location: {lat: 1, lng: 2}, is_web: false}
+        ];
+        $scope.populateMarkers(notifs);
+        expect($scope.showBrowserWarning).toEqual(false);
+        expect($scope.markers.length).toEqual(1);
+
+        // Mixed notifications
+        notifs.push({location: {lat: 3, lng: 4}, is_web: true});
+        $scope.populateMarkers(notifs);
+        expect($scope.showBrowserWarning).toEqual(true);
+        expect($scope.markers.length).toEqual(2);
+    });
+
+    it('should handle location', function(){
+        // No notifications
+        $scope.item = {notifications: []};
+        $scope.locationHandler({map: mapMock});
+        expect($scope.map).toEqual(mapMock);
+        expect($scope.marker).toBeUndefined();
+        expect($scope.markers).toEqual([]);
+        expect($rootScope.currentLatLng)
+            .toEqual({lat: undefined, lng: undefined});
+
+        // Notifications are set
+        $scope.map.setCenter.calls.reset();
+        spyOn($scope, 'populateMarkers').and.callThrough();
+        spyOn($scope, 'centerMarker').and.callThrough();
+        $scope.item = {notifications: [
+            {location: {lat: 1, lng: 2}, is_web: false},
+            {location: {lat: 3, lng: 4}, is_web: true}
+        ]};
+        var data = {map: mapMock, marker: null, lat: 1.2, lng: 3.4};
+        $scope.locationHandler(data);
+        expect($scope.map).toEqual(mapMock);
+        expect($scope.marker).toEqual($scope.markers[0]);
+        expect($scope.markers.length).toEqual(2);
+        expect($rootScope.currentLatLng)
+            .toEqual({lat: 1.2, lng: 3.4});
+        expect($scope.map.setCenter).toHaveBeenCalledWith({lat: 1.2, lng: 3.4});
+        expect($scope.populateMarkers).toHaveBeenCalled();
+        expect($scope.centerMarker).toHaveBeenCalled();
+    });
+
+    it('should handle request', function(){
+        var dataMock = jasmine.createSpy('data');
+        spyOn($scope, 'locationHandler');
+        // Request is outgoing
+        $scope.isOutgoing = true;
+        $scope.requestHandler(reqData);
+        expect($scope.item).toEqual(reqData.data);
+        expect($scope.icon).toEqual('ion-ios-bolt');
+        expect($scope.form).toEqual({token: 'ABC'});
+        expect($scope.locationHandler)
+            .toHaveBeenCalledWith({
+                map: mapMock, marker: null, lat: 1.2, lng: 3.4});
+
+        // Request is not outgoing
+        $scope.locationHandler.calls.reset();
+        $scope.isOutgoing = false;
+        $scope.requestHandler(reqData);
+        expect(mapIonic.getCurrentLocation).toHaveBeenCalledWith('locmap');
+        deferredLoc.resolve(dataMock);
+        $scope.$apply();
+        expect($scope.locationHandler).toHaveBeenCalledWith(dataMock);
+    });
+
+    it('should send location with success', function(){
+        $scope.form = {token: 'ABC'};
+        $rootScope.currentLatLng = {lat: 1.2, lng: 3.4};
+        var reqMock = jasmine.createSpy();
+        Request.get.calls.reset();
+        spyOn(utilsIonic, 'toast');
+        spyOn($scope, 'requestHandler');
+        deferredNotifPost.resolve(null);  // data don't matter
+        deferredReqGet.resolve(reqData);
+        $scope.sendLocation();
+        expect(Notification.post)
+            .toHaveBeenCalledWith({token: 'ABC'}, 1.2, 3.4);
+        $scope.$apply();
+        expect($scope.form).toEqual({});
+        expect(Request.get).toHaveBeenCalled();
+        expect($scope.requestHandler).toHaveBeenCalledWith(reqData);
+        expect(utilsIonic.toast).toHaveBeenCalledWith('Location submitted');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should send location with error', function(){
+        $scope.form = {token: 'ABC'};
+        $rootScope.currentLatLng = {lat: 1.2, lng: 3.4};
+        spyOn(utilsIonic, 'alert');
+        deferredNotifPost.reject({});
+        $scope.sendLocation();
+        expect(Notification.post)
+            .toHaveBeenCalledWith({token: 'ABC'}, 1.2, 3.4);
+        $scope.$apply();
+        expect(utilsIonic.alert)
+            .toHaveBeenCalledWith('Error ', 'Failed to send location');
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+    });
+
+    it('should center marker', function(){
+        $scope.map = map.createMap();
+        $scope.centerMarker(locMock);
+        expect($scope.map.setCenter).toHaveBeenCalledWith(locMock);
+    });
+
+    it('should center on me', function(){
+        spyOn(map, 'currentLocation').and.callFake(function(){
+            arguments[0](1.2, 3.4);
+        });
+        spyOn($scope, 'centerMarker').and.callThrough();
+        $window.google = {
+            maps: {LatLng: function(lat, lng){
+                return locMock
+            }}
+        };
+        // Map is not set
+        $scope.centerOnMe();
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        expect($scope.centerMarker.calls.any()).toEqual(false);
+        // Map is set
+        $scope.map = mapMock;
+        $ionicLoading.show.calls.reset();
+        $ionicLoading.hide.calls.reset();
+        $scope.centerOnMe();
+        expect($ionicLoading.show).toHaveBeenCalled();
+        expect($ionicLoading.hide).toHaveBeenCalled();
+        expect($scope.map.setCenter).toHaveBeenCalledWith(locMock);
+    });
+
+
 });
 
 describe('controller utils tests', function(){
