@@ -54,21 +54,20 @@ function($scope, $rootScope, $state, $ionicSideMenuDelegate, storageManager,
 
 .controller('LoginCtrl', [
     '$scope',
-    '$rootScope',
     '$location',
     '$ionicLoading',
     'EucabyApi',
     'notifications',
     'utils',
     'utilsIonic',
-function($scope, $rootScope, $location, $ionicLoading, EucabyApi,
-         notifications, utils, utilsIonic) {
+function($scope, $location, $ionicLoading, EucabyApi, notifications,
+    utils, utilsIonic) {
 
     $scope.facebookLogin = function(){
         $ionicLoading.show();
         EucabyApi.login().then(function() {
                 $location.path('/app/tab/map');
-                notifications.init($rootScope);
+                notifications.init();
             }, function(data) {
                 utilsIonic.alert('Error', 'Error during log in. ' +
                                      'Please try again in a moment.');

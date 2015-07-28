@@ -10,8 +10,10 @@ angular.module('eucaby.api', [
     'openfb',
     'eucaby.utils'
 ])
+
 .constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
 //.constant('ENDPOINT', 'http://localhost:8888')
+
 .factory('EucabyApi', [
     '$http',
     '$q',

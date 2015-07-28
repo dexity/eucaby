@@ -62,7 +62,7 @@ describe('main controller tests', function() {
 
     it('should show header for map view', function(){
         stateIsMock.and.returnValue(true);
-        expect($scope.showHeader()).toBeTruthy();
+        expect($scope.showHeader()).toEqual(true);
         expect($state.is).toHaveBeenCalledWith('app.tab.map');
         $httpBackend.flush();
     });
@@ -123,7 +123,7 @@ describe('login controller tests', function(){
         expect($ionicLoading.show).toHaveBeenCalled();
         expect($ionicLoading.hide).toHaveBeenCalled();
         expect($location.path).toHaveBeenCalledWith('/app/tab/map');
-        expect(notifications.init).toHaveBeenCalledWith($rootScope);
+        expect(notifications.init).toHaveBeenCalledWith();
     });
 
     it('should display error after failed login', function(){
@@ -229,8 +229,8 @@ describe('map controller tests', function(){
         });
         $scope.centerOnMe(true);
         $scope.$apply();
-        expect($ionicLoading.show.calls.any()).toBeFalsy();
-        expect($ionicLoading.hide.calls.any()).toBeFalsy();
+        expect($ionicLoading.show.calls.any()).toEqual(false);
+        expect($ionicLoading.hide.calls.any()).toEqual(false);
         expect($window.google.maps.event.addListener).toHaveBeenCalled();
     });
 
@@ -244,7 +244,7 @@ describe('map controller tests', function(){
         expect($ionicLoading.hide).toHaveBeenCalled();
         expect(map.createMap).toHaveBeenCalled();
         expect(utilsIonic.alert).toHaveBeenCalled();
-        expect(map.createMarker.calls.any()).toBeFalsy();
+        expect(map.createMarker.calls.any()).toEqual(false);
     });
 
     it('should register model', function(){
@@ -306,22 +306,22 @@ describe('map controller tests', function(){
     it('should check if form is valid', function(){
         var form;
         // Empty form
-        expect($scope.isFormValid({})).toBeFalsy();
+        expect($scope.isFormValid({})).toEqual(false);
         expect(utilsIonic.alert).toHaveBeenCalled();
         // Invalid email
         form = {email: 'wrong'};
-        expect($scope.isFormValid(form)).toBeFalsy();
+        expect($scope.isFormValid(form)).toEqual(false);
         expect(utilsIonic.alert).toHaveBeenCalled();
         // Valid email
         form = {email: 'some@email'};
-        expect($scope.isFormValid(form)).toBeTruthy();
+        expect($scope.isFormValid(form)).toEqual(true);
         // Both email and user are set
         form = {email: 'some@email', user: 'user1'};
-        expect($scope.isFormValid(form)).toBeFalsy();
+        expect($scope.isFormValid(form)).toEqual(false);
         expect(utilsIonic.alert).toHaveBeenCalled();
         // User is set
         form = {user: 'user1'};
-        expect($scope.isFormValid(form)).toBeTruthy();
+        expect($scope.isFormValid(form)).toEqual(true);
     });
 
     it('should handle modal.shown event', function(){
@@ -336,7 +336,7 @@ describe('map controller tests', function(){
         expect($scope.friends).toEqual([]);
         $scope.modalShownHandler(null, 'notification');
         expect($scope.loadFriends).toHaveBeenCalled();
-        expect(mapIonic.getCurrentLocation.calls.any()).toBeFalsy();
+        expect(mapIonic.getCurrentLocation.calls.any()).toEqual(false);
 
         // Friends is populated
         $scope.loadFriends.calls.reset();
@@ -348,7 +348,7 @@ describe('map controller tests', function(){
 
         $scope.modalShownHandler(null, 'notification');  // Run function
         $scope.$apply();
-        expect($scope.loadFriends.calls.any()).toBeFalsy();
+        expect($scope.loadFriends.calls.any()).toEqual(false);
         expect($scope.map).toEqual('somemap');
         expect($scope.marker).toEqual('somemarker');
         expect($scope.currentLatLng).toEqual({lat: 1.2, lng: 3.4});
@@ -872,8 +872,8 @@ describe('notification detail controller tests', function(){
         };
         deferred.resolve(data);
         $scope.$apply();
-        expect($ionicLoading.show.calls.any()).toBeFalsy();
-        expect($ionicLoading.hide.calls.any()).toBeFalsy();
+        expect($ionicLoading.show.calls.any()).toEqual(false);
+        expect($ionicLoading.hide.calls.any()).toEqual(false);
         expect($scope.isOutgoing).toBeDefined();
         expect($scope.map).toEqual(mapMock);
         expect($scope.marker).toEqual(markerMock);

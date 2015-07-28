@@ -173,10 +173,10 @@ describe('utils tests', function(){
             'hello@world.info', 'hello@world.message', 'some@email', '!@email'];
         var invalidEmails = ['', 'test', '@email', '@email.com'];
         for (i = 0; i < validEmails.length; i++){
-            expect(utils.validEmail(validEmails[i])).toBeTruthy();
+            expect(utils.validEmail(validEmails[i])).toEqual(true);
         }
         for (i = 0; i < invalidEmails.length; i++){
-            expect(utils.validEmail(invalidEmails[i])).toBeFalsy();
+            expect(utils.validEmail(invalidEmails[i])).toEqual(false);
         }
     });
 
@@ -453,8 +453,8 @@ describe('date utils tests', function(){
     });
 
     it('should determine if show year', function(){
-        expect(dateUtils.showYear(ts1, ts2)).toBeFalsy();  // Same year
-        expect(dateUtils.showYear(ts1, ts3)).toBeTruthy();  // Different year
+        expect(dateUtils.showYear(ts1, ts2)).toEqual(false);  // Same year
+        expect(dateUtils.showYear(ts1, ts3)).toEqual(true);  // Different year
     });
 
     it('should convert timestamp to human date', function(){
@@ -532,7 +532,7 @@ describe('map ionic tests', function(){
         $scope.$apply();
         expect(successHandler).toHaveBeenCalledWith(
             {map: mapMock, marker: markerMock, lat: 1.2, lng: 3.4});
-        expect(errorHandler.calls.any()).toBeFalsy();
+        expect(errorHandler.calls.any()).toEqual(false);
     });
 
     it('should get current location with error', function(){
@@ -541,8 +541,8 @@ describe('map ionic tests', function(){
         });
 
         var location = mapIonic.getCurrentLocation('map-id');
-        expect(map.createMap.calls.any()).toBeFalsy();
-        expect(map.createMarker.calls.any()).toBeFalsy();
+        expect(map.createMap.calls.any()).toEqual(false);
+        expect(map.createMarker.calls.any()).toEqual(false);
         expect($ionicLoading.show).toHaveBeenCalled();
         expect($ionicLoading.hide).toHaveBeenCalled();
         location.then(successHandler, errorHandler);
@@ -550,7 +550,7 @@ describe('map ionic tests', function(){
         expect(errorHandler).toHaveBeenCalledWith({error: 'Some error'});
         expect(utilsIonic.alert).toHaveBeenCalledWith(
             'Error', 'Failed to find the current location.');
-        expect(successHandler.calls.any()).toBeFalsy();
+        expect(successHandler.calls.any()).toEqual(false);
     });
 });
 
@@ -612,7 +612,7 @@ describe('utils ionic tests', function(){
         // Current view is null
         var viewMock = spyOn($ionicHistory, 'currentView');
         viewMock.and.returnValue(null);
-        expect(utilsIonic.urlHasSubstring('request')).toBeFalsy();
+        expect(utilsIonic.urlHasSubstring('request')).toEqual(false);
         expect($ionicHistory.currentView).toHaveBeenCalled();
 
         // Current view has url with match
@@ -620,7 +620,7 @@ describe('utils ionic tests', function(){
             stateName: '/app/notification'
         });
         $ionicHistory.currentView.calls.reset();
-        expect(utilsIonic.urlHasSubstring('request')).toBeFalsy();
+        expect(utilsIonic.urlHasSubstring('request')).toEqual(false);
         expect($ionicHistory.currentView).toHaveBeenCalled();
 
         // Current view has matching url
@@ -628,7 +628,7 @@ describe('utils ionic tests', function(){
             stateName: '/app/request'
         });
         $ionicHistory.currentView.calls.reset();
-        expect(utilsIonic.urlHasSubstring('request')).toBeTruthy();
+        expect(utilsIonic.urlHasSubstring('request')).toEqual(true);
         expect($ionicHistory.currentView).toHaveBeenCalled();
     });
 
@@ -636,17 +636,17 @@ describe('utils ionic tests', function(){
         var viewMock = spyOn($ionicHistory, 'backView');
         // No back view
         viewMock.and.returnValue(null);
-        expect(utilsIonic.hasBackButton()).toBeFalsy();
+        expect(utilsIonic.hasBackButton()).toEqual(false);
         expect($ionicHistory.backView).toHaveBeenCalled();
         // Back view has no id
         $ionicHistory.backView.calls.reset();
         viewMock.and.returnValue({backViewId: null});
-        expect(utilsIonic.hasBackButton()).toBeFalsy();
+        expect(utilsIonic.hasBackButton()).toEqual(false);
         expect($ionicHistory.backView).toHaveBeenCalled();
         // Back view exists
         $ionicHistory.backView.calls.reset();
         viewMock.and.returnValue({backViewId: '001'});
-        expect(utilsIonic.hasBackButton()).toBeTruthy();
+        expect(utilsIonic.hasBackButton()).toEqual(true);
         expect($ionicHistory.backView).toHaveBeenCalled();
     });
 });
@@ -687,7 +687,7 @@ describe('storage manager tests', function(){
         expect(storageManager.getRefreshToken()).toBeUndefined();
         expect(storageManager.getAccessToken()).toBeUndefined();
         expect(storageManager.getFbToken()).toBeUndefined();
-        expect(storageManager.userLoggedIn()).toBeFalsy();
+        expect(storageManager.userLoggedIn()).toEqual(false);
 
         // Access and refresh tokens are passed
         storageManager.saveAuth(
@@ -696,7 +696,7 @@ describe('storage manager tests', function(){
             {ec_access_token: 'access', ec_refresh_token: 'refresh'});
         expect(storageManager.getAccessToken()).toEqual('access');
         expect(storageManager.getRefreshToken()).toEqual('refresh');
-        expect(storageManager.userLoggedIn()).toBeTruthy();
+        expect(storageManager.userLoggedIn()).toEqual(true);
         // fbtoken is set internally by OpenFB
         $window.localStorage.fbtoken = 'sometoken';
         expect(storageManager.getFbToken()).toEqual('sometoken');
@@ -711,13 +711,13 @@ describe('storage manager tests', function(){
     });
 
     it('should manage device status', function(){
-        expect(storageManager.getDeviceStatus()).toBeFalsy();
+        expect(storageManager.getDeviceStatus()).toEqual(false);
         // Invalid status: true should be a string, not a boolean
         storageManager.setDeviceStatus(true);
-        expect(storageManager.getDeviceStatus()).toBeFalsy();
+        expect(storageManager.getDeviceStatus()).toEqual(false);
         // True status
         storageManager.setDeviceStatus('true');
-        expect(storageManager.getDeviceStatus()).toBeTruthy();
+        expect(storageManager.getDeviceStatus()).toEqual(true);
         expect(storage).toEqual({ec_device_registered: 'true'});
     });
 

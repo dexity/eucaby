@@ -26,7 +26,7 @@ function($rootScope, $state, $ionicPlatform, $window, EucabyApi, notifications,
         if(window.StatusBar) {
             window.StatusBar.styleDefault();
         }
-        notifications.init($rootScope);
+        notifications.init();
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {

@@ -392,6 +392,6 @@ describe('eucaby api tests', function(){
         spyOn(OpenFB, 'logout').and.callThrough();
         EucabyApi.logout();
         expect(OpenFB.logout).toHaveBeenCalled();
-        expect(angular.equals(storage, {})).toBeTruthy();
+        expect(storage).toEqual({});
     });
 });
