@@ -1,5 +1,8 @@
 'use strict';
 
+// Utils module.
+/* global moment */
+
 angular.module('eucaby.utils', [])
 
 .constant('LATLNG', [37.7833, -122.4167])  // Default location: San Francisco
