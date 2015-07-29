@@ -316,11 +316,11 @@ describe('map controller tests', function(){
         form = {email: 'some@email'};
         expect($scope.isFormValid(form)).toEqual(true);
         // Both email and user are set
-        form = {email: 'some@email', user: 'user1'};
+        form = {email: 'some@email', username: 'user1'};
         expect($scope.isFormValid(form)).toEqual(false);
         expect(utilsIonic.alert).toHaveBeenCalled();
         // User is set
-        form = {user: 'user1'};
+        form = {username: 'user1'};
         expect($scope.isFormValid(form)).toEqual(true);
     });
 

@@ -24,24 +24,22 @@ angular.module('eucaby.push', [
 function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
     storageManager, ANDROID_ID) {
 
-    return {
+    var factory = {
         init: function() {
-            var self = this;
             // Set up push notifications to receive messages
             console.log('Registering device and notification event ...');
             // This should be executed when device is ready!
             try {
-                // XXX: Fix 'device' is not defined.
                 switch(device.platform){
                     case 'Android':
-                        self.$registerAndroid();
+                        factory.$registerAndroid();
                         $rootScope.$on('$cordovaPush:notificationReceived',
-                                   self.$receivedHandlerAndroid);
+                                       factory.$receivedHandlerAndroid);
                         break;
                     case 'iOS':
-                        self.$registerIOS();
+                        factory.$registerIOS();
                         $rootScope.$on('$cordovaPush:notificationReceived',
-                                   self.$receivedHandlerIOS);
+                                       factory.$receivedHandlerIOS);
                         break;
                     default:
                         console.error(
@@ -83,13 +81,12 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
             });
         },
         $registerIOS: function(){
-            var self = this;
             $cordovaPush.register({
                 badge: true,
                 sound: true,
                 alert: true
             }).then(function(deviceToken) {
-                self.$registerDevice(deviceToken, 'ios');
+                factory.$registerDevice(deviceToken, 'ios');
                 console.log("deviceToken: " + deviceToken);
             }, function(err) {
                 console.error("Registration error: " + err);
@@ -103,7 +100,6 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
             }
         },
         $handleMessage: function(payload, is_foreground){
-            var self = this;
             // Handles messages both for Android and iOS
             var typeLabel = payload.type;
             var showDetails = true;
@@ -125,10 +121,10 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
                 var body = 'Show the new ' + typeLabel + '?';
                 utilsIonic.confirm(
                     header, body, 'Show', 'Later', function(){
-                        self.$redirect(payload, showDetails);
+                        factory.$redirect(payload, showDetails);
                     });
             } else {
-                self.$redirect(payload, showDetails);
+                factory.$redirect(payload, showDetails);
                 /*
                 Note for Android only:
                     If you need to differentiate cold start
@@ -141,13 +137,12 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
             }
         },
         $receivedHandlerAndroid: function(event, notif) {
-            var self = this;
             switch(notif.event) {
                 case 'registered':
-                    self.$registerDevice(notif.regid, 'android');
+                    factory.$registerDevice(notif.regid, 'android');
                     break;
                 case 'message':
-                    self.$handleMessage(notif.payload, notif.foreground);
+                    factory.$handleMessage(notif.payload, notif.foreground);
                     break;
                 case 'error':
                     console.error('GCM error: ' + notif.msg);
@@ -158,7 +153,8 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
             }
         },
         $receivedHandlerIOS: function(event, notif) {
-            this.$handleMessage(notif, notif.foreground === '1');
+            factory.$handleMessage(notif, notif.foreground === '1');
         }
     };
+    return factory;
 }]);

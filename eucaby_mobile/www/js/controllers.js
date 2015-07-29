@@ -153,7 +153,7 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
     $scope.isFormValid = function(form){
         // Main form validation
         var emailValue = form.email;
-        var userValue = form.user;
+        var userValue = form.username;
         if ((!emailValue && !userValue) || (emailValue && userValue)){
             utilsIonic.alert(
                 'Error', 'Please provide either an email or select a friend');
