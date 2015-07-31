@@ -1,7 +1,6 @@
 'use strict';
 
 //Module for push notifications.
-/* global device */
 
 angular.module('eucaby.push', [
     'ionic',

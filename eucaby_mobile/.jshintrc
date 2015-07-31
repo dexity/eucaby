@@ -22,6 +22,8 @@
         "window": true,
         "navigator": true,
         "alert": true,
-        "document": true
+        "document": true,
+        "device": true,
+        "moment": true
     }
 }

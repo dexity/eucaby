@@ -1,13 +1,13 @@
 'use strict';
 
 // Utils module.
-/* global moment */
 
 angular.module('eucaby.utils', [])
 
 .constant('LATLNG', [37.7833, -122.4167])  // Default location: San Francisco
 
 .constant('MAX_RECENT_CONTACTS', 3)
+
 // See: https://github.com/angular/angular.js/blob/master/src/ng/directive/input.js
 .constant('EMAIL_REGEXP',
           /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i)
