@@ -5,6 +5,8 @@ import flask
 import flask_sqlalchemy
 from sqlalchemy_utils.types import choice
 
+from google.appengine.api import memcache
+
 from eucaby_api import args as api_args
 from eucaby_api.utils import utils as api_utils
 from eucaby_api.utils import date as utils_date
@@ -69,8 +71,7 @@ class User(db.Model):
         db.session.add(user)
         db.session.commit()
         # Create user settings and set default values
-        obj = UserSettings.get_or_create(user.id)
-        obj.update(None, commit=True)
+        UserSettings.get_or_create(user.id)
         return user
 
     @classmethod
@@ -105,24 +106,25 @@ class User(db.Model):
 class UserSettings(db.Model):
 
     """User settings model."""
-    DEFAULT_SETTINGS = dict(
-        email_subscription=True
-    )
+    DEFAULT_SETTINGS = {
+        api_args.EMAIL_SUBSCRIPTION: True
+    }
 
     __tablename__ = 'user_settings'
     id = db.Column(db.Integer, primary_key=True)
     # One to one relationship with User
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    settings = db.Column(db.Text)  # Settings in json format
+    settings = db.Column(db.Text, default='{}')  # Settings in json format
 
     @classmethod
-    def get_or_create(cls, user_id, commit=False):
+    def get_or_create(cls, user_id, commit=True):
         """Returns user settings object or creates a new one."""
         obj = cls.query.filter_by(user_id=user_id).first()
         if obj:
             return obj
-        obj = cls(user_id=user_id)
-        # By default, the new object doesn't persist data
+        obj = cls(user_id=user_id,
+                  settings=flask.json.dumps(cls.DEFAULT_SETTINGS))
+        # By default, the new object persists data
         if commit:
             db.session.add(obj)
             db.session.commit()
@@ -130,6 +132,7 @@ class UserSettings(db.Model):
 
     def update(self, params, commit=True):
         """Updates user settings."""
+        # This should be the only way to set settings
         if params is None:  # Resets settings to default values
             self.settings = flask.json.dumps(self.DEFAULT_SETTINGS)
         elif params == {}:  # Special case for empty settings
@@ -139,9 +142,23 @@ class UserSettings(db.Model):
             for k, v in params.items():
                 settings[k] = v
             self.settings = flask.json.dumps(settings)
+        cache_key = api_utils.create_key(self.user_id, 'settings')
+        memcache.set(cache_key, self.settings)
         if commit:
             db.session.add(self)
             db.session.commit()
+
+    @classmethod
+    def user_param(cls, user_id, key):
+        """User settings parameter."""
+        cache_key = api_utils.create_key(user_id, 'settings')
+        text = memcache.get(cache_key)
+        if text:
+            settings = cls._to_dict(text)
+            return settings.get(key)
+        obj = cls.get_or_create(user_id)
+        memcache.set(cache_key, obj.settings)
+        return obj.param(key)
 
     def param(self, key):
         """Returns settings param specified by key."""
@@ -150,15 +167,15 @@ class UserSettings(db.Model):
 
     def to_dict(self):
         """Returns settings dictionary."""
-        return self._json_loads(self.settings) or {}
+        return self._to_dict(self.settings)
 
     @classmethod
-    def _json_loads(cls, json_str):
+    def _to_dict(cls, json_str):
         """Converts json string to dictionary."""
         try:
             return flask.json.loads(json_str)
         except (TypeError, ValueError):
-            return None
+            return {}
 
 
 class Token(db.Model):

@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import flask
+import mock
 import unittest
 import sqlalchemy
+
+from google.appengine.api import memcache
+
 from eucaby_api import args as api_args
 from eucaby_api import models
+
 from tests.eucaby_api import base as test_base
 from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
@@ -56,9 +61,14 @@ class TestUserSettings(test_base.TestCase):
     """Tests UserSettings model."""
     def setUp(self):
         super(TestUserSettings, self).setUp()
+        self.testbed = test_utils.create_testbed()
         self.user = models.User.create(
             username='2345', first_name='Test', last_name=u'Юзер',
             email='test@example.com')
+
+    def tearDown(self):
+        super(TestUserSettings, self).tearDown()
+        self.testbed.deactivate()
 
     def test_user_settings(self):
         """Tests that user settings are created when user is created."""
@@ -73,9 +83,10 @@ class TestUserSettings(test_base.TestCase):
         models.UserSettings.query.delete()  # Clear user settings first
 
         # User exists
-        models.UserSettings.get_or_create(self.user.id)
+        models.UserSettings.get_or_create(self.user.id, commit=False)
         objs = models.UserSettings.query.all()
-        self.assertEqual([], objs)  # Without commit set no object is created
+        # With commit set to False no object is created
+        self.assertEqual([], objs)
         # User doesn't exist
         self.assertRaises(sqlalchemy.exc.IntegrityError,
                           models.UserSettings.get_or_create, (123), commit=True)
@@ -142,6 +153,35 @@ class TestUserSettings(test_base.TestCase):
         obj.update(None)
         obj2 = models.UserSettings.query.first()
         self.assertEqual(None, obj2.param('hello'))
+
+    def test_cache(self):
+        """Tests settings cache."""
+        cache_key = '{}::settings'.format(self.user.id)
+        get_or_create = 'eucaby_api.models.UserSettings.get_or_create'
+        # When UserSettings object is created settings cache is not set
+        self.assertIsNone(memcache.get(cache_key))
+        # If cache is not sett calling user_param will also call get_or_create
+        with mock.patch(get_or_create) as gc_mock:
+            gc_mock.return_value = mock.Mock(settings='{}')
+            models.UserSettings.user_param(self.user.id, 'hello')
+            self.assertTrue(gc_mock.called)
+            memcache.flush_all()
+        # Non-existing key
+        value = models.UserSettings.user_param(self.user.id, 'hello')
+        self.assertIsNone(value)
+        self.assertEqual(  # user_param sets the cache
+            '{"email_subscription": true}', memcache.get(cache_key))
+        # If settings cache is set it shouldn't call get_or_create
+        with mock.patch(get_or_create) as gc_mock:
+            models.UserSettings.user_param(self.user.id, 'hello')
+            self.assertFalse(gc_mock.called)
+        # Updating settings should refresh the cache
+        obj = models.UserSettings.get_or_create(self.user.id)
+        obj.update(dict(hello='world'))
+        text = '{"email_subscription": true, "hello": "world"}'
+        self.assertEqual(text, memcache.get(cache_key))
+        value = models.UserSettings.user_param(self.user.id, 'hello')
+        self.assertEqual('world', value)
 
 
 class TestDevice(test_base.TestCase):

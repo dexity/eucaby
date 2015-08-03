@@ -125,3 +125,7 @@ def create_apns_socket(app):
         cert_file=app.config['APNS_CERT_FILE'],
         key_file=app.config['APNS_KEY_FILE'], enhanced=True)
 
+
+def create_key(*args):
+    """Creates key for memcached."""
+    return '::'.join([str(arg) for arg in args])

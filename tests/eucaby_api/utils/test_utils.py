@@ -59,6 +59,18 @@ class UtilsTest(unittest.TestCase):
             data = api_utils.apns_payload_data(*case)
             self.assertEqual(excepted[i], data)
 
+    def test_create_key(self):
+        """Tests create key."""
+        # No arguments
+        self.assertEqual('', api_utils.create_key())
+        # Arguments with numbers
+        self.assertEqual(
+            'test::123::{\'hello\': \'world\'}',
+            api_utils.create_key('test', 123, dict(hello='world')))
+        # Typical scenario
+        self.assertEqual('user::settings',
+                         api_utils.create_key('user', 'settings'))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -34,6 +34,7 @@ INVALID_INT = 'Integer type is expected'
 ACTIVITY_CHOICES = [OUTGOING, INCOMING, REQUEST, NOTIFICATION]
 PLATFORM_CHOICES = [ANDROID, IOS]
 MESSAGE_CHOICES = [REQUEST, NOTIFICATION]
+EMAIL_SUBSCRIPTION = 'email_subscription'
 
 
 class ValidationError(Exception):
@@ -91,7 +92,7 @@ ACTIVITY_ARGS = [
 ]
 
 SETTINGS_ARGS = [
-    reqparse.Argument(name='email_subscription', type=inputs.boolean)
+    reqparse.Argument(name=EMAIL_SUBSCRIPTION, type=inputs.boolean)
 ]
 
 REGISTER_DEVICE_ARGS = [

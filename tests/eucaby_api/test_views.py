@@ -558,7 +558,7 @@ class TestRequestLocation(test_base.TestCase):
         fixtures.verify_email_history(self.user.id, recipient_email)
 
     @mock.patch(SEND_NOTIFICATION)
-    def test_user(self, mock_send_notif):
+    def test_username(self, mock_send_notif):
         """Tests valid recipient user."""
         resp = self.client.post(
             '/location/request', data=dict(
@@ -571,6 +571,21 @@ class TestRequestLocation(test_base.TestCase):
         self._verify_data_email(
             resp, self.user2.username, self.user2.name, self.user2.email, '',
             ['Hi, Test2 User2', u'from Test Юзер'])
+
+    @mock.patch(SEND_NOTIFICATION)
+    def test_username_no_email(self, mock_send_notif):  # pylint: disable=unused-argument
+        """Tests valid recipient user with no email subscription set."""
+        obj = models.UserSettings.get_or_create(self.user2.id)
+        obj.update({api_args.EMAIL_SUBSCRIPTION: False})
+        self.client.post(
+            '/location/request', data=dict(
+                username=self.user2.username, message=''),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        # No email is sent
+        tasks = self.taskq.get_filtered_tasks(queue_names='mail')
+        self.assertEqual(0, len(tasks))
+        messages = self.mail_stub.get_sent_messages()
+        self.assertEqual(0, len(messages))
 
     @mock.patch(SEND_NOTIFICATION)
     def test_email_user(self, mock_send_notif):
@@ -1085,6 +1100,21 @@ class TestNotifyLocation(test_base.TestCase):
             resp, self.user2.username, self.user2.name, self.user2.email, None,
             ['Hi, Test2 User2', u'Test Юзер shared'])
 
+    @mock.patch(SEND_NOTIFICATION)
+    def test_username_no_email(self, mock_send_notif):  # pylint: disable=unused-argument
+        """Tests valid recipient user with no email subscription set."""
+        obj = models.UserSettings.get_or_create(self.user2.id)
+        obj.update({api_args.EMAIL_SUBSCRIPTION: False})
+        self.client.post(
+            '/location/notification', data=dict(
+                latlng=fixtures.LATLNG, username=self.user2.username),
+            headers=dict(Authorization='Bearer {}'.format(fixtures.UUID)))
+        # No email is sent
+        tasks = self.taskq.get_filtered_tasks(queue_names='mail')
+        self.assertEqual(0, len(tasks))
+        messages = self.mail_stub.get_sent_messages()
+        self.assertEqual(0, len(messages))
+
 
 class TestUserProfile(test_base.TestCase):
 
@@ -1125,7 +1155,12 @@ class TestUserSettings(test_base.TestCase):
     def setUp(self):
         super(TestUserSettings, self).setUp()
         self.client = self.app.test_client()
+        self.testbed = test_utils.create_testbed()
         self.user = fixtures.create_user()
+
+    def tearDown(self):
+        super(TestUserSettings, self).tearDown()
+        self.testbed.deactivate()
 
     def test_general_errors(self):
         """Tests general errors for user settings."""
