@@ -25,10 +25,25 @@ def _gcm_response(success, failure=0, canonical_ids=0, results=None):
     return json.dumps(resp)
 
 
+def _assert_error_cases(cases, taskq, client, queue_name, url):
+    """Util to test general error cases."""
+    kwargs = dict(queue_name=queue_name, url=url)
+    for i, case in enumerate(cases):
+        qkwargs = kwargs.copy()
+        if case[0]:  # params parameter
+            qkwargs['params'] = case[0]
+        taskqueue.add(**qkwargs)
+        tasks = taskq.get_filtered_tasks(queue_names=queue_name)
+        assert i+1 == len(tasks)
+        resp = test_utils.execute_queue_task(client, tasks[i])
+        # The failed task should not be retried so return 200 code
+        assert 200 == resp.status_code
+        assert case[1] in resp.data  # Assert data substring
+
+
 class TestPushNotifications(test_base.TestCase):
 
     def _assert_general_errors(self, url):
-        kwargs = dict(queue_name='push', url=url)
         cases = (
             (None, 'Missing recipient_username parameter'),
             (dict(recipient_username=self.user.username,),
@@ -41,18 +56,7 @@ class TestPushNotifications(test_base.TestCase):
             (dict(recipient_username='unknown',
                   message_type=api_args.NOTIFICATION, message_id=123),
              'No android devices found'))
-        for i in range(len(cases)):
-            case = cases[i]
-            qkwargs = kwargs.copy()
-            if case[0]:  # params parameter
-                qkwargs['params'] = case[0]
-            taskqueue.add(**qkwargs)
-            tasks = self.taskq.get_filtered_tasks(queue_names='push')
-            self.assertEqual(i+1, len(tasks))
-            resp = test_utils.execute_queue_task(self.client, tasks[i])
-            # The failed task should not be retried so return 200 code
-            self.assertEqual(200, resp.status_code)
-            self.assertIn(case[1], resp.data)  # Assert data substring
+        _assert_error_cases(cases, self.taskq, self.client, 'push', url)
 
 
 class TestGCMNotifications(TestPushNotifications):
@@ -63,14 +67,8 @@ class TestGCMNotifications(TestPushNotifications):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.username = self.user.username
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
         # Create devices
         device_params = [
             ('12', api_args.ANDROID), ('23', api_args.ANDROID),
@@ -234,20 +232,18 @@ class TestAPNsNotifications(TestPushNotifications):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.username = self.user.username
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
         # Create devices
         device_params = [
             ('12', api_args.ANDROID), ('23', api_args.IOS),
             ('34', api_args.IOS)]
         self.devices = [models.Device.get_or_create(
             self.user, *param) for param in device_params]
+
+    def tearDown(self):
+        super(TestAPNsNotifications, self).tearDown()
+        self.testbed.deactivate()
 
     def test_general_errors(self):
         """Tests general errors for apns push tasks."""
@@ -284,20 +280,18 @@ class TestCleanupiOSDevicesTask(test_base.TestCase):
         super(TestCleanupiOSDevicesTask, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
         # Create devices
         device_params = [
             ('12', api_args.ANDROID), ('23', api_args.IOS),
             ('34', api_args.IOS)]
         self.devices = [models.Device.get_or_create(
             self.user, *param) for param in device_params]
+
+    def tearDown(self):
+        super(TestCleanupiOSDevicesTask, self).tearDown()
+        self.testbed.deactivate()
 
     @mock.patch('eucaby_api.tasks.api_utils.create_apns_socket')
     def test_cleanup_devices(self, mock_create_socket):
@@ -318,6 +312,47 @@ class TestCleanupiOSDevicesTask(test_base.TestCase):
         # iOS devices are deactivated
         self.assertEqual(1, len(devices))
         self.assertEqual(self.devices[0].device_key, devices[0].device_key)
+
+
+class TestMailTask(test_base.TestCase):
+
+    def setUp(self):
+        super(TestMailTask, self).setUp()
+        self.user = fixtures.create_user()
+        self.client = self.app.test_client()
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
+    def tearDown(self):
+        super(TestMailTask, self).tearDown()
+        self.testbed.deactivate()
+
+    def test_general_errors(self):
+        """Tests general errors for mail task."""
+        cases = (
+            (None, 'Missing subject parameter'),
+            (dict(subject='Some subject'), 'Missing body parameter'),
+            (dict(subject='Some subject', body='Some content'),
+             'Missing recipient parameter'))
+        _assert_error_cases(
+            cases, self.taskq, self.client, 'mail', '/tasks/mail')
+
+    def test_mail(self):
+        """Tests sending email."""
+        params = dict(subject='Some subject', body=u'Текст сообщения',
+                      recipient=['test@example.com', 'some@email.com'])
+        taskqueue.add(queue_name='mail', url='/tasks/mail', params=params)
+        tasks = self.taskq.get_filtered_tasks(queue_names='mail')
+        self.assertEqual(1, len(tasks))
+        resp = test_utils.execute_queue_task(self.client, tasks[0])
+        self.assertEqual(200, resp.status_code)
+        messages = self.mail_stub.get_sent_messages()
+        self.assertEqual(1, len(messages))
+        message = messages[0]
+        self.assertEqual(u'Текст сообщения', message.body.decode())
+        self.assertEqual('Some subject', message.subject)
+        self.assertEqual('test@example.com, some@email.com', message.to)
 
 
 if __name__ == '__main__':

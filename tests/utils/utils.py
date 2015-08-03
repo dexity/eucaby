@@ -1,6 +1,8 @@
 import json
 import urlparse
 
+from google.appengine.ext import testbed
+
 
 def assert_object(obj, **kwargs):
     """Validates object."""
@@ -49,3 +51,14 @@ def execute_queue_task(client, task):
     data = urlparse.parse_qs(task.payload)
     return getattr(client, task.method.lower())(
         task.url, data=data)
+
+
+def create_testbed():
+    """Creates testbed object."""
+    obj = testbed.Testbed()
+    obj.activate()
+    obj.init_datastore_v3_stub()
+    obj.init_memcache_stub()
+    obj.init_mail_stub()
+    obj.init_taskqueue_stub(root_path='.')
+    return obj

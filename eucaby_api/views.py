@@ -6,7 +6,6 @@ import flask_restful
 import itertools
 import logging
 
-from eucaby.utils import mail as utils_mail
 from eucaby_api import auth
 from eucaby_api import fields as api_fields
 from eucaby_api.utils import api as eucaby_api
@@ -86,16 +85,13 @@ class RequestLocationView(flask_restful.Resource):
 
         if recipient_email:
             # Send email notification to recipient
-            # XXX: Create mail task
-            noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             req_url = '{}/request/{}'.format(eucaby_url, req.uuid)
             body = flask.render_template(
                 'mail/location_request_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
                 url=req_url, message=message)
-            utils_mail.send_mail(
-                'Location Request', body, noreply_email, [recipient_email])
+            gae_utils.send_mail('Location Request', body, [recipient_email])
         logging.info('Location Request: %s', str(req.to_dict()))
         return flask_restful.marshal(
             req.to_dict(), api_fields.REQUEST_FIELDS, envelope='data')
@@ -163,9 +159,6 @@ class NotifyLocationView(flask_restful.Resource):
             recipient_name=recipient_name, recipient_email=recipient_email,
             message=message, session=session)
 
-        # XXX: Add user configuration to receive notifications to email
-        #      (for Eucaby users). See #18
-
         # Send notifications to Android and iOS devices of the registered user
         # (sender and recipient can be the same person)
         if recipient_username:
@@ -173,18 +166,19 @@ class NotifyLocationView(flask_restful.Resource):
                 recipient_username, user.name, api_args.NOTIFICATION,
                 loc_notif.id)
 
+        # XXX: Add user configuration to receive notifications to email
+        #      (for Eucaby users). See #18
+
         if recipient_email:
             # Send email notification to recipient
-            # XXX: Create mail task
-            noreply_email = current_app.config['NOREPLY_EMAIL']
             eucaby_url = current_app.config['EUCABY_URL']
             location_url = '{}/location/{}'.format(eucaby_url, loc_notif.uuid)
             body = flask.render_template(
                 'mail/location_response_body.txt', sender_name=user.name,
                 recipient_name=recipient_name, eucaby_url=eucaby_url,
                 location_url=location_url, message=message)
-            utils_mail.send_mail(
-                'Location Notification', body, noreply_email, [recipient_email])
+            gae_utils.send_mail(
+                'Location Notification', body, [recipient_email])
         logging.info('Location Notification: %s', str(loc_notif.to_dict()))
         return flask_restful.marshal(
             loc_notif.to_dict(), api_fields.NOTIFICATION_FIELDS,

@@ -8,6 +8,8 @@ import logging
 from sqlalchemy import exc
 import time
 
+from google.appengine.api import mail as gae_mail
+
 from eucaby_api import args as api_args
 from eucaby_api import models
 from eucaby_api.utils import reqparse
@@ -152,8 +154,17 @@ class MailTask(views.MethodView):
     methods = ['POST']
 
     def post(self):  # pylint: disable=no-self-use
-        # XXX: Implement
-        return 'ok'
+        args = reqparse.clean_args(api_args.MAIL_TASK_ARGS, is_task=True)
+        if isinstance(args, flask.Response):
+            logging.error(str(args.data))
+            return args
+
+        noreply_email = current_app.config['NOREPLY_EMAIL']
+        # Send the actual email
+        gae_mail.send_mail(
+            sender=noreply_email, to=args['recipient'],
+            subject=args['subject'], body=args['body'])
+        return 'Email submitted'
 
 
 tasks_app.add_url_rule(
@@ -163,5 +174,4 @@ tasks_app.add_url_rule(
 tasks_app.add_url_rule(
     '/push/apns/cleanup',
     view_func=CleanupiOSDevicesTask.as_view('cleanup_apns'))
-tasks_app.add_url_rule(
-    '/mail', view_func=MailTask.as_view('mail'))
+tasks_app.add_url_rule('/mail', view_func=MailTask.as_view('mail'))

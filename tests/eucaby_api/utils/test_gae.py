@@ -19,14 +19,11 @@ class GaeUtilsTest(test_base.TestCase):
         super(GaeUtilsTest, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
         # Create devices
         device_params = [('12', api_args.ANDROID), ('34', api_args.IOS)]
-        # for user in [self.user, self.user2]:
         for param in device_params:  # Both users own both devices
             models.Device.get_or_create(self.user, *param)
         self.payload_data = dict(
@@ -69,6 +66,17 @@ class GaeUtilsTest(test_base.TestCase):
             resp_ios = test_utils.execute_queue_task(self.client, tasks[1])
             self.assertEqual(1, mock_send_notif.call_count)
             self.assertEqual(200, resp_ios.status_code)
+
+    @mock.patch('eucaby_api.utils.gae.taskqueue.add')
+    def test_send_mail(self, add_mock):  # pylint: disable=no-self-use
+        """Tests send email."""
+        gae_utils.send_mail(
+            'Some subject', u'Текст сообщения', ['test@example.com'])
+        add_mock.assert_called_with(
+            url='/tasks/mail', queue_name='mail',
+            params={'body': u'Текст сообщения',
+                    'recipient': ['test@example.com'],
+                    'subject': 'Some subject'})
 
 
 if __name__ == '__main__':

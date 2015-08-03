@@ -427,11 +427,8 @@ class TestRequestLocation(test_base.TestCase):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.user2 = fixtures.create_user2()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
 
     def tearDown(self):
@@ -465,6 +462,8 @@ class TestRequestLocation(test_base.TestCase):
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
         # Check email content
+        task = self.taskq.get_filtered_tasks(queue_names='mail')[0]
+        test_utils.execute_queue_task(self.client, task)
         messages = self.mail_stub.get_sent_messages()
         test_utils.verify_email(
             messages, 1, recipient_email, in_list + [
@@ -596,15 +595,9 @@ class TestRequestById(test_base.TestCase):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.user2 = fixtures.create_user2()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -716,15 +709,9 @@ class TestNotificationById(test_base.TestCase):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.user2 = fixtures.create_user2()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -855,11 +842,8 @@ class TestNotifyLocation(test_base.TestCase):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.user2 = fixtures.create_user2()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
         self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
 
     def tearDown(self):
@@ -905,6 +889,8 @@ class TestNotifyLocation(test_base.TestCase):
             session=session_out))
         self.assertEqual(ec_valid_data, data)
         self.assertEqual(200, resp.status_code)
+        task = self.taskq.get_filtered_tasks(queue_names='mail')[-1]
+        test_utils.execute_queue_task(self.client, task)
         messages = self.mail_stub.get_sent_messages()
         if len(messages) == 2:
             messages.pop(0)  # Don't need the first message
@@ -1219,14 +1205,8 @@ class TestUserActivity(test_base.TestCase):
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
         self.user2 = fixtures.create_user2()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
 
         # Test Cases
         # ----------
@@ -1524,11 +1504,7 @@ class TestRegisterDeviceView(test_base.TestCase):
         super(TestRegisterDeviceView, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
 
     def tearDown(self):
         self.testbed.deactivate()

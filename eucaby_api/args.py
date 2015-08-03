@@ -111,6 +111,15 @@ PUSH_TASK_ARGS = [
                       help=MISSING_PARAM.format('message_id'))
 ]
 
+MAIL_TASK_ARGS = [
+    reqparse.Argument(name='subject', type=unicode, required=True,
+                      help=MISSING_PARAM.format('subject')),
+    reqparse.Argument(name='body', type=unicode, required=True,
+                      help=MISSING_PARAM.format('body')),
+    reqparse.Argument(name='recipient', type=unicode, action='append',
+                      required=True, help=MISSING_PARAM.format('recipient'))
+]
+
 AUTO_ARGS = [
     reqparse.Argument(name='query', type=str, required=True,
                       help=MISSING_PARAM.format('query')),

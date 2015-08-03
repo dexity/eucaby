@@ -15,3 +15,9 @@ def send_notification(
         message_type=message_type, message_id=message_id)
     taskqueue.add(queue_name='push', url='/tasks/push/gcm', params=params)
     taskqueue.add(queue_name='push', url='/tasks/push/apns', params=params)
+
+
+def send_mail(subject, body, recipient_list):
+    """Sends email with task queue."""
+    params = dict(subject=subject, body=body, recipient=recipient_list)
+    taskqueue.add(queue_name='mail', url='/tasks/mail', params=params)

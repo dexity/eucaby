@@ -103,6 +103,8 @@ class NotifyLocationView(generic.View):
             loc_req.sender_username, sender_name, api_args.NOTIFICATION,
             loc_notif.id)
 
+        # XXX: Send email if setting is set
+
         return http.JsonResponse(loc_notif.to_dict())
 
     def dispatch(self, request, uuid):  # pylint: disable=arguments-differ
