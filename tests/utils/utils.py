@@ -1,4 +1,5 @@
 import json
+import os
 import urlparse
 
 from google.appengine.ext import testbed
@@ -60,5 +61,9 @@ def create_testbed():
     obj.init_datastore_v3_stub()
     obj.init_memcache_stub()
     obj.init_mail_stub()
-    obj.init_taskqueue_stub(root_path='.')
+    # Set root path
+    root_path = os.path.abspath('.')
+    if root_path.endswith('/tests'):
+        root_path = root_path[:-5]
+    obj.init_taskqueue_stub(root_path=root_path)
     return obj

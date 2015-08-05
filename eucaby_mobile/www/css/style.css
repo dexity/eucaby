@@ -118,14 +118,13 @@ hr.separator {
     border-bottom: 0px;
 }
 
-.badge-web,
-.badge-web-detail {
+.badge-web {
     float:right;
     font-size: 14px;
-    color: #e42012;
-}
-.badge-web {
-    margin-right: -15px;
+    padding: 0px 6px 1px 6px;
+    background-color: #e6b400;
+    color: white;
+    border-radius: 3px;
 }
 .note-area {
     border: 0;

@@ -59,12 +59,12 @@
                     <div ng-switch-when="true">
                         received from <br>
                         <b>{{ notif.sender | userName }}</b>
-                        <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
+                        <div ng-show="notif.is_web" class="badge-web">web</div><br>
                     </div>
                     <div ng-switch-when="false">
                         sent to <br>
                         <b>{{ notif.recipient | userName }}</b>
-                        <div ng-show="notif.is_web" class="badge-web-detail">web</div><br>
+                        <div ng-show="notif.is_web" class="badge-web">web</div><br>
                     </div>
                 </div>
                 <div ng-show="notif.message">
