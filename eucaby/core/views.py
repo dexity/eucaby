@@ -1,10 +1,15 @@
 
 import datetime
-from django.views import generic
+import logging
 from django import http
 from django import shortcuts
+from django.conf import settings
+from django.contrib.auth import models as auth_models
+from django.views import generic
+from django.template import loader
 
 from eucaby.core import forms
+from eucaby.core import models
 from eucaby_api import args as api_args
 from eucaby_api import ndb_models
 from eucaby_api.utils import gae as gae_utils
@@ -103,7 +108,23 @@ class NotifyLocationView(generic.View):
             loc_req.sender_username, sender_name, api_args.NOTIFICATION,
             loc_notif.id)
 
-        # XXX: Send email if setting is set
+        try:
+            user = auth_models.User.objects.get(
+                username=loc_req.sender_username)
+        except models.DoesNotExist:
+            logging.error('User {} does not exist'.format(
+                loc_req.sender_username))
+            return http.JsonResponse(loc_notif.to_dict())
+
+        if models.UserSettings.user_param(user.id, api_args.EMAIL_SUBSCRIPTION):
+            # Send email notification to recipient
+            eucaby_url = settings.EUCABY_URL
+            location_url = '{}/location/{}'.format(eucaby_url, loc_notif.uuid)
+            body = loader.render_to_string(
+                'mail/location_response_body.txt', sender_name=user.name,
+                recipient_name=loc_req.sender_username, eucaby_url=eucaby_url,
+                location_url=location_url, message=data['message'])
+            gae_utils.send_mail('Location Notification', body, [user.email])
 
         return http.JsonResponse(loc_notif.to_dict())
 

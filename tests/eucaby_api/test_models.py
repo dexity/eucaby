@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Tests for Eucaby API models."""
 
 import flask
 import mock
 import unittest
-import sqlalchemy
 
 from google.appengine.api import memcache
+from sqlalchemy.orm import exc as orm_exc
 
 from eucaby_api import args as api_args
 from eucaby_api import models
@@ -88,7 +89,7 @@ class TestUserSettings(test_base.TestCase):
         # With commit set to False no object is created
         self.assertEqual([], objs)
         # User doesn't exist
-        self.assertRaises(sqlalchemy.exc.IntegrityError,
+        self.assertRaises(orm_exc.NoResultFound,
                           models.UserSettings.get_or_create, (123), commit=True)
         models.db.session.rollback()    # Rollback session
         # Successful user settings creation (operation is idempotent)
@@ -156,7 +157,7 @@ class TestUserSettings(test_base.TestCase):
 
     def test_cache(self):
         """Tests settings cache."""
-        cache_key = '{}::settings'.format(self.user.id)
+        cache_key = 'user_id::{}::settings'.format(self.user.id)
         get_or_create = 'eucaby_api.models.UserSettings.get_or_create'
         # When UserSettings object is created settings cache is not set
         self.assertIsNone(memcache.get(cache_key))
@@ -166,6 +167,9 @@ class TestUserSettings(test_base.TestCase):
             models.UserSettings.user_param(self.user.id, 'hello')
             self.assertTrue(gc_mock.called)
             memcache.flush_all()
+        # Wrong user id
+        with self.assertRaises(orm_exc.NoResultFound):
+            models.UserSettings.user_param('wrong', 'hello')
         # Non-existing key
         value = models.UserSettings.user_param(self.user.id, 'hello')
         self.assertIsNone(value)

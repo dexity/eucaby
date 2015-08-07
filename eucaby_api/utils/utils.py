@@ -129,3 +129,11 @@ def create_apns_socket(app):
 def create_key(*args):
     """Creates key for memcached."""
     return '::'.join([str(arg) for arg in args])
+
+
+def json_to_dict(json_str):
+    """Convenience function to convert json string to dictionary."""
+    try:
+        return json.loads(json_str)
+    except (TypeError, ValueError):
+        return {}

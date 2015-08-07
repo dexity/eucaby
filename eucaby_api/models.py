@@ -122,6 +122,7 @@ class UserSettings(db.Model):
         obj = cls.query.filter_by(user_id=user_id).first()
         if obj:
             return obj
+        User.query.filter_by(id=user_id).one()  # Check if user exists
         obj = cls(user_id=user_id,
                   settings=flask.json.dumps(cls.DEFAULT_SETTINGS))
         # By default, the new object persists data
@@ -142,7 +143,7 @@ class UserSettings(db.Model):
             for k, v in params.items():
                 settings[k] = v
             self.settings = flask.json.dumps(settings)
-        cache_key = api_utils.create_key(self.user_id, 'settings')
+        cache_key = api_utils.create_key('user_id', self.user_id, 'settings')
         memcache.set(cache_key, self.settings)
         if commit:
             db.session.add(self)
@@ -151,10 +152,10 @@ class UserSettings(db.Model):
     @classmethod
     def user_param(cls, user_id, key):
         """User settings parameter."""
-        cache_key = api_utils.create_key(user_id, 'settings')
+        cache_key = api_utils.create_key('user_id', user_id, 'settings')
         text = memcache.get(cache_key)
         if text:
-            settings = cls._to_dict(text)
+            settings = api_utils.json_to_dict(text)
             return settings.get(key)
         obj = cls.get_or_create(user_id)
         memcache.set(cache_key, obj.settings)
@@ -167,15 +168,7 @@ class UserSettings(db.Model):
 
     def to_dict(self):
         """Returns settings dictionary."""
-        return self._to_dict(self.settings)
-
-    @classmethod
-    def _to_dict(cls, json_str):
-        """Converts json string to dictionary."""
-        try:
-            return flask.json.loads(json_str)
-        except (TypeError, ValueError):
-            return {}
+        return api_utils.json_to_dict(self.settings)
 
 
 class Token(db.Model):

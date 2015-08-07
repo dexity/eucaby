@@ -11,3 +11,5 @@ DATABASES = {
         'PORT': '',
     }
 }
+
+EUCABY_URL = 'http://localhost'

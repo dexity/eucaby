@@ -1,6 +1,7 @@
 
 from eucaby.settings.base import *  # pylint: disable=wildcard-import
 
+DEBUG = False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -10,5 +11,5 @@ DATABASES = {
     }
 }
 
-DEBUG = False
+EUCABY_URL = 'http://eucaby-prd.appspot.com'
 # ALLOWED_HOSTS = []

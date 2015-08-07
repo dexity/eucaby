@@ -22,6 +22,8 @@ DATABASES = {
     }
 }
 
+EUCABY_URL = 'http://www.eucaby.com'
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.8/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['*']
@@ -88,6 +90,7 @@ WSGI_APPLICATION = 'eucaby.wsgi.app'
 
 TEMPLATE_DIRS = (
     os.path.join(os.path.dirname(__file__), '../templates'),
+    os.path.join(os.path.dirname(__file__), '../../eucaby_api/templates'),
 )
 
 INSTALLED_APPS = (
@@ -101,7 +104,6 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
 )
 
-# 1.5
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.debug',
