@@ -6,12 +6,14 @@ from eucaby_api import args as api_args
 from eucaby_api import app as eucaby_app
 from eucaby_api.utils import utils as api_utils
 
+from tests.eucaby_api import base as test_base
+
 
 class UtilsTest(unittest.TestCase):
 
     def setUp(self):
         self.app = eucaby_app.create_app()
-        self.app.config.from_object('eucaby_api.config.Testing')
+        self.app.config.from_object(test_base.Testing)
         self.cases = (
             (None, '', ''),  # Empty parameters
             (u'Юзер', '', ''),  # Name parameter is set
@@ -70,6 +72,15 @@ class UtilsTest(unittest.TestCase):
         # Typical scenario
         self.assertEqual('user::settings',
                          api_utils.create_key('user', 'settings'))
+
+    def test_json_to_dict(self):
+        """Tests json to dict converter."""
+        # Invalid json
+        self.assertEqual({}, api_utils.json_to_dict(''))
+        self.assertEqual({}, api_utils.json_to_dict(None))
+        # Valid json
+        self.assertEqual(dict(hello='world'),
+                         api_utils.json_to_dict('{"hello": "world"}'))
 
 
 if __name__ == '__main__':

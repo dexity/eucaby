@@ -63,7 +63,11 @@ def create_testbed():
     obj.init_mail_stub()
     # Set root path
     root_path = os.path.abspath('.')
-    if root_path.endswith('/tests'):
-        root_path = root_path[:-5]
+    # Adjust path
+    paths = ['/tests', '/tests/eucaby_api']
+    for path in paths:
+        if root_path.endswith(path):
+            root_path = root_path[:-len(path)]
+            break
     obj.init_taskqueue_stub(root_path=root_path)
     return obj

@@ -3,12 +3,14 @@ import unittest
 from eucaby_api import app as eucaby_app
 from eucaby_api.utils import reqparse
 
+from tests.eucaby_api import base as test_base
+
 
 class RequestParserTest(unittest.TestCase):
 
     def setUp(self):
         self.app = eucaby_app.create_app()
-        self.app.config.from_object('eucaby_api.config.Testing')
+        self.app.config.from_object(test_base.Testing)
 
     def test_parse_args(self):
         arg1 = reqparse.Argument('param1')
