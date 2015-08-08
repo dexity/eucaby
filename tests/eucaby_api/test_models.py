@@ -155,13 +155,13 @@ class TestUserSettings(test_base.TestCase):
         obj2 = models.UserSettings.query.first()
         self.assertEqual(None, obj2.param('hello'))
 
-    def test_cache(self):
-        """Tests settings cache."""
+    def test_user_param(self):
+        """Tests user settings param."""
         cache_key = 'user_id::{}::settings'.format(self.user.id)
         get_or_create = 'eucaby_api.models.UserSettings.get_or_create'
         # When UserSettings object is created settings cache is not set
         self.assertIsNone(memcache.get(cache_key))
-        # If cache is not sett calling user_param will also call get_or_create
+        # If cache is not set calling user_param will also call get_or_create
         with mock.patch(get_or_create) as gc_mock:
             gc_mock.return_value = mock.Mock(settings='{}')
             models.UserSettings.user_param(self.user.id, 'hello')

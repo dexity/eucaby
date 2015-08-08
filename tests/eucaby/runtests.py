@@ -3,7 +3,6 @@ import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.eucaby.test_settings')
 
 import django
-
 from django.conf import settings
 from django.test import utils as test_utils
 
