@@ -9,6 +9,9 @@ DATABASES = {
         'PASSWORD': 'devpass',
         'HOST': '',
         'PORT': '',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=INNODB',
+        }
     }
 }
 

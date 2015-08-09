@@ -16,7 +16,8 @@ class TestUserSettings(test.TestCase):
     def setUp(self):
         self.testbed = test_utils.create_testbed()
         self.user = auth_models.User.objects.create(
-            username='test', email='test@example.com')
+            username='test', email='test@example.com', first_name='Test',
+            last_name=u'Юзер')
         self.user_settings = models.UserSettings.objects.create(
             user=self.user, settings='{"email_subscription": true}')
 

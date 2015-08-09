@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 
-import os
 import datetime
-import json
-from eucaby.settings import utils as set_utils
-os.environ.setdefault(
-    'DJANGO_SETTINGS_MODULE', set_utils.get_settings_module('testing'))
-
 import django
+import json
 import mock
+
 from django import test
-from eucaby_api import ndb_models
+from django.contrib.auth import models as auth_models
 from google.appengine.ext import testbed
+
+from eucaby.core import models
+from eucaby_api import app as eucaby_app
+from eucaby_api import ndb_models
+
 from tests.eucaby_api import fixtures
+from tests.eucaby_api import base as test_base
+from tests.utils import utils as test_utils
 
 django.setup()
 
@@ -23,11 +26,7 @@ class TestLocationView(test.TestCase):
 
     def setUp(self):
         self.client = test.Client()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
+        self.testbed = test_utils.create_testbed()
         self.today = datetime.datetime(2015, 6, 12)
         self.loc_notif = ndb_models.LocationNotification.create(
             fixtures.LATLNG, 'testuser', u'Test Юзер',
@@ -69,18 +68,21 @@ class TestNotifyLocationView(test.TestCase):
 
     def setUp(self):
         self.client = test.Client()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
-        self.testbed.init_mail_stub()
-        self.testbed.init_taskqueue_stub(root_path='.')
-        self.taskq = self.testbed.get_stub(
-            testbed.TASKQUEUE_SERVICE_NAME)
+        self.api_app = eucaby_app.create_app()
+        self.api_app.config.from_object(test_base.Testing)
+        self.api_client = self.api_app.test_client()
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
         self.today = datetime.datetime(2015, 6, 12)
         self.loc_req = ndb_models.LocationRequest.create(
-            'testuser', u'Test Юзер', recipient_email='test@example.com',
+            'testuser', u'Test Юзер', recipient_email='test2@example.com',
             message=u'Привет')
+        self.user = auth_models.User.objects.create(
+            username='testuser', email='test@example.com', first_name='Test',
+            last_name=u'Юзер')
+        self.user_settings = models.UserSettings.objects.create(
+            user=self.user, settings='{"email_subscription": true}')
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -155,11 +157,24 @@ class TestNotifyLocationView(test.TestCase):
 
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
-            'testuser', 'test@example.com', 'notification', notif.id)
+            'testuser', 'test2@example.com', 'notification', notif.id)
+
+        task = self.taskq.get_filtered_tasks(queue_names='mail')[0]
+        test_utils.execute_queue_task(self.api_client, task)
+        messages = self.mail_stub.get_sent_messages()
+        test_utils.verify_email(
+            messages, 1, 'test@example.com',
+            [u'Салют', u'Hi, Test Юзер', 'test2@example.com sent a message',
+             '.com/location/' + notif.uuid])
 
     @mock.patch('eucaby.core.views.gae_utils.send_notification')
     def test_post_existing_user(self, mock_send_notif):
         """Tests post request for request view for existing user."""
+        # Note: Tests for new and existing user are similar so we set
+        #       email_subscription to false to not notify
+        self.user_settings.settings = '{"email_subscription": false}'
+        self.user_settings.save()
+
         loc_req2 = ndb_models.LocationRequest.create(
             'testuser', u'Test Юзер', recipient_username='testuser2',
             recipient_name='Test2 User2', message=u'Привет')
@@ -182,3 +197,7 @@ class TestNotifyLocationView(test.TestCase):
         self.assertEqual(1, mock_send_notif.call_count)
         mock_send_notif.assert_called_with(
             'testuser', 'Test2 User2', 'notification', notif.id)
+
+        self.assertEqual(
+            0, len(self.taskq.get_filtered_tasks(queue_names='mail')))
+        self.assertEqual(0, len(self.mail_stub.get_sent_messages()))

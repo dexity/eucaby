@@ -8,6 +8,9 @@ DATABASES = {
         'NAME': 'eucaby',
         'USER': 'root',
         'HOST': '/cloudsql/eucaby-dev:eucaby2',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=INNODB',
+        }
     }
 }
 

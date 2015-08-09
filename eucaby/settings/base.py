@@ -10,6 +10,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 DEFAULT_FROM_EMAIL = 'alex@eucaby.com'
+# CHARSET = 'utf8'
+# COLLATION = 'utf8_general_ci'
 
 DATABASES = {
     'default': {
@@ -19,6 +21,9 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': '',
         'PORT': '',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=INNODB',
+        }
     }
 }
 
