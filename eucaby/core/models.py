@@ -28,3 +28,6 @@ class UserSettings(models.Model):
         obj = cls.objects.get(user__id=user_id)
         memcache.set(cache_key, obj.settings)
         return get_param(obj.settings, key)
+
+    class Meta:
+        db_table = 'user_settings'

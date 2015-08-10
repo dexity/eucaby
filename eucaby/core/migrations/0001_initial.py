@@ -21,5 +21,8 @@ class Migration(migrations.Migration):
                 ('settings', models.TextField(default=b'{}')),
                 ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL)),
             ],
+            options={
+                'db_table': 'user_settings',
+            },
         ),
     ]

@@ -37,9 +37,10 @@ class User(db.Model):
         address is available."
         See: https://developers.facebook.com/docs/graph-api/reference/v2.2/user
     """
-    __tablename__ = 'user'
+    __tablename__ = 'auth_user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(128))
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.String(50))
@@ -113,7 +114,8 @@ class UserSettings(db.Model):
     __tablename__ = 'user_settings'
     id = db.Column(db.Integer, primary_key=True)
     # One to one relationship with User
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('auth_user.id'), nullable=False)
     settings = db.Column(db.Text, default='{}')  # Settings in json format
 
     @classmethod
@@ -177,7 +179,8 @@ class Token(db.Model):
     __tablename__ = 'token'
     id = db.Column(db.Integer, primary_key=True)
     service = db.Column(choice.ChoiceType(SERVICE_TYPES), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('auth_user.id'), nullable=False)
     user = db.relationship('User')
     access_token = db.Column(db.String(255), unique=True, nullable=False)
     refresh_token = db.Column(db.String(255), unique=True)
@@ -234,7 +237,7 @@ class Token(db.Model):
 
 user_device = db.Table(
     'user_device',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('auth_user.id')),
     db.Column('device_id', db.Integer, db.ForeignKey('device.id'))
 )
 
@@ -314,7 +317,8 @@ class EmailHistory(db.Model):
     __table_args__ = (db.UniqueConstraint(
         'text', 'user_id', name='_text__user_id'),)
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('auth_user.id'), nullable=False)
     user = db.relationship('User')
     text = db.Column(db.String(255), nullable=False, index=True)
     created_date = db.Column(
