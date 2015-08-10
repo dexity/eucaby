@@ -298,7 +298,7 @@ describe('map controller tests', function(){
         });
         deferred.resolve({data: []});
         $scope.refreshFriends();
-        expect($scope.loadFriends).toHaveBeenCalled();
+        expect($scope.loadFriends).toHaveBeenCalledWith({refresh: '1'});
         expect($ionicLoading.show).toHaveBeenCalled();
         // expect($ionicLoading.hide).toHaveBeenCalled();
     });

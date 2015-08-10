@@ -31,8 +31,12 @@ function(EucabyApi) {
     'EucabyApi',
  function(EucabyApi) {
     return {
-        all: function(){
-            return EucabyApi.api({path: '/friends'});
+        all: function(params){
+            var obj = {path: '/friends'};
+            if (angular.isObject(params)){
+                obj.params = params;
+            }
+            return EucabyApi.api(obj);
         }
     };
 }])

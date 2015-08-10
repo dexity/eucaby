@@ -131,9 +131,9 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
         });
     };
 
-    $scope.loadFriends = function(){
+    $scope.loadFriends = function(params){
         // Loads friends
-        return Friends.all().then(function(data){
+        return Friends.all(params).then(function(data){
             $rootScope.friends = data.data;
             utils.syncFriendsWithRecent(
                 $rootScope.recentFriends, $rootScope.friends);
@@ -145,7 +145,7 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
 
     $scope.refreshFriends = function(){
         $ionicLoading.show();
-        $scope.loadFriends().finally(function(){
+        $scope.loadFriends({refresh: '1'}).finally(function(){
             $ionicLoading.hide();
         });
     };

@@ -75,6 +75,10 @@ input {
     font-size: 23px;
 }
 
+.icon-link {
+    color: #4d8cf4;
+}
+
 [ng-click] {
     cursor: pointer;
 }

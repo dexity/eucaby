@@ -206,6 +206,15 @@ describe('services tests', function(){
             },
             apiParams: {path: '/friends'}
         }, {
+            // Refresh friends list
+            it: 'should refresh friends list',
+            url: ENDPOINT + '/friends?refresh=1',
+            response: FRIENDS_LIST,
+            apiCall: function(){
+                return Friends.all({refresh: '1'});
+            },
+            apiParams: {path: '/friends', params: {refresh: '1'}}
+        }, {
             // Autocomplete query
             it: 'should autocomplete query',
             url: ENDPOINT + '/autocomplete?limit=5&query=some',
