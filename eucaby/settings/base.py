@@ -5,13 +5,11 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    #('Alex Dementsov', 'alex@eucaby.com')
+    # ('Alex Dementsov', 'alex@eucaby.com')
 )
 
 MANAGERS = ADMINS
-DEFAULT_FROM_EMAIL = 'alex@eucaby.com'
-# CHARSET = 'utf8'
-# COLLATION = 'utf8_general_ci'
+DEFAULT_FROM_EMAIL = 'notification@eucaby.com'
 
 DATABASES = {
     'default': {

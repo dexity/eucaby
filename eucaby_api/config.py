@@ -24,7 +24,7 @@ class Config(object):
     CACHE_TYPE = 'gaememcached'
     # XXX: Make host url configurable
     EUCABY_URL = 'http://www.eucaby.com'
-    NOREPLY_EMAIL = 'alex@eucaby.com'
+    NOREPLY_EMAIL = 'notification@eucaby.com'
     GCM_API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
     APNS_CERT_FILE = os.path.abspath('private/dev/EucabyCert.pem')
     APNS_KEY_FILE = os.path.abspath('private/dev/EucabyKey.pem')
