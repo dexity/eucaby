@@ -430,6 +430,18 @@ class TestFriends(test_base.TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertEqual(data, json.loads(memcache.get(cache_key)))
         self.assertEqual(0, fb_request.called)
+
+        # Refresh cache
+        ec_resp2 = dict(data=[])
+        resp = self.client.get(
+            '/friends?refresh=1', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(ec_resp2, data)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(data, json.loads(memcache.get(cache_key)))
+        self.assertEqual(1, fb_request.called)
+
         memcache.flush_all()
 
         # Empty list of friends
@@ -437,7 +449,7 @@ class TestFriends(test_base.TestCase):
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        self.assertEqual(dict(data=[]), data)
+        self.assertEqual(ec_resp2, data)
         self.assertEqual(200, resp.status_code)
 
 
