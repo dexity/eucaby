@@ -199,7 +199,8 @@ describe('eucaby api tests', function(){
         spyOn(OpenFB, 'login').and.returnValue(deferred.promise);
         spyOn(EucabyApi, 'login').and.callThrough();
         EucabyApi.api({path: '/friends'});
-        expect(OpenFB.login).toHaveBeenCalledWith('email,user_friends');
+        expect(OpenFB.login)
+            .toHaveBeenCalledWith('email,user_friends,public_profile');
         expect(EucabyApi.login).toHaveBeenCalled();
     });
 

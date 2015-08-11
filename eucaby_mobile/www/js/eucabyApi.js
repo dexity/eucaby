@@ -79,10 +79,10 @@ function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
                         });
                 };
 
-                OpenFB.login('email,user_friends').then(fbLoginSuccess,
-                    function(data) {
-                        deferred.reject(data);
-                    });
+                OpenFB.login('email,user_friends,public_profile')
+                    .then(fbLoginSuccess, function(data) {
+                            deferred.reject(data);
+                        });
             }
             return deferred.promise;
         },
