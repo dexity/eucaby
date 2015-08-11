@@ -9,6 +9,7 @@ import urllib
 from flask import json
 from flask_oauthlib import client as f_oauth_client
 
+from google.appengine.api import memcache
 from google.appengine.ext import testbed
 
 from eucaby_api import args as api_args
@@ -317,6 +318,22 @@ class TestFriends(test_base.TestCase):
         super(TestFriends, self).setUp()
         self.client = self.app.test_client()
         self.user = fixtures.create_user()
+        self.testbed = test_utils.create_testbed()
+        # List of friends
+        self.fb_friends = dict(
+            data=[dict(name='User2', id='456'), dict(name=u'Юзер', id='123')],
+            paging=dict(
+                next=('https://graph.facebook.com/v2.1/10152815532718638/'
+                      'friends?limit=5000&offset=5000&__after_id=enc_Aez53')),
+            summary=dict(total_count=123))
+        # Friends are sorted by name
+        self.ec_resp = dict(
+            data=[dict(name='User2', username='456'),
+                  dict(name=u'Юзер', username='123')])
+
+    def tearDown(self):
+        super(TestFriends, self).tearDown()
+        self.testbed.deactivate()
 
     @mock.patch('eucaby_api.auth.facebook._tokengetter')
     def test_general_errors(self, fb_tokengetter):
@@ -390,28 +407,32 @@ class TestFriends(test_base.TestCase):
     @mock.patch('eucaby_api.auth.facebook.request')
     def test_friends(self, fb_request):
         """Tests successful response for access token."""
-        # List of friends
-        fb_friends = dict(
-            data=[dict(name='User2', id='456'), dict(name=u'Юзер', id='123')],
-            paging=dict(
-                next=('https://graph.facebook.com/v2.1/10152815532718638/'
-                      'friends?limit=5000&offset=5000&__after_id=enc_Aez53')),
-            summary=dict(total_count=123))
-        # Friends are sorted by name
-        ec_resp = dict(
-            data=[dict(name='User2', username='456'),
-                  dict(name=u'Юзер', username='123')])
-        fb_request.return_value = mock.Mock(data=fb_friends, status=200)
+        cache_key = 'user_id::{}::friends'.format(self.user.id)
+        self.assertIsNone(memcache.get(cache_key))
+        fb_request.return_value = mock.Mock(data=self.fb_friends, status=200)
         resp = self.client.get(
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))
         data = json.loads(resp.data)
-        self.assertEqual(ec_resp, data)
+        self.assertEqual(self.ec_resp, data)
         self.assertEqual(200, resp.status_code)
+        self.assertEqual(data, json.loads(memcache.get(cache_key)))
+
+        # Cache is used
+        self.fb_friends['data'] = []
+        fb_request.reset_mock()
+        fb_request.return_value = mock.Mock(data=self.fb_friends, status=200)
+        resp = self.client.get(
+            '/friends', headers=dict(
+                Authorization='Bearer {}'.format(fixtures.UUID)))
+        data = json.loads(resp.data)
+        self.assertEqual(self.ec_resp, data)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(data, json.loads(memcache.get(cache_key)))
+        self.assertEqual(0, fb_request.called)
+        memcache.flush_all()
 
         # Empty list of friends
-        fb_friends['data'] = []
-        fb_request.return_value = mock.Mock(data=fb_friends, status=200)
         resp = self.client.get(
             '/friends', headers=dict(
                 Authorization='Bearer {}'.format(fixtures.UUID)))

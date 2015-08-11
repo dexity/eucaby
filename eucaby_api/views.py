@@ -4,7 +4,10 @@ import flask
 from flask import current_app
 import flask_restful
 import itertools
+import json
 import logging
+
+from google.appengine.api import memcache
 
 from eucaby_api import auth
 from eucaby_api import fields as api_fields
@@ -48,13 +51,20 @@ class FriendsView(flask_restful.Resource):
 
     def get(self):  # pylint: disable=no-self-use
         user = flask.request.user
+        cache_key = api_utils.create_key('user_id', user.id, 'friends')
+        cached_data = memcache.get(cache_key)
+        # Note: If request has get parameter 'refresh=1' then do not use cache
+        if cached_data and flask.request.args.get('refresh') != '1':
+            return json.loads(cached_data)
         resp = auth.facebook_request(
             'get', '/{}/friends'.format(user.username))
         fresp = api_utils.format_fb_response(resp, api_fields.FRIENDS_FIELDS)
         if resp.status not in api_utils.SUCCESS_STATUSES:
             return fresp
         # Sort friends by name
-        return dict(data=sorted(fresp['data'], key=lambda x: x['name']))
+        data = dict(data=sorted(fresp['data'], key=lambda x: x['name']))
+        memcache.set(cache_key, json.dumps(data), api_args.DAY)
+        return data
 
 
 class RequestLocationView(flask_restful.Resource):
