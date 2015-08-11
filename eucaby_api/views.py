@@ -55,7 +55,9 @@ class FriendsView(flask_restful.Resource):
         cached_data = memcache.get(cache_key)
         # Note: If request has get parameter 'refresh=1' then do not use cache
         if cached_data and flask.request.args.get('refresh') != '1':
-            return json.loads(cached_data)
+            resp = flask.make_response(cached_data)
+            resp.mimetype = 'application/json'
+            return resp
         resp = auth.facebook_request(
             'get', '/{}/friends'.format(user.username))
         fresp = api_utils.format_fb_response(resp, api_fields.FRIENDS_FIELDS)
