@@ -1,7 +1,7 @@
 {
   "name": "Eucaby",
   "version": "1.0.0",
-  "description": "Location Request Service",
+  "description": "Geo Messenger",
   "dependencies": {
     "gulp": "^3.5.6",
     "gulp-sass": "^0.7.1",

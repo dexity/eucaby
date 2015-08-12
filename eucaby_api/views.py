@@ -105,8 +105,8 @@ class RequestLocationView(flask_restful.Resource):
                     'mail/location_request_body.txt', sender_name=user.name,
                     recipient_name=recipient_name, eucaby_url=eucaby_url,
                     url=req_url, message=message)
-                gae_utils.send_mail('Location Request', body, [recipient_email])
-        logging.info('Location Request: %s', str(req.to_dict()))
+                gae_utils.send_mail('New Request', body, [recipient_email])
+        logging.info('New Request: %s', str(req.to_dict()))
         return flask_restful.marshal(
             req.to_dict(), api_fields.REQUEST_FIELDS, envelope='data')
 
@@ -195,8 +195,8 @@ class NotifyLocationView(flask_restful.Resource):
                     recipient_name=recipient_name, eucaby_url=eucaby_url,
                     location_url=location_url, message=message)
                 gae_utils.send_mail(
-                    'Location Notification', body, [recipient_email])
-        logging.info('Location Notification: %s', str(loc_notif.to_dict()))
+                    'New Location', body, [recipient_email])
+        logging.info('New Location: %s', str(loc_notif.to_dict()))
         return flask_restful.marshal(
             loc_notif.to_dict(), api_fields.NOTIFICATION_FIELDS,
             envelope='data')

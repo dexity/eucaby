@@ -125,7 +125,7 @@ class NotifyLocationView(generic.View):
                 message=data['message'])
             body = loader.render_to_string(
                 'mail/location_response_body.txt', context)
-            gae_utils.send_mail('Location Notification', body, [user.email])
+            gae_utils.send_mail('New Location', body, [user.email])
 
         return http.JsonResponse(loc_notif.to_dict())
 
