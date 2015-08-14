@@ -43,6 +43,16 @@
     background-color: #f5f5f5;
     border-top: 1px solid #e5e5e5;
 }
-.footer a {
+.footer a,
+.social a {
     margin-right: 10px;
+}
+
+.social a:last-of-type {
+    margin-right: 0px;
+}
+.social a img {
+    width: 24px;
+    height: 24px;
+    display: inline;
 }

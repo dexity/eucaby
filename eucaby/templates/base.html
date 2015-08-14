@@ -30,19 +30,29 @@
                     <div class="top-menu pull-right">
                         <a href="/blog">Blog</a>
                         <a href="/forum">Forum</a>
-                        <a href="/help">Help</a>
                     </div>
                 </nav>
             </div>
             {% block content %}{% endblock %}
-
+            {% comment %}
+            <a href="http://itunes.apple.com/us/app/lyft-on-demand-ridesharing/id529379082?mt=8" class="apple-store" data-track-outbound="{category: 'AppStoreOutbound', action: 'clicked'}"> Apple Store </a>
+            <a href="https://play.google.com/store/apps/details?id=me.lyft.android" class="google-play" data-track-outbound="{category: 'AndroidMarketOutbound', action: 'clicked'}"> Google Play </a>
+            {% endcomment %}
             <footer class="footer">
-                <a href="/about">About Us</a>
-                <a href="/terms">Terms of Service</a>
-                <a href="/privacy">Privacy Policy</a>
-                <a href="/feedback">Feedback</a>
+                {# <a href="/about">About Us</a> #}
+                <a href="/terms">Terms</a>
+                <a href="/privacy">Privacy</a>
+                {# <a href="/feedback">Feedback</a> #}
                 <span>&copy; 2015 Eucaby, Alex Dementsov</span>
-                <!--| <a href="#">Facebook</a> | <a href="#">Twitter</a>-->
+                <div class="pull-right social">
+                    <a href="https://facebook.com/" title="Facebook" target="_blank">
+                        <img src="/media/img/facebook.svg">
+                    </a>
+                    <a href="https://twitter.com/" title="Twitter" target="_blank">
+                        <img src="/media/img/twitter.svg">
+                    </a>
+                </div>
+
             </footer>
         </div>
     </body>

@@ -62,8 +62,8 @@ input {
 }
 
 .spinner svg {
-  stroke: #bbb;
-  fill: #999;
+    stroke: #bbb;
+    fill: #999;
 }
 
 .loading-container .loading {
@@ -148,6 +148,9 @@ hr.separator {
     margin-left:10px;
 }
 
+.bar.bar-stable .title {
+    color: #006738;
+}
 .bar .title-right-button {
     left: 20px !important;
     margin-right: 0px;
