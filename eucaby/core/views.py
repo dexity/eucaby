@@ -21,6 +21,18 @@ class Home(generic.View):
         return shortcuts.render(request, 'index.html')
 
 
+class Blog(generic.View):
+    def get(self, request):
+        url = 'http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/'
+        return shortcuts.redirect(url)
+
+
+class Forum(generic.View):
+    def get(self, request):
+        url = 'http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/'
+        return shortcuts.redirect(url)
+
+
 class About(generic.View):
 
     def get(self, request):  # pylint: disable=no-self-use
