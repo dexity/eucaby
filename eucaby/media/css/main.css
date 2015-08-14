@@ -3,3 +3,46 @@
     width: 500px;
     height: 300px;
 }
+
+.logo {
+    padding-left: 0px;
+}
+.logo img {
+    width: 60px;
+    height: 60px;
+    margin: -8px 0px 0px -8px;
+}
+.logo .title {
+    margin-top: 2px;
+    color: #006738;
+    display: inline;
+}
+.logo a:hover {
+    text-decoration: none;
+}
+.top-menu {
+    text-transform: uppercase;
+    margin-right: -15px;
+    margin-top: 15px;
+}
+.top-menu a {
+    display: inline;
+    margin-left: 15px;
+    color: #757575;
+}
+.top-menu a:hover {
+    text-decoration: none;
+}
+.brand-inline {
+    font-weight: bold;
+    color: #006738;
+}
+.footer {
+    padding: 17px 20px 40px;
+    margin-top: 18px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e5e5e5;
+}
+.footer a {
+    margin-right: 10px;
+}

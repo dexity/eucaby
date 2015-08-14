@@ -76,7 +76,11 @@ class Production(Config):
     APP_ID = PRD_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql://root@/eucaby?unix_socket=/cloudsql/eucaby-prd:eucaby')
-    EUCABY_URL = 'http://eucaby-prd.appspot.com'
+    FACEBOOK = dict(
+        consumer_key='817673931682235',
+        consumer_secret='76593027ca28a493f883f3ca26f7573c'
+    )
+    EUCABY_URL = 'https://www.eucaby.com'
     DEBUG = False
     CORS_ENABLED = False
     APNS_CERT_FILE = os.path.abspath('private/prd/EucabyCert.pem')

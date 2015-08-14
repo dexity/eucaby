@@ -7,6 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 ADMINS = (
     # ('Alex Dementsov', 'alex@eucaby.com')
 )
+BASE_DIR = os.path.join(os.path.dirname(__file__), '..')
 
 MANAGERS = ADMINS
 DEFAULT_FROM_EMAIL = 'notification@eucaby.com'
@@ -54,8 +55,8 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-MEDIA_ROOT = ''
-MEDIA_URL = ''
+MEDIA_ROOT = 'media'
+MEDIA_URL = '/media/'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 
@@ -89,11 +90,11 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'eucaby.eucaby.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'eucaby.wsgi.app'
+WSGI_APPLICATION = 'eucaby.eucaby.wsgi.app'
 
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../templates'),
-    os.path.join(os.path.dirname(__file__), '../../eucaby_api/templates'),
+    os.path.join(BASE_DIR, 'templates'),
+    os.path.join(BASE_DIR, '../eucaby_api/templates'),
 )
 
 INSTALLED_APPS = (

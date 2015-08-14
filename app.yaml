@@ -16,11 +16,9 @@ handlers:
 libraries:
 - name: MySQLdb
   version: latest
+
 - name: ssl
   version: latest
-
-#env_variables:
-#  DJANGO_SETTINGS_MODULE: 'eucaby.eucaby.settings'
 
 builtins:
 - django_wsgi: on
