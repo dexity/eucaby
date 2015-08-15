@@ -11,6 +11,7 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), '..')
 
 MANAGERS = ADMINS
 DEFAULT_FROM_EMAIL = 'notification@eucaby.com'
+ENV_TYPE = 'devappserver'
 
 DATABASES = {
     'default': {
@@ -105,7 +106,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'eucaby.core'
-    # 'django.contrib.admin',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -113,7 +113,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.debug',
     'django.core.context_processors.i18n',
     'django.core.context_processors.media',
-    'django.core.context_processors.static'
+    'django.core.context_processors.static',
+    'eucaby.context_processors.settings'
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

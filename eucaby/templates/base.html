@@ -44,15 +44,26 @@
                 {# <a href="/feedback">Feedback</a> #}
                 <span>&copy; 2015 Eucaby, Alex Dementsov</span>
                 <div class="pull-right social">
-                    <a href="https://facebook.com/" title="Facebook" target="_blank">
+                    <a href="https://www.facebook.com/eucaby" title="Facebook" target="_blank">
                         <img src="/media/img/facebook.svg">
                     </a>
-                    <a href="https://twitter.com/" title="Twitter" target="_blank">
+                    <a href="https://twitter.com/eucaby" title="Twitter" target="_blank">
                         <img src="/media/img/twitter.svg">
                     </a>
                 </div>
-
             </footer>
+            {% if IS_PROD %}
+            <script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-66359538-1', 'auto');
+              ga('send', 'pageview');
+
+            </script>
+            {% endif %}
         </div>
     </body>
 </html>

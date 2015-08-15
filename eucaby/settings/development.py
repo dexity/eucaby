@@ -15,4 +15,5 @@ DATABASES = {
 }
 
 EUCABY_URL = 'http://eucaby-dev.appspot.com'
+ENV_TYPE = 'development'
 # ALLOWED_HOSTS = []

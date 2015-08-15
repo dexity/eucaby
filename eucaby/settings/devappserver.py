@@ -16,3 +16,4 @@ DATABASES = {
 }
 
 EUCABY_URL = 'http://localhost'
+ENV_TYPE = 'devappserver'

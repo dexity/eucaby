@@ -22,14 +22,16 @@ class Home(generic.View):
 
 
 class Blog(generic.View):
+
     def get(self, request):
         url = 'http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/'
         return shortcuts.redirect(url)
 
 
 class Forum(generic.View):
+
     def get(self, request):
-        url = 'http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/'
+        url = 'https://groups.google.com/d/forum/eucaby'
         return shortcuts.redirect(url)
 
 
@@ -44,10 +46,12 @@ class Terms(generic.View):
     def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'terms.html')
 
+
 class Privacy(generic.View):
 
     def get(self, request):  # pylint: disable=no-self-use
         return shortcuts.render(request, 'privacy.html')
+
 
 class Feedback(generic.View):
 
