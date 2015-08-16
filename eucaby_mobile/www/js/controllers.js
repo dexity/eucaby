@@ -102,13 +102,18 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
             // Create a new map
             // Note: There might be performance issues when creating
             //       map for every current location click
-            $scope.map = map.createMap('map', lat, lng,
-                                       {zoom: $scope.currentZoom});
+            if (!$scope.map) {
+                $scope.map = map.createMap('map', lat, lng,
+                                           {zoom: $scope.currentZoom});
+                google.maps.event.addListener(
+                    $scope.map, 'zoom_changed', function () {
+                        $rootScope.currentZoom = $scope.map.getZoom();
+                    });
+            }
+            if ($scope.marker){
+                map.clearMarkers([$scope.marker]);
+            }
             $scope.marker = map.createMarker($scope.map, lat, lng);
-            google.maps.event.addListener(
-                $scope.map, 'zoom_changed', function() {
-                $rootScope.currentZoom = $scope.map.getZoom();
-            });
             if (!hideLoading) {
                 $ionicLoading.hide();
             }
@@ -119,7 +124,7 @@ function($scope, $rootScope, $http, $ionicModal, $ionicLoading, map, utils,
                 $ionicLoading.hide();
             }
             utilsIonic.alert('Location Error',
-                        'Unable to get location: ' + data.message);
+                             'Unable to get location: ' + data.message);
         });
     };
 
@@ -496,13 +501,15 @@ function($scope, $rootScope, $ionicLoading, $http, $stateParams, map, utils,
 
     $scope.centerOnMe = function() {
         // Centers map at the current location
-        // Note: Location is obtain again in case if user is moving.
+        // Note: Location is obtained again in case if user is moving.
         //       Other option is to use stale $rootScope.currentLatLng
         $ionicLoading.show();
         map.currentLocation(function(lat, lng){
             if ($scope.map){
-                var position = new google.maps.LatLng(lat, lng);
-                $scope.centerMarker(position);
+                if ($scope.marker){
+                    map.clearMarkers([$scope.marker]);
+                }
+                $scope.marker = map.createMarker($scope.map, lat, lng);
             }
             $ionicLoading.hide();
         }, function(){
