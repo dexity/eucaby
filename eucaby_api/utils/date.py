@@ -1,6 +1,7 @@
 """Dates utils."""
 
 import datetime
+import time
 
 
 class FixedOffset(datetime.tzinfo):
@@ -30,3 +31,11 @@ def timezone_date(date_time, offset=None):
     if offset is None:
         return date_time
     return date_time.astimezone(FixedOffset(offset))
+
+
+def dt2ts(date_time, in_ms=True):
+    """Converts datetime to timestamp."""
+    timestamp = time.mktime(date_time.timetuple())
+    if in_ms:
+        return timestamp * 1000
+    return timestamp

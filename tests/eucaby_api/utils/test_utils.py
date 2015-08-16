@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import unittest
 
 from eucaby_api import args as api_args
 from eucaby_api import app as eucaby_app
 from eucaby_api.utils import utils as api_utils
+from eucaby_api.utils import date as date_utils
 
 from tests.eucaby_api import base as test_base
 
@@ -81,6 +83,13 @@ class UtilsTest(unittest.TestCase):
         # Valid json
         self.assertEqual(dict(hello='world'),
                          api_utils.json_to_dict('{"hello": "world"}'))
+
+    def test_dt2ts(self):
+        """Tests datetime to timestamp util."""
+        self.assertRaises(AttributeError, date_utils.dt2ts, None)
+        date_time = datetime.datetime(2015, 8, 16, 11, 41)
+        self.assertEqual(1439750460000, date_utils.dt2ts(date_time))
+        self.assertEqual(1439750460, date_utils.dt2ts(date_time, in_ms=False))
 
 
 if __name__ == '__main__':

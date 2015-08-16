@@ -13,6 +13,7 @@ from eucaby.core import models
 from eucaby_api import args as api_args
 from eucaby_api import ndb_models
 from eucaby_api.utils import gae as gae_utils
+from eucaby_api.utils import date as date_utils
 
 
 class Home(generic.View):
@@ -23,14 +24,14 @@ class Home(generic.View):
 
 class Blog(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use,unused-argument
         url = 'http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/'
         return shortcuts.redirect(url)
 
 
 class Forum(generic.View):
 
-    def get(self, request):
+    def get(self, request):  # pylint: disable=no-self-use,unused-argument
         url = 'https://groups.google.com/d/forum/eucaby'
         return shortcuts.redirect(url)
 
@@ -77,7 +78,9 @@ class LocationView(generic.View):
     http_method_names = ['get', ]
 
     def get(self, request, loc_notif):  # pylint: disable=no-self-use
-        context = dict(loc_notif=loc_notif)
+        context = dict(
+            loc_notif=loc_notif,
+            created_timestamp=date_utils.dt2ts(loc_notif.created_date))
         return shortcuts.render(request, 'location.html', context)
 
     def dispatch(self, request, uuid):  # pylint: disable=arguments-differ
@@ -93,7 +96,9 @@ class NotifyLocationView(generic.View):
     http_method_names = ['get', 'post']
 
     def get(self, request, loc_req):  # pylint: disable=no-self-use
-        context = dict(loc_req=loc_req)
+        context = dict(
+            loc_req=loc_req,
+            created_timestamp=date_utils.dt2ts(loc_req.created_date))
         return shortcuts.render(request, 'request.html', context)
 
     def post(self, request, loc_req):  # pylint: disable=no-self-use

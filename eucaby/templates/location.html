@@ -1,14 +1,23 @@
-{% extends  "base_app.html" %}
+{% extends  "base.html" %}
 
 {% block header %}
+<script src="/media/lib/angular/angular.js"></script>
+<script src="/media/js/app.js"></script>
+<script src="/media/js/utils.js"></script>
+<script src="/media/js/controllers.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
 {% endblock %}
+
 {% block content %}
 <div ng-controller="LocationCtrl"
      ng-init="lat='{{ loc_notif.location.lat }}'; lng='{{ loc_notif.location.lon }}'; message='{{ loc_notif.message }}'">
     <div id="map"></div>
     <br>
-    Location sent by {{loc_notif.sender_name}} at {{loc_notif.created_date}} <br>
-    <div ng-show="'{{ loc_notif.message }}'">Message: {{ loc_notif.message }}</div>
+    <div ng-show="'{{ loc_notif.message }}'.length" class="message">{{ loc_notif.message }}</div>
+
+    <div class="message-info">
+        Location sent by <b>{{loc_notif.sender_name}}</b> at
+        &#123;&#123;{{created_timestamp}}| date:'MMM d, y h:mm a'&#125;&#125;
+    </div>
 </div>
 {% endblock %}
