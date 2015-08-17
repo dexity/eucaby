@@ -40,11 +40,11 @@ class User(db.Model):
     __tablename__ = 'auth_user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(128))
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.Unicode(128))
+    first_name = db.Column(db.Unicode(50), nullable=False)
+    last_name = db.Column(db.Unicode(50), nullable=False)
     gender = db.Column(db.String(50))
-    email = db.Column(db.String(75))
+    email = db.Column(db.Unicode(75))
     is_staff = db.Column(db.Boolean, nullable=False, default=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     is_superuser = db.Column(db.Boolean, nullable=False, default=False)
@@ -64,9 +64,9 @@ class User(db.Model):
         offset = api_utils.zone2offset(kwargs.get('timezone', 0))
         user = cls(
             username=kwargs['username'],
-            first_name=kwargs.get('first_name', ''),
-            last_name=kwargs.get('last_name', ''),
-            email=kwargs.get('email', ''),
+            first_name=unicode(kwargs.get('first_name', '')),
+            last_name=unicode(kwargs.get('last_name', '')),
+            email=unicode(kwargs.get('email', '')),
             gender=kwargs.get('gender'),
             timezone_offset=offset)
         db.session.add(user)
@@ -320,14 +320,14 @@ class EmailHistory(db.Model):
     user_id = db.Column(
         db.Integer, db.ForeignKey('auth_user.id'), nullable=False)
     user = db.relationship('User')
-    text = db.Column(db.String(255), nullable=False, index=True)
+    text = db.Column(db.Unicode(255), nullable=False, index=True)
     created_date = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.now)
 
     @classmethod
     def get_or_create(cls, user_id, text):
         """Returns email history or creates a new one."""
-        text = text.lower()
+        text = unicode(text.lower())
         obj = cls.query.filter_by(user_id=user_id, text=text).first()
         if obj:
             return obj
