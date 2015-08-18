@@ -152,6 +152,7 @@ class TestNotifyLocationView(test.TestCase):
         data = json.loads(resp.content)
         notif_dict = notif.to_dict()
         notif_dict['created_date'] = data['created_date']
+        self.assertTrue(notif.session.complete)
         self.assertEqual(notif_dict, data)
         self.assertEqual(u'Салют', data['message'])
 
@@ -184,6 +185,7 @@ class TestNotifyLocationView(test.TestCase):
         self.assertEqual(200, resp.status_code)
         notif = ndb_models.LocationNotification.get_by_session_token(
             loc_req2.session.token)[0]
+        self.assertTrue(notif.session.complete)
         data = json.loads(resp.content)
         notif_dict = notif.to_dict()
         notif_dict['created_date'] = data['created_date']

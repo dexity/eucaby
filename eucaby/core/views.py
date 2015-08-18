@@ -118,6 +118,8 @@ class NotifyLocationView(generic.View):
         sender_username = loc_req.recipient_username or default_name
         sender_name = loc_req.recipient_name or default_name
 
+        loc_req.session.complete = True
+        loc_req.session.put()
         loc_notif = ndb_models.LocationNotification.create(
             '{lat},{lng}'.format(**data), sender_username, sender_name,
             recipient_username=loc_req.sender_username,

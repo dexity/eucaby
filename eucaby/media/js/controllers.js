@@ -24,7 +24,7 @@ angular.module('eucaby.controllers', ['eucaby.utils'])
         $http.post('/request/' + $scope.uuid,
            utils.toPostData({
                lat: $scope.lat, lng: $scope.lng,
-               message: $scope.message
+               message: $scope.message || ''
            }), {
            headers: {
                'Content-Type': 'application/x-www-form-urlencoded'
