@@ -1,3 +1,4 @@
+"""Queue Tasks."""
 
 import apns
 import flask

@@ -106,8 +106,8 @@ class LocationRequest(LocationMessage):
                recipient_name=None, recipient_email=None, message=None,
                session=None):
         """Create LocationRequest entity."""
-        assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
-                'Either recipient username or email should be set')
+        assert_value = recipient_username or recipient_email
+        assert assert_value, 'Either recipient username or email should be set'
         if not session:
             session = Session.create()
         obj = cls(
@@ -131,8 +131,8 @@ class LocationNotification(LocationMessage):
                recipient_email=None, message=None, is_web=False,
                session=None):
         """Create LocationNotification entity."""
-        assert (recipient_username or recipient_email,  # pylint: disable=assert-on-tuple
-                'Either recipient username or email should be set')
+        assert_value = recipient_username or recipient_email
+        assert assert_value, 'Either recipient username or email should be set'
         if not session:
             session = Session.create()
         obj = cls(

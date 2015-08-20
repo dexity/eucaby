@@ -37,6 +37,10 @@ input {
     background: #F0F3F8;
 }
 
+.login-logo h1 {
+    color: #006738;
+}
+
 .login-text {
     margin-left: 20px;
 }
