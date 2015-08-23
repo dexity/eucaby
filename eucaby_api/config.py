@@ -22,8 +22,7 @@ class Config(object):
     CSRF_ENABLED = True
     CORS_ENABLED = True
     CACHE_TYPE = 'gaememcached'
-    # XXX: Make host url configurable
-    EUCABY_URL = 'http://www.eucaby.com'
+    EUCABY_URL = 'https://www.eucaby.com'
     NOREPLY_EMAIL = 'notification@eucaby.com'
     GCM_API_KEY = 'AIzaSyApFKUOZoJffYaeD_TjvPKjORWp1JiBdMc'
     APNS_CERT_FILE = os.path.abspath('private/dev/EucabyCert.pem')
@@ -83,6 +82,7 @@ class Production(Config):
     EUCABY_URL = 'https://www.eucaby.com'
     DEBUG = False
     CORS_ENABLED = False
+    GCM_API_KEY = 'AIzaSyBouvxkvhXJyZMnR1R_55AIn5WylvZKdlA'
     APNS_CERT_FILE = os.path.abspath('private/prd/EucabyCert.pem')
     APNS_KEY_FILE = os.path.abspath('private/prd/EucabyKey.pem')
     APNS_USE_SANDBOX = False

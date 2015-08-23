@@ -14,6 +14,6 @@ DATABASES = {
     }
 }
 
-EUCABY_URL = 'http://eucaby-prd.appspot.com'
+EUCABY_URL = 'https://www.eucaby.com'
 ENV_TYPE = 'production'
 # ALLOWED_HOSTS = []

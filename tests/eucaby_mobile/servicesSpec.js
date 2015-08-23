@@ -14,7 +14,8 @@ describe('services tests', function(){
         Autocomplete,
         successHandler,
         errorHandler,
-        storage;
+        storage,
+        config;
     var defaultStorage = {
         ec_access_token: 'some_access_token',
         ec_refresh_token: 'some_refresh_token'
@@ -68,9 +69,11 @@ describe('services tests', function(){
 
     beforeEach(module('eucaby.services'));
     beforeEach(module('eucaby.api'));
+    beforeEach(module('eucaby.config'));
     beforeEach(inject(function(
         _$rootScope_, _$window_, _$httpBackend_, _EucabyApi_, _Friends_,
-        _User_, _Activity_, _Notification_, _Request_, _Settings_, _Autocomplete_){
+        _User_, _Activity_, _Notification_, _Request_, _Settings_,
+        _Autocomplete_, _config_){
         $scope = _$rootScope_.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
@@ -82,6 +85,8 @@ describe('services tests', function(){
         Request = _Request_;
         Settings = _Settings_;
         Autocomplete = _Autocomplete_;
+        config = _config_;
+        config.EUCABY_API_ENDPOINT = ENDPOINT;
         EucabyApi.init($window.localStorage);
     }));
     beforeEach(function() {

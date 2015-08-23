@@ -13,10 +13,12 @@ describe('push notifications tests', function(){
         EucabyApi,
         utilsIonic,
         deferred,
-        deferredReg;
+        deferredReg,
+        config;
     var ANDROID_ID = 'some_android_id';
 
     beforeEach(module('eucaby.push'));
+    beforeEach(module('eucaby.config'));
     beforeEach(function() {
         module(function($provide) {
             $provide.constant('ANDROID_ID', ANDROID_ID);
@@ -24,7 +26,7 @@ describe('push notifications tests', function(){
     });
     beforeEach(inject(function(_$q_, $rootScope, _$httpBackend_, _$cordovaPush_,
         _notifications_, _storageManager_, _$window_, _$state_, _EucabyApi_,
-        _utilsIonic_){
+        _utilsIonic_, _config_){
         $q = _$q_;
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
@@ -35,6 +37,8 @@ describe('push notifications tests', function(){
         $state = _$state_;
         EucabyApi = _EucabyApi_;
         utilsIonic = _utilsIonic_;
+        config = _config_;
+        config.ANDROID_ID = ANDROID_ID;
     }));
     beforeEach(function() {
         storage = {};

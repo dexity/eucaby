@@ -8,11 +8,9 @@ Module to perform the following operations:
 
 angular.module('eucaby.api', [
     'openfb',
-    'eucaby.utils'
+    'eucaby.utils',
+    'eucaby.config'
 ])
-
-.constant('ENDPOINT', 'http://api.eucaby-dev.appspot.com')
-//.constant('ENDPOINT', 'http://localhost:8888')
 
 .factory('EucabyApi', [
     '$http',
@@ -20,8 +18,8 @@ angular.module('eucaby.api', [
     'OpenFB',
     'utils',
     'storageManager',
-    'ENDPOINT',
-function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
+    'config',
+function ($http, $q, OpenFB, utils, storageManager, config) {
 
     var runningInCordova = false;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -32,7 +30,7 @@ function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
 
     return {
         init: function(){
-            OpenFB.init('809426419123624',
+            OpenFB.init(config.FB_APP_ID,
                         'http://localhost:8100/oauthcallback.html',
                         storageManager.getStorage());
         },
@@ -64,7 +62,8 @@ function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
                         service: 'facebook', grant_type: 'password',
                         username: fb_user_id, password: fb_access_token};
                     // Authenticate with Eucaby service
-                    $http.post(ENDPOINT + '/oauth/token', utils.toPostData(params))
+                    $http.post(config.EUCABY_API_ENDPOINT + '/oauth/token',
+                               utils.toPostData(params))
                         .success(ecLoginSuccess)
                         .error(function(data, status, headers, config) {
                             deferred.reject(data);
@@ -98,7 +97,8 @@ function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
                 deferred.reject(data);
             };
             var apiRequest = function(method, path, token, params){
-                return $http({method: method, url: ENDPOINT + path,
+                return $http({
+                    method: method, url: config.EUCABY_API_ENDPOINT + path,
                     params: params, data: data,
                     headers: {'Authorization': 'Bearer ' + token}});
             };
@@ -112,7 +112,8 @@ function ($http, $q, OpenFB, utils, storageManager, ENDPOINT) {
                     grant_type: 'refresh_token',
                     refresh_token: refreshToken
                 };
-                return $http.post(ENDPOINT + '/oauth/token', utils.toPostData(params))
+                return $http.post(config.EUCABY_API_ENDPOINT + '/oauth/token',
+                                  utils.toPostData(params))
                     .success(makeApiRequest).error(errorHandler);
             };
             var makeApiRequest = function(data){

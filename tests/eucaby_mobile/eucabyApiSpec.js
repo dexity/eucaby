@@ -1,7 +1,13 @@
 'use strict';
 
 describe('eucaby api tests', function(){
-    var $scope, $window, $httpBackend, OpenFB, $q, EucabyApi;
+    var $scope,
+        $window,
+        $httpBackend,
+        OpenFB,
+        $q,
+        EucabyApi,
+        config;
     var storage = {};
     var defaultStorage = {
         ec_access_token: 'some_access_token',
@@ -40,14 +46,17 @@ describe('eucaby api tests', function(){
     var ENDPOINT = 'http://api.eucaby-dev.appspot.com';
 
     beforeEach(module('eucaby.api'));
+    beforeEach(module('eucaby.config'));
     beforeEach(inject(function($rootScope, _$window_, _$httpBackend_, _$q_,
-                               _OpenFB_, _EucabyApi_){
+                               _OpenFB_, _EucabyApi_, _config_){
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $window = _$window_;
         $q = _$q_;
         OpenFB = _OpenFB_;
         EucabyApi = _EucabyApi_;
+        config = _config_;
+        config.EUCABY_API_ENDPOINT = ENDPOINT;
     }));
     beforeEach(function(){
         // LocalStorage mock.

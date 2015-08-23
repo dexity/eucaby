@@ -1,15 +1,14 @@
 'use strict';
 
-//Module for push notifications.
+// Module for push notifications.
 
 angular.module('eucaby.push', [
     'ionic',
     'ngCordova',
     'eucaby.api',
-    'eucaby.utils'
+    'eucaby.utils',
+    'eucaby.config'
 ])
-
-.constant('ANDROID_ID', '376614047301')
 
 .factory('notifications', [
     '$rootScope',
@@ -19,9 +18,9 @@ angular.module('eucaby.push', [
     'utils',
     'utilsIonic',
     'storageManager',
-    'ANDROID_ID',
+    'config',
 function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
-    storageManager, ANDROID_ID) {
+    storageManager, config) {
 
     var factory = {
         init: function() {
@@ -71,7 +70,7 @@ function($rootScope, $state, $cordovaPush, EucabyApi, utils, utilsIonic,
         },
         $registerAndroid: function(){
             $cordovaPush.register({
-                senderID: ANDROID_ID
+                senderID: config.ANDROID_ID
             }).then(function(result) {
                 // No registration id at the stage
                 console.log('Android registration accepted');
