@@ -15,7 +15,7 @@ class Config(object):
     SECRET_KEY = secret_keys.CSRF_SECRET_KEY
     CSRF_SESSION_KEY = secret_keys.SESSION_KEY
     OAUTH2_PROVIDER_TOKEN_EXPIRES_IN = 60 * 60 * 24 * 30  # 30 days  pylint: disable=invalid-name
-    FACEBOOK = dict(
+    FACEBOOK = dict(  # v2.1
         consumer_key='809426419123624',
         consumer_secret='b4b8c000e74e15c294e9d67ce7fca42b'
     )
@@ -75,9 +75,9 @@ class Production(Config):
     APP_ID = PRD_APP_ID
     SQLALCHEMY_DATABASE_URI = (
         'mysql://root@/eucaby?unix_socket=/cloudsql/eucaby-prd:eucaby')
-    FACEBOOK = dict(
-        consumer_key='817673931682235',
-        consumer_secret='76593027ca28a493f883f3ca26f7573c'
+    FACEBOOK = dict(  # v2.4
+        consumer_key='1622022934714935',
+        consumer_secret='e464952b788b20f9101c7454c7816fe4'
     )
     EUCABY_URL = 'https://www.eucaby.com'
     DEBUG = False

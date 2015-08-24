@@ -5,13 +5,16 @@ threadsafe: true
 handlers:
 - url: /media
   static_dir: eucaby/media
+  secure: always
 
 - url: /static
   static_dir: eucaby/static
+  secure: always
   expiration: 0
 
 - url: .*
   script: eucaby.eucaby.wsgi.app
+  secure: always
 
 libraries:
 - name: MySQLdb

@@ -20,8 +20,8 @@
     "cordova-plugin-device",
     "cordova-plugin-inappbrowser",
     "cordova-plugin-whitelist",
-    "org.apache.cordova.geolocation",
-    "org.apache.cordova.splashscreen"
+    "org.apache.cordova.splashscreen",
+    "org.apache.cordova.geolocation"
   ],
   "cordovaPlatforms": [
     "ios",

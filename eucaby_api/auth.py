@@ -2,6 +2,7 @@
 
 import flask
 import functools
+import logging
 from flask_oauthlib import client as f_oauth_client
 from flask_oauthlib import provider
 from oauthlib import common as oauth_common
@@ -169,7 +170,14 @@ class EucabyValidator(provider.OAuth2RequestValidator):
         if user is None:
             try:
                 # Facebook profile request
-                resp_me = facebook.get('/me', token=(access_token, ''))
+                fields = ['first_name', 'last_name', 'name', 'locale',
+                          'gender', 'email', 'id', 'link', 'timezone',
+                          'updated_time', 'verified']
+                fields_str = '?fields=' + ','.join(fields)
+                resp_me = facebook.get(
+                    '/me' + fields_str, token=(access_token, ''))
+                # Note: We keep track of Facebook request in case of API changes
+                logging.info('facebook.get("/me"): %s', resp_me.data)
             except f_oauth_client.OAuthException as ex:
                 raise oauth_oauth2.InvalidGrantError(ex.message)
 

@@ -7,6 +7,7 @@ handlers:
 - url: /tasks/mail
   script: eucaby_api.wsgi.app
   login: admin
+  secure: always
 
 libraries:
 - name: MySQLdb

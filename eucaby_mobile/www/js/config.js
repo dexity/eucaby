@@ -12,14 +12,14 @@ angular.module('eucaby.config', [])
     if (!isProd){
         config = {  // Development
             ANDROID_ID: '376614047301',
-            EUCABY_API_ENDPOINT: 'http://api.eucaby-dev.appspot.com',  // 'http://localhost:8888'
+            EUCABY_API_ENDPOINT: 'https://api.eucaby-dev.appspot.com',  // 'http://localhost:8888'
             FB_APP_ID: '809426419123624'
         };
     } else {
         config = {  // Production
             ANDROID_ID: '1013390921672',
-            EUCABY_API_ENDPOINT: 'http://api.eucaby.com',
-            FB_APP_ID: '817673931682235'
+            EUCABY_API_ENDPOINT: 'https://api.eucaby.com',
+            FB_APP_ID: '1622022934714935'
         };
     }
     return config;

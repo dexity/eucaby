@@ -6,6 +6,7 @@ threadsafe: true
 handlers:
 - url: .*
   script: eucaby_api.wsgi.app
+  secure: always
 
 libraries:
 - name: MySQLdb
