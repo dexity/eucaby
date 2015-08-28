@@ -16,12 +16,12 @@
   },
   "cordovaPlugins": [
     "com.phonegap.plugins.PushPlugin",
-    "cordova-plugin-crosswalk-webview",
     "cordova-plugin-device",
     "cordova-plugin-inappbrowser",
-    "cordova-plugin-whitelist",
     "org.apache.cordova.splashscreen",
-    "org.apache.cordova.geolocation"
+    "org.apache.cordova.geolocation",
+    "cordova-plugin-whitelist",
+    "cordova-plugin-crosswalk-webview"
   ],
   "cordovaPlatforms": [
     "ios",

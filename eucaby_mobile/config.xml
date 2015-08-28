@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.ionicframework.eucaby213417" version="0.0.3" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<widget id="com.eucaby.mobile" version="0.0.2"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
   <name>Eucaby</name>
   <description>
       Geo Messenger
@@ -33,6 +36,7 @@
   <allow-navigation href="*://*.eucaby.com/*" />
   <allow-navigation href="*://*.appspot.com/*" />
   <allow-navigation href="*://*.euca.by/*" />
+  <allow-navigation href="*://*.google.com/*" />
   <allow-navigation href="*://*.googleapis.com/*" />
   <allow-navigation href="*://*.gstatic.com/*" />
   <allow-navigation href="*://*.localhost:*/*" />
