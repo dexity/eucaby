@@ -20,11 +20,10 @@
     "cordova-plugin-inappbrowser",
     "org.apache.cordova.splashscreen",
     "org.apache.cordova.geolocation",
-    "cordova-plugin-whitelist",
-    "cordova-plugin-crosswalk-webview"
+    "cordova-plugin-whitelist"
   ],
   "cordovaPlatforms": [
-    "ios",
-    "android"
+    "android",
+    "ios"
   ]
 }

@@ -277,7 +277,7 @@ function($scope, $ionicLoading, utils, dateUtils, utilsIonic, User) {
         $scope.profile.date_joined = dateUtils.ts2hd(
             Date.parse(data.data.date_joined), true);
     }, function(data){
-        utilsIonic.alert('Failed to load user profile');
+        utilsIonic.alert('Error', 'Failed to load user profile');
         console.error(data);
     }).finally(function(){
         $ionicLoading.hide();
