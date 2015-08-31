@@ -6,6 +6,7 @@ from flask import views
 from flask import current_app
 from gcm import gcm
 import logging
+import random
 from sqlalchemy import exc
 import time
 
@@ -120,7 +121,7 @@ class APNsNotificationsTask(PushNotificationsTask):
             flask.request.message_id)
         payload = apns.Payload(**kwargs)
         for device in flask.request.devices:
-            identifier = 1
+            identifier = random.getrandbits(32)
             frame.add_item(
                 device.device_key, payload, identifier, expiry, priority)
         apns_socket = api_utils.create_apns_socket(current_app)
