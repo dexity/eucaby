@@ -303,12 +303,15 @@ class UserActivityView(flask_restful.Resource):
 
     @classmethod
     def _get_vector_data(cls, requests, notifications, offset, limit):
-        # WARNING: This is not efficient as it loads all requests and
-        #          notifications to memory and sorts them
+        """Returns data dictionary with merged requests and notifications."""
+        data = []
         items = itertools.chain(requests, notifications)
         merged_items = sorted(
             items, key=lambda x: x.created_date, reverse=True)
-        data = []
+        # Alternative solution:
+        # merged_items = api_utils.merge_sorted_queries(
+        #     [requests, notifications], offset + limit,
+        #     key=lambda x: x.created_date, reverse=True)
         for item in merged_items[offset:offset+limit]:
             if isinstance(item, ndb_models.LocationRequest):
                 data_item = flask_restful.marshal(
@@ -323,19 +326,24 @@ class UserActivityView(flask_restful.Resource):
     def get_outgoing_data(cls, offset, limit):
         """Returns data for outgoing activities."""
         username = flask.request.user.username
-        requests = ndb_models.LocationRequest.get_by_sender_username(username)
+        size = offset + limit
+        requests = ndb_models.LocationRequest.get_by_sender_username(
+            username, offset=0, limit=size)
         notifications = (ndb_models.LocationNotification
-                         .get_by_sender_username(username))
+                         .get_by_sender_username(username, offset=0,
+                                                 limit=size))
         return cls._get_vector_data(requests, notifications, offset, limit)
 
     @classmethod
     def get_incoming_data(cls, offset, limit):
         """Returns data for request activities."""
         username = flask.request.user.username
+        size = offset + limit
         requests = (ndb_models.LocationRequest
-                    .get_by_recipient_username(username))
+                    .get_by_recipient_username(username, offset=0, limit=size))
         notifications = (ndb_models.LocationNotification
-                         .get_by_recipient_username(username))
+                         .get_by_recipient_username(username, offset=0,
+                                                    limit=size))
         return cls._get_vector_data(requests, notifications, offset, limit)
 
     @classmethod
@@ -343,7 +351,7 @@ class UserActivityView(flask_restful.Resource):
         """Returns data for request activities."""
         username = flask.request.user.username
         requests = ndb_models.LocationRequest.get_by_sender_username(
-            username, limit=limit, offset=offset)
+            username, offset=offset, limit=limit)
         return flask_restful.marshal(
             dict(data=[req.to_dict() for req in requests]),
             api_fields.REQUEST_LIST_FIELDS)
@@ -353,7 +361,7 @@ class UserActivityView(flask_restful.Resource):
         """Returns data for notification activities."""
         username = flask.request.user.username
         notifications = ndb_models.LocationNotification.get_by_sender_username(
-            username, limit=limit, offset=offset)
+            username, offset=offset, limit=limit)
 
         return flask_restful.marshal(
             dict(data=[notif.to_dict() for notif in notifications]),

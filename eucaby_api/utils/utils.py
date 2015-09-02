@@ -137,3 +137,51 @@ def json_to_dict(json_str):
         return json.loads(json_str)
     except (TypeError, ValueError):
         return {}
+
+
+def merge_sorted_queries(queries, size, key, reverse=False):
+    """Merges several sorted queries into one list."""
+    # Note: Queries are already sorted in certain order. Make sure that
+    #       reverse matches the sorting order. Otherwise unexpected results
+    #       will occur.
+    #       Queries should be iterable (support .next() interface)
+    def compare(x, y, _key, _reverse):
+        """Compares two elements."""
+        if _reverse:
+            return _key(x) > _key(y)
+        return _key(x) < _key(y)
+
+    queries_size = len(queries)
+    assert queries_size > 0
+    current_list = [None for _ in range(queries_size)]
+    empty_list = [False for _ in range(queries_size)]
+    k = 0
+    items = []
+    while k < size:
+        # All lists are processed
+        if len(set(empty_list)) == 1 and empty_list[0]:
+            break
+        curr = None
+        idx = 0
+        for i, query in enumerate(queries):
+            if empty_list[i]:
+                continue
+            try:
+                if current_list[i] is None:
+                    next_item = query.next()
+                    # No query item can be None
+                    if next_item is None:
+                        raise
+                    current_list[i] = next_item
+            except StopIteration:
+                empty_list[i] = True
+            if (curr is None or
+                    (current_list[i] is not None and
+                     compare(current_list[i], curr, key, reverse))):
+                curr = current_list[i]
+                idx = i
+        if curr is not None:
+            items.append(curr)
+            current_list[idx] = None
+        k += 1
+    return items

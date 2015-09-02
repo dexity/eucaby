@@ -40,7 +40,7 @@ class LocationMessage(polymodel.PolyModel):
 
     @classmethod
     def _get_by_username(
-            cls, username_field, username, limit=None, offset=None):
+            cls, username_field, username, offset=None, limit=None):
         res = cls.query(getattr(cls, username_field) == username).order(
             -cls.created_date)
         kwargs = {}
@@ -49,16 +49,16 @@ class LocationMessage(polymodel.PolyModel):
         return res.fetch(**kwargs)
 
     @classmethod
-    def get_by_recipient_username(cls, username, limit=None, offset=None):
+    def get_by_recipient_username(cls, username, offset=None, limit=None):
         """Returns messages by recipient_username."""
         return cls._get_by_username(
-            'recipient_username', username, limit, offset)
+            'recipient_username', username, offset=offset, limit=limit)
 
     @classmethod
-    def get_by_sender_username(cls, username, limit=None, offset=None):
+    def get_by_sender_username(cls, username, offset=None, limit=None):
         """Returns messages by sender_username."""
         return cls._get_by_username(
-            'sender_username', username, limit, offset)
+            'sender_username', username, offset=offset, limit=limit)
 
     @classmethod
     def get_by_session_token(cls, token):
