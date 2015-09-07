@@ -123,7 +123,7 @@ def create_apns_socket(app):
     return apns.APNs(
         use_sandbox=app.config['APNS_USE_SANDBOX'],
         cert_file=app.config['APNS_CERT_FILE'],
-        key_file=app.config['APNS_KEY_FILE'], enhanced=True)
+        key_file=app.config['APNS_KEY_FILE'])#, enhanced=True)
 
 
 def create_key(*args):

@@ -6,9 +6,7 @@ from flask import views
 from flask import current_app
 from gcm import gcm
 import logging
-import random
 from sqlalchemy import exc
-import time
 
 from google.appengine.api import mail as gae_mail
 
@@ -113,19 +111,33 @@ class APNsNotificationsTask(PushNotificationsTask):
 
         logging.info('Pushing APNs notifications to %s devices',
                      len(flask.request.devices))
-        frame = apns.Frame()
-        expiry = time.time() + 3600
-        priority = 10
         kwargs = api_utils.apns_payload_data(
             flask.request.sender_name, flask.request.message_type,
             flask.request.message_id)
         payload = apns.Payload(**kwargs)
+
         for device in flask.request.devices:
-            identifier = random.getrandbits(32)
-            frame.add_item(
-                device.device_key, payload, identifier, expiry, priority)
-        apns_socket = api_utils.create_apns_socket(current_app)
-        apns_socket.gateway_server.send_notification_multiple(frame)
+            # Note: For every device it creates a new connection to send
+            #       notification. This is inefficient and should be fixed.
+            apns_socket = api_utils.create_apns_socket(current_app)
+            apns_socket.gateway_server.send_notification(
+                device.device_key, payload)
+
+        # Note: For unknown reasons send multiple notifications stopped working
+        #       on App Engine both for new and legacy enhanced notification
+        #       format: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/CommunicatingWIthAPS.html  # pylint: disable=line-too-long
+
+        # import random
+        # import time
+        # frame = apns.Frame()
+        # expiry = time.time() + 3600
+        # priority = 10
+        # for device in flask.request.devices:
+        #     identifier = random.getrandbits(32)
+        #     frame.add_item(
+        #         device.device_key, payload, identifier, expiry, priority)
+        # apns_socket = api_utils.create_apns_socket(current_app)
+        # apns_socket.gateway_server.send_notification_multiple(frame)
 
         msg = 'Notification to APNs is pushed'
         logging.info(msg)
