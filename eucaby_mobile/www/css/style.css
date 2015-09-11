@@ -106,10 +106,18 @@ input {
     /*font-size: 14px;*/
 }
 
-.message-text {
+.message-text,
+.message-detail {
     color: #0c63ee;
+}
+
+.message-text {
     text-overflow: ellipsis;
     overflow: hidden;
+}
+
+.item .message-detail {
+    white-space: normal;
 }
 
 .detail-time {
