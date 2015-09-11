@@ -65,3 +65,8 @@
     text-align: right;
     margin-bottom: 10px;
 }
+
+.screenshot img {
+    height: 450px;
+    margin-bottom: 10px;
+}
