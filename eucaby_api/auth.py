@@ -9,6 +9,8 @@ from oauthlib import common as oauth_common
 from oauthlib import oauth2 as oauth_oauth2
 
 from eucaby_api import models
+from eucaby_api import args as api_args
+from eucaby_api.utils import gae as gae_utils
 from eucaby_api.utils import utils as api_utils
 
 oauth = f_oauth_client.OAuth()  # Client for remote APIs
@@ -186,6 +188,8 @@ class EucabyValidator(provider.OAuth2RequestValidator):
             resp_data['username'] = username  # Set user id from Facebook
             # Create user profile from Facebook data
             user = models.User.create(**resp_data)
+            # Notify admin about new user
+            gae_utils.send_mail('New User', user.name, [api_args.ADMIN_EMAIL])
 
         # Username should match Facebook user id
         if username != request.body['username']:

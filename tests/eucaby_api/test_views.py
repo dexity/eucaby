@@ -84,6 +84,14 @@ class TestOAuthToken(test_base.TestCase):
         self.valid_params = dict(
             grant_type='password', service='facebook',
             password='test_password', username='12345')
+        # Testbed
+        self.testbed = test_utils.create_testbed()
+        self.taskq = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
+        self.mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+
+    def tearDown(self):
+        super(TestOAuthToken, self).tearDown()
+        self.testbed.deactivate()
 
     def test_general_errors(self):
         """Tests general errors related to oauth."""
@@ -209,6 +217,13 @@ class TestOAuthToken(test_base.TestCase):
             access_token=data['access_token'],
             refresh_token=data['refresh_token'])
         self.assertEqual(ec_success_resp, data)
+
+        # Notify admin about new user (temporary)
+        task = self.taskq.get_filtered_tasks(queue_names='mail')[0]
+        test_utils.execute_queue_task(self.client, task)
+        messages = self.mail_stub.get_sent_messages()
+        test_utils.verify_email(
+            messages, 1, api_args.ADMIN_EMAIL, [user.name])
 
     @mock.patch('eucaby_api.auth.facebook.get')
     @mock.patch('eucaby_api.auth.facebook.exchange_token')

@@ -5,6 +5,7 @@ from flask_restful import inputs
 from eucaby_api.utils import reqparse
 
 
+ADMIN_EMAIL = 'alex@eucaby.com'
 EMAIL_REGEX_PATTERN = '^[A-Z0-9\._%+-]+@[A-Z0-9\.-]+\.[A-Z]{2,4}$'  # pylint: disable=anomalous-backslash-in-string
 POINT_REGEX_PATTERN = '-?[0-9]+\.?[0-9]*'  # pylint: disable=anomalous-backslash-in-string
 LATLNG_REGEX_PATTERN = '^{p},{p}$'.format(p=POINT_REGEX_PATTERN)
