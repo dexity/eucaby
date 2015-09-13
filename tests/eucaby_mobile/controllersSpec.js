@@ -562,7 +562,7 @@ describe('profile controller tests', function(){
         deferred.reject('Profile error');
         $scope.$apply();
         expect(utilsIonic.alert)
-            .toHaveBeenCalledWith('Failed to load user profile');
+            .toHaveBeenCalledWith('Error', 'Failed to load user profile');
         expect($ionicLoading.show).toHaveBeenCalled();
         expect($ionicLoading.hide).toHaveBeenCalled();
     });
