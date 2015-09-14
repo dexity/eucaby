@@ -2,6 +2,9 @@ module: api
 runtime: python27
 api_version: 1
 threadsafe: true
+automatic_scaling:
+  min_idle_instances: 1
+  max_pending_latency: automatic
 
 handlers:
 - url: .*
@@ -14,8 +17,8 @@ libraries:
 - name: ssl
   version: latest
 
-#inbound_services:
-#- warmup
+inbound_services:
+- warmup
 
 includes:
 - common.yaml
