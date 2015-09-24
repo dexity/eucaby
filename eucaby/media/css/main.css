@@ -73,4 +73,12 @@
 
 .android-badge {
     height: 41px;
+    margin-top: -1px;
+    margin-right: 10px;
+}
+
+.ios-badge {
+    display: inline-block;
+    overflow: hidden;
+    height:40px;
 }

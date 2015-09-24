@@ -42,7 +42,7 @@ REQUEST_FIELDS = MESSAGE_FIELDS.copy()
 NOTIFICATION_FIELDS = MESSAGE_FIELDS.copy()
 NOTIFICATION_FIELDS.update(dict(
     type=rest_fields.String(default=NOTIFICATION),
-    is_web=rest_fields.Boolean,
+    is_web=rest_fields.Boolean,  # Only notification can be created from browser
     location=rest_fields.Nested(LOCATION_FIELDS)))
 
 INLINE_REQUEST_FIELDS = REQUEST_FIELDS.copy()
