@@ -1,4 +1,3 @@
-version: 1
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -6,36 +5,23 @@ threadsafe: true
 handlers:
 - url: /media
   static_dir: eucaby/media
+  secure: always
 
 - url: /static
   static_dir: eucaby/static
+  secure: always
   expiration: 0
 
-- url: /tasks/.*
-  script: eucaby.wsgi.application
-  login: admin
-
-- url: /_ah/spi/.*
-  script: eucaby_api.api.application
-
-- url: /.*
-  script: eucaby.wsgi.application
-
-env_variables:
-  DJANGO_SETTINGS_MODULE: 'eucaby.eucaby.settings'
+- url: .*
+  script: eucaby.eucaby.wsgi.app
+  secure: always
 
 libraries:
-- name: django
-  version: 1.5
-
 - name: MySQLdb
   version: latest
 
 - name: ssl
   version: latest
-
-- name: endpoints
-  version: 1.0
 
 builtins:
 - django_wsgi: on
@@ -43,17 +29,5 @@ builtins:
 #inbound_services:
 #- warmup
 
-skip_files:
-- ^\.git
-- ^\.idea
-- ^(.*/)?.*~$
-- ^(.*/)?.*\.py[co]$
-- ^deploy*
-- ^lib/Django.*
-- ^lib/django
-- ^lib/MySQL
-- ^lib/_mysql
-- ^lib/PyYAML*
-- ^lib/yaml
-- ^eucaby_rt
-- ^eucaby_mobile
+includes:
+- common.yaml

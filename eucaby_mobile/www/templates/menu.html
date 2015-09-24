@@ -1,15 +1,20 @@
 
-<ion-side-menus>
+<ion-side-menus enable-menu-with-back-views="true">
 
     <ion-side-menu-content>
+        <ion-nav-bar class="bar-stable"
+                     ng-class="{'aligned-title': alignedTitle()}">
+            <ion-nav-back-button class="button-icon ion-ios-arrow-left">
+            </ion-nav-back-button>
+        </ion-nav-bar>
         <ion-nav-view animation="no-animation" name="menu-content"></ion-nav-view>
     </ion-side-menu-content>
 
-    <ion-side-menu side="right" width="200">
+    <ion-side-menu side="right" width="200" is-enabled="showSideMenu()">
         <ion-content>
-            <ul class="list">
-                <a class="item" menu-close ng-click="logout()">Logout</a>
-            </ul>
+            <ion-item menu-toggle="right" href="#/app/profile">Profile</ion-item>
+            <ion-item menu-toggle="right" href="#/app/settings">Settings</ion-item>
+            <ion-item menu-close ng-click="logout()">Logout</ion-item>
         </ion-content>
     </ion-side-menu>
 

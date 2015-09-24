@@ -1,0 +1,28 @@
+<ion-view title="Profile">
+    <ion-nav-buttons side="left">
+        <button class="button back-button buttons button-icon
+            ion-ios-arrow-left header-item" ui-sref="app.tab.map"
+            ng-class="{'hide': hasBackButton()}"> Back
+        </button>
+    </ion-nav-buttons>
+    <ion-content class="profile" ng-cloak>
+        <div class="row">
+            <div class="col"><b>Name</b></div>
+            <div class="col col-75">
+                {{profile.name}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Email</b></div>
+            <div class="col col-75">{{profile.email}}</div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Gender</b></div>
+            <div class="col col-75">{{profile.gender}}</div>
+        </div>
+        <div class="row">
+            <div class="col"><b>Joined</b></div>
+            <div class="col col-75">{{profile.date_joined}}</div>
+        </div>
+    </ion-content>
+</ion-view>

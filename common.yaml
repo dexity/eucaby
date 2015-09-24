@@ -1,0 +1,15 @@
+
+skip_files:
+- ^\.git
+- ^\.idea
+- ^(.*/)?index\.yaml
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^deploy*
+- ^run_*
+- ^lib/MySQL
+- ^lib/_mysql
+- ^lib/PyYAML*
+- ^lib/yaml
+- ^eucaby_rt
+- ^eucaby_mobile

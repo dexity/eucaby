@@ -1,0 +1,78 @@
+<ion-view title="Request">
+    <ion-nav-buttons side="left">
+        <button class="button back-button buttons button-icon
+            ion-ios-arrow-left header-item" ng-class="{'hide': hasBackButton()}"
+            ui-sref="app.tab.map"> Map
+        </button>
+    </ion-nav-buttons>
+    <ion-nav-buttons side="secondary">
+      <button class="button button-positive header-button"
+          ng-click="sendLocation()" ng-hide="isOutgoing" ng-cloak>
+          Send Location <i class="icon ion-android-send"></i>
+      </button>
+    </ion-nav-buttons>
+  <ion-content>
+    <div id="locmap" ng-if="item.notifications"></div>
+    <div class="card" ng-cloak>
+        <div class="item item-text-wrap">
+            <i class="ion {{ icon }} icon-detail"></i>
+            <div class="detail-time">{{ item.created_date | localize }}</div>
+            <div ng-switch on="isOutgoing">
+                <div ng-switch-when="true">
+                    Request sent to <br>
+                    <b>{{ item.recipient | userName }}</b><br>
+                </div>
+                <div ng-switch-when="false">
+                    Request received from <br>
+                    <b>{{ item.sender | userName }}</b><br>
+                </div>
+            </div>
+        </div>
+        <div class="item item-text-wrap message-detail" ng-show="item.message">
+            {{ item.message }}
+        </div>
+    </div>
+    <form ng-hide="isOutgoing" ng-cloak>
+        <input type="hidden" ng-model="form.token">
+        <div class="padding row">
+            <a class="button button-icon ion-pinpoint col-20 map-pinpoint" ng-click="centerOnMe()"></a>
+            <label class="item item-input message col-80">
+              <input type="text" placeholder="Optional message" name="message"
+                     ng-model="form.message">
+            </label>
+        </div>
+    </form>
+
+    <div ng-show="item.showBrowserWarning" class="note-area" ng-cloak>
+        <b>Note:</b> Location sent from a browser might not be accurate
+    </div>
+    <div ng-show="item.notifications">
+        <ion-list>
+            <div class="item item-divider">Locations</div>
+            <ion-item ng-repeat="notif in item.notifications"
+                      ng-click="centerMarker(notif.location)" ng-cloak>
+                <div class="detail-time">{{ notif.created_date | localize }}</div>
+                <div ng-class="{'number-label': !notif.is_web, 'number-label-web': notif.is_web}">
+                    {{ $index + 1 }}
+                </div>
+                <div ng-switch on="isOutgoing">
+                    <div ng-switch-when="true">
+                        received from <br>
+                        <b>{{ notif.sender | userName }}</b>
+                        <div ng-show="notif.is_web" class="badge-web">web</div><br>
+                    </div>
+                    <div ng-switch-when="false">
+                        sent to <br>
+                        <b>{{ notif.recipient | userName }}</b>
+                        <div ng-show="notif.is_web" class="badge-web">web</div><br>
+                    </div>
+                </div>
+                <div ng-show="notif.message">
+                    <hr class="separator">
+                    <span class="message-detail">{{ notif.message }}</span>
+                </div>
+            </ion-item>
+        </ion-list>
+    </div>
+  </ion-content>
+</ion-view>

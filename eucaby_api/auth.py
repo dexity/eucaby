@@ -2,12 +2,15 @@
 
 import flask
 import functools
+import logging
 from flask_oauthlib import client as f_oauth_client
 from flask_oauthlib import provider
 from oauthlib import common as oauth_common
 from oauthlib import oauth2 as oauth_oauth2
 
 from eucaby_api import models
+from eucaby_api import args as api_args
+from eucaby_api.utils import gae as gae_utils
 from eucaby_api.utils import utils as api_utils
 
 oauth = f_oauth_client.OAuth()  # Client for remote APIs
@@ -169,7 +172,14 @@ class EucabyValidator(provider.OAuth2RequestValidator):
         if user is None:
             try:
                 # Facebook profile request
-                resp_me = facebook.get('/me', token=(access_token, ''))
+                fields = ['first_name', 'last_name', 'name', 'locale',
+                          'gender', 'email', 'id', 'link', 'timezone',
+                          'updated_time', 'verified']
+                fields_str = '?fields=' + ','.join(fields)
+                resp_me = facebook.get(
+                    '/me' + fields_str, token=(access_token, ''))
+                # Note: We keep track of Facebook request in case of API changes
+                logging.info('facebook.get("/me"): %s', resp_me.data)
             except f_oauth_client.OAuthException as ex:
                 raise oauth_oauth2.InvalidGrantError(ex.message)
 
@@ -178,6 +188,8 @@ class EucabyValidator(provider.OAuth2RequestValidator):
             resp_data['username'] = username  # Set user id from Facebook
             # Create user profile from Facebook data
             user = models.User.create(**resp_data)
+            # Notify admin about new user
+            gae_utils.send_mail('New User', user.name, [api_args.ADMIN_EMAIL])
 
         # Username should match Facebook user id
         if username != request.body['username']:
@@ -186,7 +198,6 @@ class EucabyValidator(provider.OAuth2RequestValidator):
         request.user = user
         request.facebook_token = fb_token  # Set facebook_token attribute
         return user
-
 
     def validate_refresh_token(self, refresh_token, client, request):
         """Validates Eucaby refresh token."""
@@ -236,4 +247,18 @@ eucaby_oauth._validator = EucabyValidator(  # pylint: disable=attribute-defined-
 @eucaby_oauth.invalid_response
 def eucaby_invalid_response(req):  # pylint: disable=unused-argument
     """Handles Eucaby invalid access token."""
-    return dict(code='invalid_token', message='Invalid access token'), 401
+    # Hack: Detect code based on the message string because
+    #   OAuth2RequestValidator.validate_bearer_token is not flexible enough to
+    #   customize the error code.
+    code, message = 'invalid_token', req.error_message or 'Invalid bearer token'
+    ss2code = [('scope', oauth_oauth2.InvalidScopeError.error),
+               ('expired', oauth_oauth2.TokenExpiredError.error)]
+    if req.error_message:
+        for substr, _code in ss2code:
+            if substr in req.error_message:
+                code = _code
+                break
+    # Special case: not found bearer token means invalid
+    if 'not found' in message:
+        message = 'Invalid bearer token'
+    return dict(code=code, message=message.rstrip('.')), 401

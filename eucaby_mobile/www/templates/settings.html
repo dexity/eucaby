@@ -1,0 +1,14 @@
+<ion-view title="Settings">
+    <ion-nav-buttons side="left">
+        <button class="button back-button buttons button-icon
+            ion-ios-arrow-left header-item" ui-sref="app.tab.map"
+            ng-class="{'hide': hasBackButton()}"> Back
+        </button>
+    </ion-nav-buttons>
+    <ion-content>
+        <ion-checkbox ng-model="emailSubscription.checked"
+            ng-change="emailSubscriptionChange()">
+            Receive email notifications
+        </ion-checkbox>
+    </ion-content>
+</ion-view>

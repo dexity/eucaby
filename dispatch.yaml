@@ -1,6 +1,6 @@
 dispatch:
-- url: '*/api/*'
-  module: api
+- url: '*/push/*'
+  module: push
 
-- url: '*/*'
-  module: default
+- url: '*/mail/*'
+  module: mail

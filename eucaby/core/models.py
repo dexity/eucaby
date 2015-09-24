@@ -1,63 +1,33 @@
-#from django.db import models
-import datetime
-from google.appengine.ext import ndb
-import uuid
+"""Eucaby models."""
 
-# Temp models
+from django.contrib.auth import models as auth_models
+from django.db import models
 
-class Session(ndb.Model):
-    key = ndb.StringProperty(required=True)
-    sender_email = ndb.StringProperty(required=True)
-    receiver_email = ndb.StringProperty(required=True)
+from google.appengine.api import memcache
 
-    @classmethod
-    def create(cls, sender_email, receiver_email):
-        obj = cls(
-            key=uuid.uuid4().hex, sender_email=sender_email,
-            receiver_email=receiver_email)
-        obj.put()
-        return obj
-
-    def to_dict(self):
-        return self._to_dict()
+from eucaby_api.utils import utils as api_utils
 
 
-class Request(ndb.Model):
-    token = ndb.StringProperty(required=True)
-    session = ndb.StructuredProperty(Session, required=True)
-    created_date = ndb.DateTimeProperty(required=True)
+class UserSettings(models.Model):
+
+    """User settings model."""
+    user = models.OneToOneField(auth_models.User)
+    settings = models.TextField(default='{}')
 
     @classmethod
-    def create(cls, session):
-        obj = cls(
-            token=uuid.uuid4().hex, session=session,
-            created_date=datetime.datetime.now())
-        obj.put()
-        return obj
+    def user_param(cls, user_id, key):
+        """User settings param."""
+        def get_param(text_, key_):
+            settings = api_utils.json_to_dict(text_)
+            return settings.get(key_)
 
-    def to_dict(self):
-        return dict(
-            token=self.token, session=self.session.to_dict(),
-            created_date=str(self.created_date))
+        cache_key = api_utils.create_key('user_id', user_id, 'settings')
+        text = memcache.get(cache_key)
+        if text:
+            return get_param(text, key)
+        obj = cls.objects.get(user__id=user_id)
+        memcache.set(cache_key, obj.settings)
+        return get_param(obj.settings, key)
 
-
-class Response(ndb.Model):
-    location = ndb.GeoPtProperty(required=True)
-    session = ndb.StructuredProperty(Session, required=True)
-    created_date = ndb.DateTimeProperty(required=True)
-
-    @classmethod
-    def create(cls, session, latlng):
-        obj = cls(
-            location=ndb.GeoPt(latlng), session=session,
-            created_date=datetime.datetime.now())
-        obj.put()
-        return obj
-
-    def to_dict(self):
-
-        return dict(
-            location=dict(
-                lat=self.location.lat, lng=self.location.lon),
-            session=self.session.to_dict(),
-            created_date=str(self.created_date))
+    class Meta:
+        db_table = 'user_settings'

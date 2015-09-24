@@ -1,0 +1,5 @@
+cron:
+- description: Clean up iOS devices
+  url: /tasks/push/apns/cleanup
+  schedule: every 24 hours
+  target: push

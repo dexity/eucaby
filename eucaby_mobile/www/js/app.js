@@ -1,28 +1,37 @@
 'use strict';
 
-angular.module('eucaby',
-    ['ionic', 'openfb', 'btford.socket-io', 'eucaby.controllers',
-     'eucaby.services'])
+angular.module('eucaby', [
+    'ionic',
+    'eucaby.controllers',
+    'eucaby.filters',
+    'eucaby.utils',
+    'eucaby.api',
+    'eucaby.push'
+])
+.run([
+    '$rootScope',
+    '$state',
+    '$ionicPlatform',
+    '$window',
+    'EucabyApi',
+    'notifications',
+    'storageManager',
+function($rootScope, $state, $ionicPlatform, $window, EucabyApi, notifications,
+         storageManager) {
 
-.factory('socket', function (socketFactory) {
-    return socketFactory({
-        ioSocket: io('http://localhost:4000') // rt.eucaby-dev.appspot.com, 146.148.67.189
-    });
-})
-
-.run(function($rootScope, $state, $ionicPlatform, $window, OpenFB) {
-
-    OpenFB.init('809426419123624'); //, 'http://localhost:8100/oauthcallback.html');
+    EucabyApi.init();
 
     $ionicPlatform.ready(function() {
+        // Device is ready
         if(window.StatusBar) {
-            // org.apache.cordova.statusbar required
-            StatusBar.styleDefault();
+            window.StatusBar.styleDefault();
         }
+        notifications.init();
     });
 
     $rootScope.$on('$stateChangeStart', function(event, toState) {
-        if (toState.name !== 'app.login' && toState.name !== 'app.logout' && !$window.sessionStorage['fbtoken']) {
+        if (toState.name !== 'app.login' && toState.name !== 'app.logout' &&
+            !storageManager.getAccessToken()) {
             $state.go('app.login');
             event.preventDefault();
         }
@@ -31,13 +40,23 @@ angular.module('eucaby',
     $rootScope.$on('OAuthException', function() {
         $state.go('app.login');
     });
+}])
 
+.constant('$ionicLoadingConfig', {
+    template: '<ion-spinner icon="lines"/>',
+    noBackdrop: true,
+    duration: 30000    // 30 seconds
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config([
+    '$stateProvider',
+    '$urlRouterProvider',
+    '$ionicConfigProvider',
+function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
+
+    $ionicConfigProvider.tabs.position('bottom');
 
     $stateProvider
-
     // Abstract states
     .state('app', {
         url: '/app',
@@ -45,7 +64,7 @@ angular.module('eucaby',
         templateUrl: 'templates/menu.html'
     })
 
-    .state('app.tabs', {
+    .state('app.tab', {
         url: '/tab',
         abstract: true,
         views: {
@@ -65,67 +84,108 @@ angular.module('eucaby',
             }
         }
     })
-
-    .state('app.logout', {
-        url: '/logout',
+    .state('app.profile', {
+        url: '/profile',
         views: {
             'menu-content': {
-                templateUrl: 'templates/logout.html',
-                controller: 'LogoutCtrl'
+                templateUrl: 'templates/profile.html',
+                controller: 'ProfileCtrl'
             }
         }
     })
-
-    .state('app.tabs.map', {
+    .state('app.settings', {
+        url: '/settings',
+        views: {
+            'menu-content': {
+                templateUrl: 'templates/settings.html',
+                controller: 'SettingsCtrl'
+            }
+        }
+    })
+    .state('app.tab.map', {
         url: '/map',
         views: {
             'tab-map': {
-                templateUrl: 'templates/tab-map.html',
+                templateUrl: 'templates/map.html',
                 controller: 'MapCtrl'
             }
         }
     })
-    .state('app.tabs.map.request', { // Not working
-        url: '/request',
+    .state('app.tab.request', {
+        cache: false,
+        url: '/request/:id',
         views: {
-            'tab-map': {
-                template: 'templates/tab-down.html',
-                controller: 'RequestCtrl'
+            'tab-detail': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
             }
         }
     })
-    .state('app.tabs.friends', {
-        url: '/friends',
+    .state('app.tab.notification', {
+        cache: false,
+        url: '/notification/:id',
         views: {
-            'tab-friends': {
-                templateUrl: 'templates/tab-friends.html',
-                controller: 'FriendsCtrl'
+            'tab-detail': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
             }
         }
     })
-    .state('app.tabs.friend-detail', {
-        url: '/friend/:friendId',
+    .state('app.tab.outgoing', {
+        url: '/outgoing',
         views: {
-            'tab-friends': {
-                templateUrl: 'templates/friend-detail.html',
-                controller: 'FriendDetailCtrl'
+            'tab-outgoing': {
+                templateUrl: 'templates/messages.html',
+                controller: 'MessagesListCtrl'
             }
         }
     })
-
-    .state('app.tabs.down', {
-        url: '/down',
+    .state('app.tab.incoming', {
+        url: '/incoming',
         views: {
-            'tab-down': {
-                templateUrl: 'templates/tab-down.html',
-                controller: 'DownCtrl'
+            'tab-incoming': {
+                templateUrl: 'templates/messages.html',
+                controller: 'MessagesListCtrl'
+            }
+        }
+    })
+    .state('app.tab.outgoing_notification', {
+        url: '/outgoing_notification/:id',
+        views: {
+            'tab-outgoing': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.outgoing_request', {
+        url: '/outgoing_request/:id',
+        views: {
+            'tab-outgoing': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.incoming_notification', {
+        url: '/incoming_notification/:id',
+        views: {
+            'tab-incoming': {
+                templateUrl: 'templates/notification-detail.html',
+                controller: 'NotificationDetailCtrl'
+            }
+        }
+    })
+    .state('app.tab.incoming_request', {
+        url: '/incoming_request/:id',
+        views: {
+            'tab-incoming': {
+                templateUrl: 'templates/request-detail.html',
+                controller: 'RequestDetailCtrl'
             }
         }
     });
 
   $urlRouterProvider.otherwise('/app/tab/map');
 
-});
-
-
-
+}]);

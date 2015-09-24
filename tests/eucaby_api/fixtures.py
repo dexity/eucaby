@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import mock
 from eucaby_api import models
 
@@ -6,14 +8,19 @@ UUID2 = '123qweasd'
 USERNAME = '12345'
 LATLNG = '37.422,-122.084058'  # Google
 TOKEN_TYPE = 'Bearer'
+TIMEZONE = -8
+TIMEZONE_OFFSET = TIMEZONE*60
 FB_PROFILE = dict(
-    first_name='Test', last_name='User', verified=True,
-    name='Test User', locale='en_US', gender='male',
+    first_name='Test', last_name=u'Юзер', verified=True,
+    name=u'Test Юзер', locale='en_US', gender='male',
     email='test@example.com', id=USERNAME,
     link='https://www.facebook.com/app_scoped_user_id/12345/',
     timezone=-8, updated_time='2014-12-06T21:31:50+0000')
 INVALID_TOKEN = dict(
-    code='invalid_token', message='Invalid access token')
+    code='invalid_token', message='Invalid bearer token')
+EXPIRED_TOKEN = dict(
+    code='token_expired', message='Bearer token is expired')
+
 
 def create_user_from_facebook(client):
     """Creates user account with Eucaby and Facebook tokens."""
@@ -32,8 +39,9 @@ def create_user_from_facebook(client):
 def create_user(user_kwargs=None, ec_token_kwargs=None,
                 fb_access_token='someaccesstoken'):
     """Creates user and related tokens."""
-    _user_kwargs = dict(username=USERNAME, first_name='Test', last_name='User',
-                        email='test@example.com', gender='male')
+    _user_kwargs = dict(username=USERNAME, first_name='Test', last_name=u'Юзер',
+                        email='test@example.com', gender='male',
+                        timezone=-8)
     _ec_token_kwargs = dict(
         access_token=UUID, refresh_token=UUID2, expires_in=2592000,
         scope='profile history location')
@@ -55,3 +63,10 @@ def create_user2():
         ec_token_kwargs=dict(
             access_token=UUID2, refresh_token='222'),
         fb_access_token='someaccesstoken2')
+
+
+def verify_email_history(user_id, email):
+    """Verifies email history."""
+    objs = models.EmailHistory.get_by_user(user_id, query=email)
+    assert 1 == len(objs)
+    assert email == objs[0].text

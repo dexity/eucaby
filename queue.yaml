@@ -8,3 +8,16 @@ queue:
   retry_parameters:
     task_retry_limit: 20
     task_age_limit: 1h
+
+- name: push
+  rate: 5/s
+  target: push
+  retry_parameters:
+    task_retry_limit: 7
+
+- name: mail
+  rate: 5/s
+  target: mail
+  retry_parameters:
+    task_retry_limit: 7
+

@@ -1,0 +1,33 @@
+{% extends  "base.html" %}
+
+{% block content %}
+
+<div class="jumbotron slim">
+    <h1>I am here</h1>
+    <p class="lead">
+        <span class="brand-inline">Eucaby</span> is a simple Geo Messenger that
+        helps you to share and request accurate and authenticated location
+        messages with your friends.
+    </p>
+</div>
+<div class="row">
+    <div class="col-md-4 col-sm-6 col-xs-12 screenshot">
+        <img src="/media/img/android.png">
+    </div>
+    <div class="col-md-4 col-sm-6 col-xs-12 screenshot">
+        <img src="/media/img/iphone.png">
+    </div>
+    <div class="col-md-4 col-sm-6 col-xs-12 screenshot">
+        <img src="/media/img/browser.png">
+    </div>
+</div>
+<br>
+<a href="https://play.google.com/store/apps/details?id=com.eucaby.mobile">
+  <img alt="Get it on Google Play" class="android-badge"
+       src="https://developer.android.com/images/brand/en_generic_rgb_wo_60.png" />
+</a>
+<a href="https://geo.itunes.apple.com/us/app/eucaby/id1036493179?mt=8">
+   <img alt="Download on the AppStore" class="ios-badge"
+        src="http://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg" >
+</a>
+{% endblock %}

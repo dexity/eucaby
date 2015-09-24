@@ -1,0 +1,16 @@
+<ion-modal-view>
+  <ion-header-bar>
+      <button class="button back-button buttons button-icon
+        ion-ios-arrow-left header-item" ng-click="notifyModal.hide()">
+      </button>
+      <h1 class="title title-right-button">I am here</h1>
+      <button class="button buttons button-positive header-button"
+          ng-click="$broadcast('sendLocation')">
+          Send Location <i class="icon ion-android-send"></i>
+      </button>
+  </ion-header-bar>
+  <ion-content>
+    <div id="notifymap"></div>
+    <ng-include src="'templates/form.html'"></ng-include>
+  </ion-content>
+</ion-modal-view>

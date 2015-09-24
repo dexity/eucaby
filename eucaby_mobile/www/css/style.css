@@ -1,7 +1,22 @@
 
+.logo {
+    width: 40px;
+    float: left;
+    margin-left: -5px;
+    margin-right: 5px;
+    padding-top: 1px;
+}
 #map {
     width: 100%;
     height: 100%;
+}
+#locmap {
+    width: 100%;
+    height: 50%;
+}
+#notifymap {
+    width: 100%;
+    height: 30%;
 }
 .scroll {
     height: 100%;
@@ -22,6 +37,242 @@ input {
     background: #F0F3F8;
 }
 
+.login-logo h1 {
+    color: #006738;
+}
+
 .login-text {
     margin-left: 20px;
+}
+
+.help {
+    margin: 5px 5px 5px 17px;
+    font-style: italic;
+    color: #888;
+}
+
+.item-container .item-content {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-right: 34px;
+}
+
+.item-icon-right.item-container .item-content {
+    padding-right: 34px;
+}
+
+.activity-detail {
+    /*height: 30%;*/
+}
+
+.spinner svg {
+    stroke: #bbb;
+    fill: #999;
+}
+
+.loading-container .loading {
+    padding: 15px;
+}
+
+.icon-align-right {
+    float: right;
+    font-size: 23px;
+}
+
+.icon-link {
+    color: #4d8cf4;
+}
+
+[ng-click] {
+    cursor: pointer;
+}
+
+.icon-detail {
+    float: left;
+    font-size: 32px;
+    width: 32px;
+}
+
+.profile {
+    padding-top: 20px;
+}
+
+.message {
+    background-color: #fcfad6;
+}
+
+.item-description {
+    opacity: 0.7;
+    /*font-size: 14px;*/
+}
+
+.message-text,
+.message-detail {
+    color: #0c63ee;
+}
+
+.message-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.item .message-detail {
+    white-space: normal;
+}
+
+.detail-time {
+    float: right;
+    opacity: 0.7;
+}
+
+.detail-message {
+    font-size: 17px;
+}
+
+hr.separator {
+    border-top: 1px #ddd dashed;
+    border-bottom: 0px;
+}
+
+.badge-web {
+    float:right;
+    font-size: 14px;
+    padding: 0px 6px 1px 6px;
+    background-color: #e6b400;
+    color: white;
+    border-radius: 3px;
+}
+.note-area {
+    border: 0;
+    border-left: 4px solid #D7DBE4;
+    background: #F0F3F8;
+    margin: 20px 10px;
+    padding: 5px 10px;
+}
+
+.button.header-button {
+    padding-left: 15px;
+    padding-right: 10px;
+    border-radius: 0px;
+}
+
+.header-button .icon {
+    margin-left:10px;
+}
+
+.bar.bar-stable .title {
+    color: #006738;
+}
+.bar .title-right-button {
+    left: 20px !important;
+    margin-right: 0px;
+}
+
+.bar .title.header-item {
+    text-align: center;
+}
+
+.aligned-title .title.header-item {
+    left: 60px !important;
+}
+
+.autocomplete {
+    margin: 0px 10px;
+    padding: 0px;
+}
+
+.autocomplete a {
+    background-color: #f6f9fe;
+    border-left: 0px;
+    border-right: 0px;
+}
+
+.number-label,
+.number-label-web {
+    float: left;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    padding: 7px;
+    color: #fff;
+    text-align: center;
+    font-size: 20px;
+    margin-left: -8px;
+    margin-right: 10px;
+}
+
+.number-label {
+    background-color: #0a9ec7;
+}
+
+.number-label-web {
+    background-color: #e6b400;
+}
+
+.map-pinpoint {
+    line-height: 44px;
+    font-size: 35px;
+}
+
+.tab-virtual {
+    max-width: 0px;
+}
+
+/* AngularJS adjustments */
+
+[ng\:cloak], [ng-cloak], .ng-cloak {
+    display: none !important;
+}
+
+/* Ionic adjustments */
+
+.popup-body {
+    overflow: inherit;
+}
+
+.tab-title {
+	font-size: 13px;
+	margin-left: 5px;
+    text-transform: uppercase;
+}
+
+.item-icon-right .icon {
+    right: 0px;
+}
+
+.item-divider {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+ion-footer-bar .button-bar .button {
+    border-width: 0px;
+    font-size: 15px;
+}
+
+.button-bar .button-icon {
+    margin-top: 5px;
+}
+
+.bar .button-bar > .button {
+    line-height: 42px;
+}
+
+.bar .button {
+    font-size: 14px;
+}
+
+.bar .title + .header-button,
+.bar .buttons-right {
+    top: 0px !important;
+    right: 0px !important;
+    bottom: 0px !important;
+}
+
+ion-footer-bar.bar {
+    padding: 0px;
+}
+
+.button-bar > .button.button-modal:last-child {
+  border-radius: 0px;
 }

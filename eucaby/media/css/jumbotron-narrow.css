@@ -1,0 +1,57 @@
+body {
+  padding-top: 20px;
+}
+
+.header h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 40px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 730px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 500px) {
+    .container {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+.container-narrow > hr {
+    margin: 30px 0;
+}
+
+.jumbotron.slim {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-bottom: 0px;
+    background-color: inherit;
+}
+
+.jumbotron {
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+.jumbotron .btn {
+  padding: 14px 24px;
+  font-size: 21px;
+}
+
+@media screen and (min-width: 768px) {
+    .header {
+        margin-bottom: 15px;
+    }
+    .jumbotron h1 {
+        font-size: 50px;
+    }
+}

@@ -5,12 +5,14 @@ import mock
 from eucaby_api import auth
 from eucaby_api import app as eucaby_app
 
+from tests.eucaby_api import base as test_base
+
 
 class FacebookRemoteAppTest(unittest.TestCase):
 
     def setUp(self):
         self.app = eucaby_app.create_app()
-        self.app.config.from_object('eucaby_api.config.Testing')
+        self.app.config.from_object(test_base.Testing)
         self.app.secret_key = 'development'
         self.facebook = auth.facebook
 

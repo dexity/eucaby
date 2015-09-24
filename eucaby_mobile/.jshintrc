@@ -1,0 +1,29 @@
+{
+    "bitwise": true,
+    "immed": true,
+    "newcap": true,
+    "noarg": true,
+    "nonew": true,
+    "trailing": true,
+    "maxlen": 200,
+    "boss": true,
+    "eqnull": true,
+    "expr": true,
+    "globalstrict": true,
+    "laxbreak": true,
+    "loopfunc": true,
+    "sub": true,
+    "undef": true,
+    "indent": 4,
+    "node": true,
+    "globals": {
+        "angular": true,
+        "google": true,
+        "window": true,
+        "navigator": true,
+        "alert": true,
+        "document": true,
+        "device": true,
+        "moment": true
+    }
+}

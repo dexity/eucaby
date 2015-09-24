@@ -1,0 +1,31 @@
+{% extends  "base.html" %}
+
+{% block header %}
+<script src="/media/lib/angular/angular.js"></script>
+<script src="/media/js/app.js"></script>
+<script src="/media/js/utils.js"></script>
+<script src="/media/js/controllers.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+{% endblock %}
+
+{% block content %}
+<div ng-controller="RequestCtrl" ng-init="uuid='{{ loc_req.uuid }}'">
+    <div id="map"></div>
+    <br>
+    <div ng-show="'{{ loc_req.message }}'.length" class="message">{{ loc_req.message }}</div>
+    <div class="message-info">
+        Request sent by <b>{{loc_req.sender_name}}</b> at
+        &#123;&#123;{{created_timestamp}}| date:'MMM d, y h:mm a'&#125;&#125;
+    </div>
+    <form novalidate>
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" ng-model="message" class="form-control" placeholder="Optional message">
+            </div>
+        </div>
+        <br>
+        <input type="submit" class="btn btn-success" ng-click="sendLocation()" value="Send Location">
+    </form>
+</div>
+{% endblock %}

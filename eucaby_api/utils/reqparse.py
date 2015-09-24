@@ -65,7 +65,7 @@ class RequestParser(reqparse.RequestParser):
         return namespace
 
 
-def clean_args(args, strict=False):
+def clean_args(args, strict=False, is_task=False):
     """Simple parsing handler.
 
     Returns:
@@ -82,4 +82,7 @@ def clean_args(args, strict=False):
             errors.update(e.unparsed)
         error = dict(message='Invalid request parameters',
                      code='invalid_request', fields=errors)
-        return api_utils.make_response(error, 400)
+        # For tasks even if the error occurs it should return 200 status code
+        # to avoid resubmitting the task
+        status_code = (is_task and 200) or 400
+        return api_utils.make_response(error, status_code)

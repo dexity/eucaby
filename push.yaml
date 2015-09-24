@@ -1,0 +1,22 @@
+module: push
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /tasks/push/.*
+  script: eucaby_api.wsgi.app
+  login: admin
+  secure: always
+
+libraries:
+- name: MySQLdb
+  version: latest
+- name: ssl
+  version: latest
+
+#inbound_services:
+#- warmup
+
+includes:
+- common.yaml

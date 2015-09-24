@@ -1,15 +1,23 @@
 {% extends  "base.html" %}
 
-{% block content %}
+{% block header %}
+<script src="/media/lib/angular/angular.js"></script>
+<script src="/media/js/app.js"></script>
+<script src="/media/js/utils.js"></script>
+<script src="/media/js/controllers.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+{% endblock %}
 
-{% verbatim %}
-<div ng-switch on="message_type">
-    <div ng-switch-when="error">{{message}}</div>
-    <div ng-switch-when="success">{{message}}</div>
-    <div ng-switch-default>
-        Notify your location
+{% block content %}
+<div ng-controller="LocationCtrl"
+     ng-init="lat='{{ loc_notif.location.lat }}'; lng='{{ loc_notif.location.lon }}'; message='{{ loc_notif.message }}'">
+    <div id="map"></div>
+    <br>
+    <div ng-show="'{{ loc_notif.message }}'.length" class="message">{{ loc_notif.message }}</div>
+
+    <div class="message-info">
+        Location sent by <b>{{loc_notif.sender_name}}</b> at
+        &#123;&#123;{{created_timestamp}}| date:'MMM d, y h:mm a'&#125;&#125;
     </div>
 </div>
-{% endverbatim %}
-<div ng-init="session='{{ session }}'"></div>
 {% endblock %}

@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="eucaby">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <meta name="viewport"
+          content="initial-scale=1, maximum-scale=1, user-scalable=no,
+                   width=device-width">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src *;
+                   style-src 'self' 'unsafe-inline' https://*.googleapis.com;
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval'
+                              http://localhost:*
+                              https://*.google.com
+                              https://*.googleapis.com
+                              https://*.gstatic.com">
     <title>Eucaby</title>
 
     <link href="lib/ionic/css/ionic.css" rel="stylesheet">
@@ -13,29 +23,29 @@
     -->
 
     <script src="lib/ionic/js/ionic.bundle.js"></script>
+    <script src="lib/ngCordova/dist/ng-cordova.js"></script>
     <script src="cordova.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
-    <script src="http://localhost:4000/socket.io/socket.io.js"></script>
-    <!--<script src="http://146.148.67.189:4000/socket.io/socket.io.js"></script>-->
-    <script src="lib/angular_socket_io/socket.js"></script>
-    <script src="js/app.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+    <script src="lib/moment.js"></script>
     <script src="lib/openfb-angular.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/eucabyApi.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>
+    <script src="js/push.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/utils.js"></script>
   </head>
-  <body ng-app="eucaby" animation="slide-right-left-ios7" ng-controller="MainCtrl">
+  <body ng-controller="MainCtrl">
 
     <ion-header-bar align-title="left" class="bar-stable" ng-show="showHeader()">
-        <h1 class="title">Eucaby</h1>
+        <h1 class="title"><img src="img/logo.png" class="logo">Eucaby</h1>
         <div class="buttons">
-            <button class="button button-icon button-clear ion-navicon" ng-click="toggleRight()"></button>
+            <button class="button button-icon button-clear ion-navicon"
+                    ng-click="toggleRight()"></button>
         </div>
     </ion-header-bar>
-
-      <!--<ion-nav-bar class="bar-stable" animation="nav-title-slide-ios7">
-        <ion-nav-back-button class="button-icon ion-ios7-arrow-back">
-        </ion-nav-back-button>
-      </ion-nav-bar>-->
 
     <ion-nav-view id="main"></ion-nav-view>
   </body>
