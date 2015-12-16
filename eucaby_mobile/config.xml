@@ -1,91 +1,92 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.eucaby.mobile" version="0.0.6"
-        xmlns="http://www.w3.org/ns/widgets"
-        xmlns:cdv="http://cordova.apache.org/ns/1.0"
-        xmlns:android="http://schemas.android.com/apk/res/android">
-  <name>Eucaby</name>
-  <description>
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.eucaby.mobile" version="0.0.7" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Eucaby</name>
+    <description>
       Geo Messenger
   </description>
-  <author email="alex@eucaby.com" href="http://www.eucaby.com">
+    <author email="alex@eucaby.com" href="http://www.eucaby.com">
       Alex Dementsov
   </author>
-  <content src="index.html"/>
-  <access origin="*"/>
-  <preference name="webviewbounce" value="false"/>
-  <preference name="UIWebViewBounce" value="false"/>
-  <preference name="DisallowOverscroll" value="true"/>
-  <preference name="BackupWebStorage" value="none"/>
-  <preference name="StatusBarOverlaysWebView" value="true"/>
-  <preference name="SplashScreen" value="screen"/>
-  <preference name="SplashScreenDelay" value="3000"/>
-  <feature name="StatusBar">
-    <param name="ios-package" value="CDVStatusBar" onload="true"/>
-  </feature>
-  <feature name="Geolocation">
-    <param name="android-package" value="org.apache.cordova.geolocation.GeoBroker"/>
-    <param name="ios-package" value="CDVLocation"/>
-  </feature>
-  <feature name="PushPlugin">
-    <param name="android-package" value="com.plugin.gcm.PushPlugin"/>
-    <param name="ios-package" value="PushPlugin"/>
-  </feature>
-  <feature name="InAppBrowser">
-    <param name="ios-package" value="CDVInAppBrowser"/>
-  </feature>
-  <allow-navigation href="*://*.eucaby.com/*" />
-  <allow-navigation href="*://*.appspot.com/*" />
-  <allow-navigation href="*://*.euca.by/*" />
-  <allow-navigation href="*://*.google.com/*" />
-  <allow-navigation href="*://*.googleapis.com/*" />
-  <allow-navigation href="*://*.gstatic.com/*" />
-  <allow-navigation href="*://*.localhost:*/*" />
-  <platform name="android">
-    <icon src="resources/android/icon/eucaby-ldpi-icon.png" density="ldpi"/>
-    <icon src="resources/android/icon/eucaby-mdpi-icon.png" density="mdpi"/>
-    <icon src="resources/android/icon/eucaby-hdpi-icon.png" density="hdpi"/>
-    <icon src="resources/android/icon/eucaby-xhdpi-icon.png" density="xhdpi"/>
-    <icon src="resources/android/icon/eucaby-xxhdpi-icon.png" density="xxhdpi"/>
-    <icon src="resources/android/icon/eucaby-xxxhdpi-icon.png" density="xxxhdpi"/>
-    <splash src="resources/android/splash/eucaby-land-ldpi-screen.png" density="land-ldpi"/>
-    <splash src="resources/android/splash/eucaby-land-mdpi-screen.png" density="land-mdpi"/>
-    <splash src="resources/android/splash/eucaby-land-hdpi-screen.png" density="land-hdpi"/>
-    <splash src="resources/android/splash/eucaby-land-xhdpi-screen.png" density="land-xhdpi"/>
-    <splash src="resources/android/splash/eucaby-land-xxhdpi-screen.png" density="land-xxhdpi"/>
-    <splash src="resources/android/splash/eucaby-land-xxxhdpi-screen.png" density="land-xxxhdpi"/>
-    <splash src="resources/android/splash/eucaby-port-ldpi-screen.png" density="port-ldpi"/>
-    <splash src="resources/android/splash/eucaby-port-mdpi-screen.png" density="port-mdpi"/>
-    <splash src="resources/android/splash/eucaby-port-hdpi-screen.png" density="port-hdpi"/>
-    <splash src="resources/android/splash/eucaby-port-xhdpi-screen.png" density="port-xhdpi"/>
-    <splash src="resources/android/splash/eucaby-port-xxhdpi-screen.png" density="port-xxhdpi"/>
-    <splash src="resources/android/splash/eucaby-port-xxxhdpi-screen.png" density="port-xxxhdpi"/>
-  </platform>
-  <platform name="ios">
-    <icon src="resources/ios/icon/icon.png" width="57" height="57"/>
-    <icon src="resources/ios/icon/icon@2x.png" width="114" height="114"/>
-    <icon src="resources/ios/icon/icon-40.png" width="40" height="40"/>
-    <icon src="resources/ios/icon/icon-40@2x.png" width="80" height="80"/>
-    <icon src="resources/ios/icon/icon-50.png" width="50" height="50"/>
-    <icon src="resources/ios/icon/icon-50@2x.png" width="100" height="100"/>
-    <icon src="resources/ios/icon/icon-60.png" width="60" height="60"/>
-    <icon src="resources/ios/icon/icon-60@2x.png" width="120" height="120"/>
-    <icon src="resources/ios/icon/icon-60@3x.png" width="180" height="180"/>
-    <icon src="resources/ios/icon/icon-72.png" width="72" height="72"/>
-    <icon src="resources/ios/icon/icon-72@2x.png" width="144" height="144"/>
-    <icon src="resources/ios/icon/icon-76.png" width="76" height="76"/>
-    <icon src="resources/ios/icon/icon-76@2x.png" width="152" height="152"/>
-    <icon src="resources/ios/icon/icon-small.png" width="29" height="29"/>
-    <icon src="resources/ios/icon/icon-small@2x.png" width="58" height="58"/>
-    <icon src="resources/ios/icon/icon-small@3x.png" width="87" height="87"/>
-    <splash src="resources/ios/splash/Eucaby-568h@2x~iphone.png" height="1136" width="640"/>
-    <splash src="resources/ios/splash/Eucaby-667h.png" height="1334" width="750"/>
-    <splash src="resources/ios/splash/Eucaby-736h.png" height="2208" width="1242"/>
-    <splash src="resources/ios/splash/Eucaby-Landscape-736h.png" height="1242" width="2208"/>
-    <splash src="resources/ios/splash/Eucaby-Landscape@2x~ipad.png" height="1536" width="2048"/>
-    <splash src="resources/ios/splash/Eucaby-Landscape~ipad.png" height="768" width="1024"/>
-    <splash src="resources/ios/splash/Eucaby-Portrait@2x~ipad.png" height="2048" width="1536"/>
-    <splash src="resources/ios/splash/Eucaby-Portrait~ipad.png" height="1024" width="768"/>
-    <splash src="resources/ios/splash/Eucaby@2x~iphone.png" height="960" width="640"/>
-    <splash src="resources/ios/splash/Eucaby~iphone.png" height="480" width="320"/>
-  </platform>
+    <content src="index.html" />
+    <access origin="*" />
+    <preference name="webviewbounce" value="false" />
+    <preference name="UIWebViewBounce" value="false" />
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="BackupWebStorage" value="none" />
+    <preference name="StatusBarOverlaysWebView" value="true" />
+    <preference name="SplashScreen" value="screen" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <feature name="StatusBar">
+        <param name="ios-package" onload="true" value="CDVStatusBar" />
+    </feature>
+    <feature name="Geolocation">
+        <param name="android-package" value="org.apache.cordova.geolocation.GeoBroker" />
+        <param name="ios-package" value="CDVLocation" />
+    </feature>
+    <feature name="PushPlugin">
+        <param name="android-package" value="com.plugin.gcm.PushPlugin" />
+        <param name="ios-package" value="PushPlugin" />
+    </feature>
+    <feature name="InAppBrowser">
+        <param name="ios-package" value="CDVInAppBrowser" />
+    </feature>
+    <allow-navigation href="*://*.eucaby.com/*" />
+    <allow-navigation href="*://*.appspot.com/*" />
+    <allow-navigation href="*://*.euca.by/*" />
+    <allow-navigation href="*://*.google.com/*" />
+    <allow-navigation href="*://*.googleapis.com/*" />
+    <allow-navigation href="*://*.gstatic.com/*" />
+    <allow-navigation href="*://*.localhost:*/*" />
+    <platform name="android">
+        <icon density="ldpi" src="resources/android/icon/eucaby-ldpi-icon.png" />
+        <icon density="mdpi" src="resources/android/icon/eucaby-mdpi-icon.png" />
+        <icon density="hdpi" src="resources/android/icon/eucaby-hdpi-icon.png" />
+        <icon density="xhdpi" src="resources/android/icon/eucaby-xhdpi-icon.png" />
+        <icon density="xxhdpi" src="resources/android/icon/eucaby-xxhdpi-icon.png" />
+        <icon density="xxxhdpi" src="resources/android/icon/eucaby-xxxhdpi-icon.png" />
+        <splash density="land-ldpi" src="resources/android/splash/eucaby-land-ldpi-screen.png" />
+        <splash density="land-mdpi" src="resources/android/splash/eucaby-land-mdpi-screen.png" />
+        <splash density="land-hdpi" src="resources/android/splash/eucaby-land-hdpi-screen.png" />
+        <splash density="land-xhdpi" src="resources/android/splash/eucaby-land-xhdpi-screen.png" />
+        <splash density="land-xxhdpi" src="resources/android/splash/eucaby-land-xxhdpi-screen.png" />
+        <splash density="land-xxxhdpi" src="resources/android/splash/eucaby-land-xxxhdpi-screen.png" />
+        <splash density="port-ldpi" src="resources/android/splash/eucaby-port-ldpi-screen.png" />
+        <splash density="port-mdpi" src="resources/android/splash/eucaby-port-mdpi-screen.png" />
+        <splash density="port-hdpi" src="resources/android/splash/eucaby-port-hdpi-screen.png" />
+        <splash density="port-xhdpi" src="resources/android/splash/eucaby-port-xhdpi-screen.png" />
+        <splash density="port-xxhdpi" src="resources/android/splash/eucaby-port-xxhdpi-screen.png" />
+        <splash density="port-xxxhdpi" src="resources/android/splash/eucaby-port-xxxhdpi-screen.png" />
+    </platform>
+    <platform name="ios">
+        <icon height="57" src="resources/ios/icon/icon.png" width="57" />
+        <icon height="114" src="resources/ios/icon/icon@2x.png" width="114" />
+        <icon height="40" src="resources/ios/icon/icon-40.png" width="40" />
+        <icon height="80" src="resources/ios/icon/icon-40@2x.png" width="80" />
+        <icon height="50" src="resources/ios/icon/icon-50.png" width="50" />
+        <icon height="100" src="resources/ios/icon/icon-50@2x.png" width="100" />
+        <icon height="60" src="resources/ios/icon/icon-60.png" width="60" />
+        <icon height="120" src="resources/ios/icon/icon-60@2x.png" width="120" />
+        <icon height="180" src="resources/ios/icon/icon-60@3x.png" width="180" />
+        <icon height="72" src="resources/ios/icon/icon-72.png" width="72" />
+        <icon height="144" src="resources/ios/icon/icon-72@2x.png" width="144" />
+        <icon height="76" src="resources/ios/icon/icon-76.png" width="76" />
+        <icon height="152" src="resources/ios/icon/icon-76@2x.png" width="152" />
+        <icon height="29" src="resources/ios/icon/icon-small.png" width="29" />
+        <icon height="58" src="resources/ios/icon/icon-small@2x.png" width="58" />
+        <icon height="87" src="resources/ios/icon/icon-small@3x.png" width="87" />
+        <splash height="1136" src="resources/ios/splash/Eucaby-568h@2x~iphone.png" width="640" />
+        <splash height="1334" src="resources/ios/splash/Eucaby-667h.png" width="750" />
+        <splash height="2208" src="resources/ios/splash/Eucaby-736h.png" width="1242" />
+        <splash height="1242" src="resources/ios/splash/Eucaby-Landscape-736h.png" width="2208" />
+        <splash height="1536" src="resources/ios/splash/Eucaby-Landscape@2x~ipad.png" width="2048" />
+        <splash height="768" src="resources/ios/splash/Eucaby-Landscape~ipad.png" width="1024" />
+        <splash height="2048" src="resources/ios/splash/Eucaby-Portrait@2x~ipad.png" width="1536" />
+        <splash height="1024" src="resources/ios/splash/Eucaby-Portrait~ipad.png" width="768" />
+        <splash height="960" src="resources/ios/splash/Eucaby@2x~iphone.png" width="640" />
+        <splash height="480" src="resources/ios/splash/Eucaby~iphone.png" width="320" />
+    </platform>
+    <preference name="xwalkVersion" value="15+" />
+    <preference name="xwalkCommandLine" value="--disable-pull-to-refresh-effect" />
+    <preference name="xwalkMode" value="embedded" />
+    <preference name="xwalkMultipleApk" value="true" />
 </widget>
