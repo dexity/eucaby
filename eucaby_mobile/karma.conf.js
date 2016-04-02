@@ -12,7 +12,7 @@ module.exports = function(config) {
       'www/lib/ionic/js/angular-ui/angular-ui-router.js',
       'www/lib/ionic/js/ionic.js',
       'www/lib/ionic/js/ionic-angular.js',
-      'www/lib/ngCordova/dist/ng-cordova.js',
+      'www/lib/ngCordova/ng-cordova.js',
       'www/lib/openfb-angular.js',
       'www/lib/moment.js',
       'www/js/*.js',
