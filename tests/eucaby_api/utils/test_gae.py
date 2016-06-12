@@ -61,8 +61,12 @@ class GaeUtilsTest(test_base.TestCase):
             apns_socket = mock.Mock()
             mock_create_socket.return_value = apns_socket
             # Test APNs request
-            mock_send_notif = (apns_socket.gateway_server.
-                               send_notification_multiple)
+            # Note: We currently use send_notification for APNs. Fix test
+            #       when using send_notification_multiple.
+            #       See comments for the method.
+            # mock_send_notif = (apns_socket.gateway_server.
+            #                    send_notification_multiple)
+            mock_send_notif = apns_socket.gateway_server.send_notification
             resp_ios = test_utils.execute_queue_task(self.client, tasks[1])
             self.assertEqual(1, mock_send_notif.call_count)
             self.assertEqual(200, resp_ios.status_code)
