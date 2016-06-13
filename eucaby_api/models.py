@@ -87,7 +87,7 @@ class User(db.Model):
 
     @classmethod
     def get_by(cls, **filter_params):
-        """Returns user by filter parameters or None."""
+        """Get user by filter parameters or None."""
         filter_params.update(dict(is_active=True))
         return cls.query.filter_by(**filter_params).first()
 
@@ -227,6 +227,13 @@ class Token(db.Model):
                         datetime.timedelta(seconds=token['expires_in']))
         db.session.add(self)
         db.session.commit()
+
+    @classmethod
+    def get_by(cls, service, **filter_params):
+        """Get latest token by filter parameters."""
+        assert service in (FACEBOOK, EUCABY)
+        filter_params.update(dict(service=service))
+        return cls.query.filter_by(**filter_params).order_by('-id').first()
 
     @property
     def scopes(self):

@@ -271,6 +271,7 @@ class TestAPNsNotifications(TestPushNotifications):
             custom=dict(type=api_args.NOTIFICATION, id=123))
         # Note: Fix tests when using send_notification_multiple.
         mock_send_notif = apns_socket.gateway_server.send_notification
+        self.assertEqual(0, mock_add_item.call_count)
         self.assertEqual(2, mock_send_notif.call_count)
 
         # self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
