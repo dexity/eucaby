@@ -269,9 +269,15 @@ class TestAPNsNotifications(TestPushNotifications):
         mock_payload.assert_called_with(
             sound='default', alert='Name\nsent you a new location',
             custom=dict(type=api_args.NOTIFICATION, id=123))
-        self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
-        mock_send_notif = apns_socket.gateway_server.send_notification_multiple
-        self.assertEqual(1, mock_send_notif.call_count)
+        # Note: Fix tests when using send_notification_multiple.
+        mock_send_notif = apns_socket.gateway_server.send_notification
+        self.assertEqual(0, mock_add_item.call_count)
+        self.assertEqual(2, mock_send_notif.call_count)
+
+        # self.assertEqual(2, mock_add_item.call_count)  # For every iOS device
+        # mock_send_notif = (apns_socket.gateway_server.
+        #                    send_notification_multiple)
+        # self.assertEqual(1, mock_send_notif.call_count)
 
 
 class TestCleanupiOSDevicesTask(test_base.TestCase):

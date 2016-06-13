@@ -16,11 +16,11 @@ from tests.eucaby_api import fixtures
 from tests.utils import utils as test_utils
 
 
-class TestModels(test_base.TestCase):
+class TestToken(test_base.TestCase):
 
     """Tests User and Token models."""
     def setUp(self):
-        super(TestModels, self).setUp()
+        super(TestToken, self).setUp()
         self.user = models.User.create(
             username='2345', first_name='Test', last_name=u'Юзер',
             email='test@example.com')
@@ -55,6 +55,27 @@ class TestModels(test_base.TestCase):
         test_utils.assert_object(
             token_obj, user_id=self.user.id, service=models.EUCABY,
             access_token=fixtures.UUID2, refresh_token=fixtures.UUID)
+
+    def test_get_by(self):
+        """Tests token get by parameters."""
+        # Unknown service
+        self.assertRaises(AssertionError, models.Token.get_by, 'Unknown')
+        # Populate Eucaby and FB tokens
+        for i in range(2):
+            params = dict(access_token='{}'.format(i), expires_in=5, scope='',
+                          refresh_token='{}'.format(i))
+            models.Token.create_eucaby_token(self.user.id, params)
+            params = dict(user_id=self.user.id, access_token='{}'.format(i+10),
+                          expires_seconds=5)
+            models.Token.create_facebook_token(**params)
+        # Check Eucaby token
+        token = models.Token.get_by(models.EUCABY)
+        self.assertEqual(models.EUCABY, token.service)
+        self.assertEqual('1', token.access_token)
+        # Check FB token
+        token = models.Token.get_by(models.FACEBOOK)
+        self.assertEqual(models.FACEBOOK, token.service)
+        self.assertEqual('11', token.access_token)
 
 
 class TestUserSettings(test_base.TestCase):

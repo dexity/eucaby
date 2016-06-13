@@ -64,8 +64,8 @@ def facebook_tokengetter():
     """Returns Facebook access token object. Used for authenticated requests."""
     # Note: remote app doesn't support tokensetter
     if flask.request.user:
-        token = models.Token.query.filter_by(
-            user_id=flask.request.user.id, service=models.FACEBOOK).first()
+        token = models.Token.get_by(
+            models.FACEBOOK, user_id=flask.request.user.id)
         flask.request.facebook_token = token
         return token.access_token, ''
     return None
@@ -110,12 +110,9 @@ def eucaby_tokengetter(access_token=None, refresh_token=None):
     # Either access_token or refresh_token can be set at a time
     token = None
     if access_token:
-        token = models.Token.query.filter_by(
-            access_token=access_token, service=models.EUCABY).first()
+        token = models.Token.get_by(models.EUCABY, access_token=access_token)
     elif refresh_token:
-        token = models.Token.query.filter_by(
-            refresh_token=refresh_token, service=models.EUCABY).first()
-
+        token = models.Token.get_by(models.EUCABY, refresh_token=refresh_token)
     if token and token.user.is_active:  # Authentication entrance gate!
         flask.request.eucaby_token = token
         flask.request.user = token.user
