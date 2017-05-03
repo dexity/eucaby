@@ -127,7 +127,7 @@ def eucaby_tokensetter(token, request, *args, **kwargs):  # pylint: disable=unus
     ec_token = request.eucaby_token
     if request.grant_type == GRANT_TYPE_PASSWORD and fb_token:
         models.Token.create_facebook_token(
-            user.id, fb_token['access_token'], int(fb_token['expires']))
+            user.id, fb_token['access_token'], int(fb_token['expires_in']))
         return models.Token.create_eucaby_token(user.id, token)
     elif request.grant_type == GRANT_TYPE_REFRESH and ec_token:
         return ec_token.update_token(token)
