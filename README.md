@@ -2,35 +2,9 @@
 Eucaby
 ======
 
-Application for real-time location discovery
+Eucaby is a simple Geo Messenger that helps you to share and request accurate and authenticated location messages with your friends.
 
-Install application
--------------------
+See Github Wiki for detail documentation.
 
-```
-$ ./install.sh
-```
-
-Eucaby API
-==========
-
-Create Database
----------------
-
-Local Development environment:
-
-```
-$ FLASK_CONF=DEV ./eucaby_api/manage.py init_db
-```
-
-Project `eucaby-dev`:
-
-```
-$ FLASK_CONF=REMOTE_DEV ./eucaby_api/manage.py init_db
-```
-
-Project `eucaby-prd`:
-
-```
-$ FLASK_CONF=REMOTE_PRD ./eucaby_api/manage.py init_db
-```
+[Eucaby: Simple Geo Messenger](http://www.surfingbits.com/blog/2015/eucaby-geo-messenger/)
+[Eucaby Architecture](http://www.surfingbits.com/blog/2015/eucaby-architecture/)
